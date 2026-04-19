@@ -1,0 +1,16 @@
+namespace: medium
+imports:
+  - bases
+
+definitions:
+  limited50Text:
+    extends: baseText
+    maxLength: 50
+
+  limited250Text:
+    extends: baseText
+    maxLength: 250
+
+  notesText:
+    extends: baseMultilineText
+    maxLength: 1000

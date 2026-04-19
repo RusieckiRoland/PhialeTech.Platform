@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587;CS8632</NoWarn>
+    <PackageId>PhialeTech.WebHost.Wpf</PackageId>
+    <AssemblyName>PhialeTech.WebHost.Wpf</AssemblyName>
+    <RootNamespace>PhialeTech.WebHost.Wpf</RootNamespace>
+    <Description>WPF adapter for the reusable PhialeTech web host.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\PhialeTech.WebHost\PhialeTech.WebHost.csproj" />
+  </ItemGroup>
+</Project>

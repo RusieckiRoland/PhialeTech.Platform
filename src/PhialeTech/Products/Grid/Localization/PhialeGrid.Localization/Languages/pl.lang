@@ -1,0 +1,76 @@
+# PhialeGrid default Polish UI text
+grouping.drop_here=Przeciągnij nagłówek kolumny tutaj, aby grupować po tej kolumnie
+grouping.empty=Brak aktywnego grupowania
+grouping.clear=Wyczyść grupowanie
+grouping.expand=Rozwiń grupę
+grouping.collapse=Zwiń grupę
+grouping.expand_all=Rozwiń wszystkie grupy
+grouping.collapse_all=Zwiń wszystkie grupy
+
+filter.label=Filtr
+filter.placeholder=Wpisz tekst filtra
+filter.contains=Zawiera
+filter.starts_with=Zaczyna się od
+filter.equals=Równa się
+filter.clear=Wyczyść filtr
+filter.edit=Edytuj filtr
+
+columns.chooser=Kolumny
+columns.show_all=Pokaż wszystkie kolumny
+columns.hide_all=Ukryj wszystkie kolumny
+columns.freeze=Przypnij kolumnę
+columns.unfreeze=Odepnij kolumnę
+columns.hide=Ukryj kolumnę
+columns.move_left=Przesuń kolumnę w lewo
+columns.move_right=Przesuń kolumnę w prawo
+columns.widen=Poszerz kolumnę
+columns.narrow=Zwęź kolumnę
+columns.auto_fit=Dopasuj szerokość kolumny
+
+sort.ascending=Sortuj rosnąco
+sort.descending=Sortuj malejąco
+sort.add_ascending=Dodaj sortowanie rosnące
+sort.add_descending=Dodaj sortowanie malejące
+sort.clear=Wyczyść sortowanie
+
+column_menu.open=Akcje kolumny
+grouping.by_column=Grupuj po tej kolumnie
+grouping.remove_column=Usuń z grupowania
+grouping.toggle_column_direction=Przełącz kierunek grupy
+
+selection.copy=Kopiuj
+selection.paste=Wklej
+selection.status=Zaznaczone wiersze: {0}, komórki: {1}
+selection.current=Aktywna komórka: {0}
+options.show_row_indicator=Pokaż wskaźnik wiersza
+options.multi_select=Wielokrotny wybór
+options.row_numbers=Numery wierszy
+options.show_row_numbers=Pokaż numery wierszy
+options.row_numbering_mode=Tryb numeracji
+options.row_numbering.global=Numeracja ogólna
+options.row_numbering.within_group=Numeruj w obrębie grupy
+options.enable_cell_selection=Włącz wybór komórek
+options.enable_range_selection=Włącz wybór zakresów
+options.show_columns=Pokaż kolumny
+options.section.row_state=Stan wiersza
+options.section.row_numbers=Numeracja wierszy
+options.section.cell_interaction=Interakcja komórek
+
+editing.commit=Zatwierdź
+editing.cancel=Anuluj
+editing.status=Brudne wiersze: {0}, błędy walidacji: {1}
+editing.pending=Wykryto niezapisane zmiany. Zatwierdź je albo anuluj przed opuszczeniem tego scenariusza.
+editing.pending_with_validation=Wykryto niezapisane zmiany. Popraw błędy walidacji przed zatwierdzeniem albo anuluj, aby odrzucić zmiany.
+
+summary.count=Liczba
+summary.sum=Suma
+summary.average=Średnia
+summary.min=Min
+summary.max=Maks
+
+paging.local_status=Widoczne wiersze: {0} / {1}
+
+search.placeholder=Szukaj
+loading.text=Ładowanie...
+hierarchy.load_more=Załaduj następną stronę dzieci...
+empty.no_rows=Brak wierszy do wyświetlenia

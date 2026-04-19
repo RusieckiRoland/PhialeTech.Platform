@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.Grid.Wpf</PackageId>
+    <AssemblyName>PhialeTech.Grid.Wpf</AssemblyName>
+    <RootNamespace>PhialeTech.PhialeGrid.Wpf</RootNamespace>
+    <Description>WPF host for the PhialeGrid control with shared API across .NET Framework 4.8 and modern WPF.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Core\PhialeGrid.Core\PhialeGrid.Core.csproj" />
+    <ProjectReference Include="..\..\..\Localization\PhialeGrid.Localization\PhialeGrid.Localization.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\PhialeTech.ComponentHost.Abstractions\PhialeTech.ComponentHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\PhialeTech.Styles.Wpf\PhialeTech.Styles.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\..\..\..\..\Shared\PhialeTech.Styles.Wpf\Themes.Linked\Grid\PhialeGrid.xaml" Link="PhialeGrid.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Surface\GridSurfaceHost.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\..\Localization\PhialeGrid.Localization\Languages\*.lang" Link="PhialeGrid.Localization\Languages\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

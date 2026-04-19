@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phiale Web Host Sample</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #152238, #0f1723 60%, #1f3a5f);
+      color: #f8fafc;
+    }
+
+    body {
+      display: grid;
+      place-items: stretch;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      padding: 18px;
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+    }
+
+    .card {
+      background: rgba(15, 23, 35, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(8px);
+    }
+
+    .hero {
+      padding: 16px 18px;
+    }
+
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .feed {
+      padding: 14px 16px;
+      overflow: auto;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      background: #38bdf8;
+      color: #082f49;
+      font-weight: 700;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+
+    .status {
+      margin-left: auto;
+      color: #a5f3fc;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="card hero">
+      <h1>Reusable Web Host Sample</h1>
+      <p>This page listens for host messages through the shared bridge and posts structured messages back to .NET.</p>
+    </section>
+
+    <section id="feed" class="card feed">Waiting for bridge...</section>
+
+    <section class="card toolbar">
+      <button id="pingButton" type="button">Send Ping</button>
+      <span id="status" class="status">bridge: offline</span>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const feed = document.getElementById('feed');
+      const status = document.getElementById('status');
+      const pingButton = document.getElementById('pingButton');
+
+      function appendLine(label, payload) {
+        const line = '[' + new Date().toLocaleTimeString() + '] ' + label + ': ' + JSON.stringify(payload, null, 2);
+        feed.textContent = feed.textContent === 'Waiting for bridge...'
+          ? line
+          : (feed.textContent + '\n\n' + line);
+        feed.scrollTop = feed.scrollHeight;
+      }
+
+      function send(message) {
+        if (!window.PhialeWebHost || typeof window.PhialeWebHost.postMessage !== 'function') {
+          appendLine('host-missing', message);
+          return;
+        }
+
+        window.PhialeWebHost.postMessage(message);
+      }
+
+      function announceReady() {
+        status.textContent = 'bridge: online';
+        send({
+          type: 'sampleReady',
+          source: 'WebHostSample',
+          detail: 'sample page ready'
+        });
+      }
+
+      window.addEventListener('phiale-webhost-bridge-ready', announceReady);
+      window.addEventListener('phiale-webhost-message', function (event) {
+        appendLine('from-host', event.detail);
+      });
+
+      pingButton.addEventListener('click', function () {
+        send({
+          type: 'samplePing',
+          source: 'WebHostSample',
+          detail: 'button click'
+        });
+      });
+
+      if (window.PhialeWebHost && typeof window.PhialeWebHost.postMessage === 'function') {
+        announceReady();
+      }
+    })();
+  </script>
+</body>
+</html>

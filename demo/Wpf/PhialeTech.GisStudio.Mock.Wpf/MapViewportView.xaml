@@ -1,0 +1,149 @@
+<UserControl x:Class="PhialeTech.GisStudio.Mock.Wpf.MapViewportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="680"
+             d:DesignWidth="1200">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Background="{DynamicResource GisMock.MapBackdropBrush}"
+                BorderBrush="{DynamicResource GisMock.TopBarBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="24"
+                Padding="18"
+                PreviewMouseLeftButtonDown="HandleMapSurfacePointerDown">
+            <Grid>
+                <Border Background="{DynamicResource GisMock.MapInsetBrush}"
+                        BorderBrush="{DynamicResource GisMock.StrongBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="20">
+                    <Grid>
+                        <Canvas Margin="16"
+                                ClipToBounds="True">
+                            <Rectangle Width="1600"
+                                       Height="900"
+                                       Fill="{DynamicResource GisMock.MapInsetBrush}" />
+                            <Path Stroke="{DynamicResource GisMock.StrongBorderBrush}"
+                                  StrokeThickness="2.5"
+                                  Data="M 20,170 C 180,80 320,100 430,200 S 660,380 840,300 S 1090,100 1320,170" />
+                            <Path Stroke="{DynamicResource Brush.Accent}"
+                                  StrokeThickness="2"
+                                  Data="M 120,520 C 240,470 350,520 440,600 S 690,760 860,690 S 1110,510 1280,560" />
+                            <Ellipse Width="16" Height="16" Fill="{DynamicResource Brush.Accent}" Canvas.Left="430" Canvas.Top="212" />
+                            <Ellipse Width="14" Height="14" Fill="{DynamicResource Brush.Accent}" Canvas.Left="516" Canvas.Top="268" />
+                            <Ellipse Width="18" Height="18" Fill="{DynamicResource Brush.Accent}" Canvas.Left="788" Canvas.Top="298" />
+                            <Ellipse Width="15" Height="15" Fill="{DynamicResource Brush.Accent}" Canvas.Left="1060" Canvas.Top="230" />
+                        </Canvas>
+
+                        <StackPanel HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Margin="20">
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Margin="0,0,0,8" Content="SEL" />
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Margin="0,0,0,8" Content="PAN" />
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Margin="0,0,0,8" Content="LIN" />
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Margin="0,0,0,8" Content="POL" />
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Margin="0,0,0,8" Content="ANA" />
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="DRK" />
+                        </StackPanel>
+
+                        <StackPanel HorizontalAlignment="Right"
+                                    VerticalAlignment="Bottom"
+                                    Margin="18">
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                    Margin="0,0,0,8"
+                                    Content="+" />
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                    Margin="0,0,0,8"
+                                    Content="-" />
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                    Margin="0,0,0,8"
+                                    Content="FIT" />
+                            <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                    Content="N" />
+                        </StackPanel>
+
+                        <Border HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Margin="0,18,0,0"
+                                Style="{StaticResource GisMock.BadgeBorderStyle}">
+                            <TextBlock Text="{Binding DocumentBadgeText}"
+                                       Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                       FontSize="11" />
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Margin="0,16,0,0"
+                Style="{StaticResource GisMock.FloatingCardBorderStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}"
+                            Margin="0,0,8,0">
+                        <TextBlock Text="EPSG:2180"
+                                   Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                   FontSize="11" />
+                    </Border>
+                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}"
+                            Margin="0,0,8,0">
+                        <TextBlock Text="{Binding SelectedScale}"
+                                   Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                   FontSize="11" />
+                    </Border>
+                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}">
+                        <TextBlock Text="{Binding DrawModeText}"
+                                   Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                   FontSize="11" />
+                    </Border>
+                </StackPanel>
+                <TextBlock Grid.Column="1"
+                           Text="X: 542341.22  Y: 481239.10"
+                           VerticalAlignment="Center"
+                           Style="{StaticResource Text.Secondary}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                Margin="0,16,0,0"
+                Style="{StaticResource GisMock.SurfaceCardBorderStyle}"
+                Visibility="{Binding IsDslOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="DSL Editor"
+                                   Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding DslCaptionText}"
+                                   Style="{StaticResource Text.Secondary}" />
+                    </StackPanel>
+                    <ToggleButton Grid.Column="1"
+                                  Style="{StaticResource GisMock.SegmentToggleButtonStyle}"
+                                  IsChecked="{Binding IsDslOpen, Mode=TwoWay}"
+                                  Content="Ukryj" />
+                </Grid>
+                <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}"
+                        Margin="0,16,0,0">
+                    <TextBlock Text="Host Monaco / DSL / live update / diagnostyka parsera"
+                               Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

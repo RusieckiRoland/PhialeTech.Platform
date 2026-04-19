@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.YamlApp.Tooling</PackageId>
+    <AssemblyName>PhialeTech.YamlApp.Tooling</AssemblyName>
+    <RootNamespace>PhialeTech.YamlApp.Tooling</RootNamespace>
+    <Description>Tooling support for the PhialeTech YamlApp product family.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Abstractions\PhialeTech.YamlApp.Abstractions\PhialeTech.YamlApp.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Definitions\PhialeTech.YamlApp.Definitions\PhialeTech.YamlApp.Definitions.csproj" />
+    <ProjectReference Include="..\..\Core\PhialeTech.YamlApp.Core\PhialeTech.YamlApp.Core.csproj" />
+  </ItemGroup>
+</Project>

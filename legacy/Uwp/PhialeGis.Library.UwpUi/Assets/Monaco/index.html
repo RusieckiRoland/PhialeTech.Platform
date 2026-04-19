@@ -1,0 +1,41 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Monaco minimal</title>
+
+  <style>
+    html, body, #container {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+  </style>
+
+  <script src="./min/vs/loader.js"></script>
+  <script>
+    // zawsze relative, nigdy z leading slash
+    require.config({ paths: { 'vs': './min/vs' } });
+
+    // worker fix dla WebView2
+    window.MonacoEnvironment = {
+      getWorker: function () {
+        return new Worker('./min/vs/base/worker/workerMain.js');
+      }
+    };
+
+    require(['vs/editor/editor.main'], function () {
+      monaco.editor.create(document.getElementById('container'), {
+        value: "print('hello from Monaco')",
+        language: "python", // wybór języka dla testu
+        theme: "vs-dark"
+      });
+    });
+  </script>
+</head>
+<body>
+  <div id="container"></div>
+</body>
+</html>

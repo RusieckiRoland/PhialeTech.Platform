@@ -1,0 +1,3069 @@
+﻿# CSXAML DUMP
+# Root: D:\Repo\dotNet\PhialeGis.Library\Uwp
+# Excluded folders: .git, .vs, bin, node_modules, obj, packages
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\App.xaml =====
+# Length: 255 bytes | Modified: 2025-09-12T18:27:23 | SHA256: E6BF896506A3E5F2835B2C99E296CBFB735AFD961FE6D901533DD5EB5BFCF2D0
+
+<Application
+    x:Class="PhialeGis.ComponentSandboxUwp.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PhialeGis.ComponentSandboxUwp" />
+
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\App.xaml =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\App.xaml.cs =====
+# Length: 5145 bytes | Modified: 2025-10-06T22:41:11 | SHA256: 52ECA8644832325439304739FDC55E78B0059B0062422FE8E83E7565D95DCE2D
+
+// App.xaml.cs — AFTER (Microsoft.Extensions.DependencyInjection)
+using Microsoft.Extensions.DependencyInjection;                   // NEW
+using PhialeGis.ComponentSandboxUwp.Core;
+using PhialeGis.ComponentSandboxUwp.ViewModels;
+using PhialeGis.Library.Abstractions.Interactions;
+using PhialeGis.Library.Abstractions.Interactions.Dsl;
+using PhialeGis.Library.Abstractions.Ui.Rendering;
+using PhialeGis.Library.Core.Interactions;
+using PhialeGis.Library.Core.Interfaces;
+using PhialeGis.Library.Domain.Map;
+using PhialeGis.Library.Dsl.Adapter;
+using PhialeGis.Library.Sync.Orchestrators;
+using System;
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.Activation;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Navigation;
+
+namespace PhialeGis.ComponentSandboxUwp
+{
+    // Small resolver that defers manager lookup until runtime.
+    // Avoids constructor-time dependency cycles without closures or Lazy<T>.
+    internal sealed class RenderContextResolver
+    {
+        private readonly IServiceProvider _sp;
+        public RenderContextResolver(IServiceProvider sp) => _sp = sp;
+
+
+
+        public Tuple<IViewport, IGraphicsFacade> Resolve(string targetId)
+        {
+            var mgr = _sp.GetRequiredService<GisInteractionManager>();
+
+            IViewport vp;
+            IGraphicsFacade gfx;
+
+            // 1) Prefer the target captured for the current DSL call
+            var targetObj = mgr.CurrentDslTarget;
+            if (mgr.TryResolveContext(targetObj, out vp, out gfx))
+                return Tuple.Create(vp, gfx);
+
+            // 2) Fallback: any registered viewport (first)
+            if (mgr.TryResolveContext(null, out vp, out gfx))
+                return Tuple.Create(vp, gfx);
+
+            throw new InvalidOperationException("No rendering viewport registered.");
+        }
+    }
+
+    public sealed partial class App : Application
+    {
+        private IServiceProvider _services; // replaces Unity container
+        /// <summary>Global DI service provider.</summary>
+        public IServiceProvider Services => _services;
+
+        public App()
+        {
+            this.InitializeComponent();
+            this.Suspending += OnSuspending;
+            _services = ConfigureServices(); // build MS.DI service provider
+        }
+
+        private IServiceProvider ConfigureServices()
+        {
+            var services = new ServiceCollection();
+
+            // ViewModels
+            services.AddTransient<MainPageViewModel>();
+
+            // Core singletons
+            services.AddSingleton<PhGis>(_ => new PhGis());
+
+            // Resolver available to the engine
+            services.AddSingleton<RenderContextResolver>();
+
+            // Engine does not require the manager at construction time anymore
+            services.AddSingleton<IDslEngine>(sp =>
+            {
+                var gis = sp.GetRequiredService<PhGis>();
+                var resolver = sp.GetRequiredService<RenderContextResolver>();
+                return new PhGisDslEngineAdapter(gis, resolver.Resolve);
+            });
+
+            // Manager depends on the engine (straightforward)
+            services.AddSingleton<GisInteractionManager>(sp =>
+            {
+                var gis = sp.GetRequiredService<PhGis>();
+                var engine = sp.GetRequiredService<IDslEngine>();
+
+                var mgr = new GisInteractionManager();
+                mgr.AttachPhGis(gis);
+                ((PhGisDslEngineAdapter)engine).AttachManager = (adapter) => { adapter.AttachManager(mgr); };
+
+                DslEditorBindings.BindDsl(mgr, engine);
+
+                return mgr;
+            });
+
+            services.AddSingleton<IGisInteractionManager>(sp => sp.GetRequiredService<GisInteractionManager>());
+
+            services.AddSingleton<ISecondaryViewService, UwpSecondaryViewService>();
+
+            return services.BuildServiceProvider();
+        }
+
+        protected override void OnLaunched(LaunchActivatedEventArgs e)
+        {
+            Frame rootFrame = Window.Current.Content as Frame;
+            if (rootFrame == null)
+            {
+                rootFrame = new Frame();
+                rootFrame.NavigationFailed += OnNavigationFailed;
+                Window.Current.Content = rootFrame;
+            }
+
+            if (!e.PrelaunchActivated)
+            {
+                if (rootFrame.Content == null)
+                {
+                    var vm = _services.GetRequiredService<MainPageViewModel>();
+                    rootFrame.Navigate(typeof(MainPage), vm);
+                }
+                Window.Current.Activate();
+            }
+        }
+
+        private void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
+        {
+            throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
+        }
+
+        private void OnSuspending(object sender, SuspendingEventArgs e)
+        {
+            var deferral = e.SuspendingOperation.GetDeferral();
+            deferral.Complete();
+        }
+    }
+}
+
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\App.xaml.cs =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\Core\ISecondaryViewService.cs =====
+# Length: 548 bytes | Modified: 2025-09-20T14:46:49 | SHA256: 2AD49486B65D95A92EE4949BF5F735841F2054CB6B781B44FB4086E6FCE1B11E
+
+using System.Threading.Tasks;
+
+namespace PhialeGis.ComponentSandboxUwp.Core
+{
+    /// <summary>
+    /// Abstraction for opening additional application views (windows).
+    /// Keeps platform-specific windowing APIs out of ViewModels.
+    /// </summary>
+    public interface ISecondaryViewService
+    {
+        /// <summary>
+        /// Opens a new window hosting another map view.
+        /// Returns the new view Id (UWP-specific), or 0 if not applicable.
+        /// </summary>
+        Task<int> OpenMapWindowAsync();
+    }
+}
+
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\Core\ISecondaryViewService.cs =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\Core\RelayCommand.cs =====
+# Length: 1916 bytes | Modified: 2025-03-08T10:43:36 | SHA256: 62B3A88FCDCA5CF8FFBAFE373E9E20D449A24E00A43030A4C3EF132A6A830E74
+
+using System;
+using System.Windows.Input;
+
+namespace PhialeGis.ComponentSandboxUwp.Core
+{
+    public class RelayCommand : ICommand
+    {
+        private readonly Action _execute;
+        private readonly Func<bool> _canExecute;
+
+        /// <summary>
+        /// Raised when RaiseCanExecuteChanged is called.
+        /// </summary>
+        public event EventHandler CanExecuteChanged;
+
+        /// <summary>
+        /// Initializes a new instance of the RelayCommand class.
+        /// </summary>
+        /// <param name="execute">The execution logic.</param>
+        /// <param name="canExecute">The execution status logic.</param>
+        public RelayCommand(Action execute, Func<bool> canExecute = null)
+        {
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            _canExecute = canExecute;
+        }
+
+        /// <summary>
+        /// Determines whether the command can execute in its current state.
+        /// </summary>
+        /// <param name="parameter">This parameter will always be ignored.</param>
+        /// <returns>true if this command can be executed; otherwise, false.</returns>
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute == null || _canExecute();
+        }
+
+        /// <summary>
+        /// Executes the command.
+        /// </summary>
+        /// <param name="parameter">This parameter will always be ignored.</param>
+        public void Execute(object parameter)
+        {
+            _execute();
+        }
+
+        /// <summary>
+        /// Method used to raise the CanExecuteChanged event
+        /// to indicate that the return value of the CanExecute
+        /// method has changed.
+        /// </summary>
+        public void RaiseCanExecuteChanged()
+        {
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+}
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\Core\RelayCommand.cs =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\Core\ViewModelBase.cs =====
+# Length: 1864 bytes | Modified: 2025-03-08T10:43:36 | SHA256: F455494DF546BEA1ADC7C3BD8F2C0A2E53CADCA3E6E517F2C587291B961A0F2D
+
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace PhialeGis.ComponentSandboxUwp.Core
+{
+    public class ViewModelBase : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        /// <summary>
+        /// Notifies listeners that a property value has changed.
+        /// </summary>
+        /// <param name="propertyName">Name of the property used to notify listeners.
+        /// This value is optional and can be provided automatically when invoked from compilers that support CallerMemberName.</param>
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        /// <summary>
+        /// Helper method to set the property and raise the property changed event if the value has changed.
+        /// </summary>
+        /// <typeparam name="T">The type of the property.</typeparam>
+        /// <param name="storage">Reference to a property with both getter and setter.</param>
+        /// <param name="value">Value to be set.</param>
+        /// <param name="propertyName">Name of the property used to notify listeners. This is optional and gets populated automatically.</param>
+        /// <returns>True if the value was changed, false if the existing value was equal to the desired value.</returns>
+        protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(storage, value))
+            {
+                return false;
+            }
+
+            storage = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+    }
+}
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\Core\ViewModelBase.cs =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\MainPage.xaml =====
+# Length: 2546 bytes | Modified: 2025-09-20T15:07:46 | SHA256: E5DC1F18C5792E2E549F7DBCBA6EF6FB05AA7A8852C5E6F5CC1ECCAAA82FB454
+
+<Page
+    x:Class="PhialeGis.ComponentSandboxUwp.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Custom="using:PhialeGis.Library.UwpUi.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:PhialeGis.ComponentSandboxUwp"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    mc:Ignorable="d">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.15*" />
+            <ColumnDefinition Width="0.7*" />
+            <ColumnDefinition Width="0.15*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.05*" />
+            <RowDefinition Height="0.60*" />
+            <RowDefinition Height="0.30*" />
+            <RowDefinition Height="0.05*" />
+        </Grid.RowDefinitions>
+
+        <!--  Panel z przyciskami; Spacing zapobiega nachodzeniu  -->
+        <StackPanel
+            Grid.Row="1"
+            Grid.Column="2"
+            VerticalAlignment="Top"
+            Orientation="Vertical"
+            Spacing="8">
+            <Button
+                Width="125"
+                Height="50"
+                Padding="10"
+                Command="{Binding ChangeViewAction}"
+                Content="Show shape" />
+            <Button
+                Width="125"
+                Height="50"
+                Padding="10"
+                Command="{Binding ImportLayer}"
+                Content="Import layer" />
+            <Button
+                Width="125"
+                Height="50"
+                Padding="10"
+                Command="{Binding OpenSecondWindow}"
+                Content="Open second map" />
+        </StackPanel>
+
+        <Custom:PhialeDrawBoxUwp
+            x:Name="Map"
+            Grid.Row="1"
+            Grid.Column="1"
+            Margin="0,11,0,42"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            HorizontalScrollBarVisible="Visible"
+            VerticalScrollBarVisible="Visible" />
+
+        <Custom:PhialeDslEditor
+            Grid.Row="2"
+            Grid.Column="1"
+            BorderBrush="red"
+            BorderThickness="2"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            TargetDraw="{Binding ElementName=Map, Path=CompositionAdapter}" />
+    </Grid>
+</Page>
+
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\MainPage.xaml =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\MainPage.xaml.cs =====
+# Length: 1272 bytes | Modified: 2025-03-08T10:43:36 | SHA256: 865C2DA0488C85EBF367BF89AC3DC0412838CA3645B6C3BB8D1AFD0821786F7F
+
+using PhialeGis.ComponentSandboxUwp.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
+using Windows.UI.Xaml.Data;
+using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Navigation;
+
+// The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
+
+namespace PhialeGis.ComponentSandboxUwp
+{
+    /// <summary>
+    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// </summary>
+    public sealed partial class MainPage : Page
+    {
+        internal MainPageViewModel ViewModel { get; private set; }
+
+        public MainPage()
+        {
+            this.InitializeComponent();
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            ViewModel = e.Parameter as MainPageViewModel;
+            this.DataContext = ViewModel;
+            // Additional initialization if needed
+        }
+    }
+}
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\MainPage.xaml.cs =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\MapWindowPage.xaml =====
+# Length: 985 bytes | Modified: 2025-09-20T14:56:45 | SHA256: 728CF80D1C6D7E0535EDBD436CC6E4F04DCAABB4F22CF5BFBE8A05A81B65DDCD
+
+<Page
+    x:Class="PhialeGis.ComponentSandboxUwp.MapWindowPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Custom="using:PhialeGis.Library.UwpUi.Controls"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="240" />
+        </Grid.RowDefinitions>
+
+        <Custom:PhialeDrawBoxUwp
+            x:Name="Map2"
+            Grid.Row="0"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            HorizontalScrollBarVisible="Visible"
+            VerticalScrollBarVisible="Visible" />
+
+        <Custom:PhialeDslEditor
+            Grid.Row="1"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            TargetDraw="{Binding ElementName=Map2, Path=CompositionAdapter}" />
+    </Grid>
+</Page>
+
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\MapWindowPage.xaml =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\MapWindowPage.xaml.cs =====
+# Length: 804 bytes | Modified: 2025-09-20T14:58:49 | SHA256: B31EC5F277048ED88FADEBA9CB9FDDDA9A5347B508B9FDB83AAE4D507AC4768C
+
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Navigation;
+using PhialeGis.ComponentSandboxUwp.ViewModels;
+
+namespace PhialeGis.ComponentSandboxUwp
+{
+    /// <summary>
+    /// Secondary window hosting another map instance.
+    /// </summary>
+    public sealed partial class MapWindowPage : Page
+    {
+        public MapWindowPage()
+        {
+            InitializeComponent();
+        }
+
+        /// <summary>
+        /// ViewModel jest przekazywany jako parametr nawigacji przez serwis okien.
+        /// </summary>
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            var vm = e.Parameter as MainPageViewModel;
+            if (vm != null)
+                DataContext = vm;
+        }
+    }
+}
+
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\MapWindowPage.xaml.cs =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\UwpSecondaryViewService.cs =====
+# Length: 1898 bytes | Modified: 2025-09-20T14:57:38 | SHA256: C8A4120F486F191F5C82AD9E2B7B02A089399BBD6A8DE7B05EB01CD770EA13A0
+
+using System;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using PhialeGis.ComponentSandboxUwp.Core;
+using PhialeGis.ComponentSandboxUwp.ViewModels;
+using Windows.ApplicationModel.Core;
+using Windows.UI.Core;
+using Windows.UI.ViewManagement;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+
+namespace PhialeGis.ComponentSandboxUwp
+{
+    /// <summary>
+    /// UWP implementation that opens a new CoreApplicationView and shows it as a standalone window.
+    /// </summary>
+    internal sealed class UwpSecondaryViewService : ISecondaryViewService
+    {
+        private readonly App _app;
+
+        public UwpSecondaryViewService()
+        {
+            // Resolve App to access the DI service provider.
+            _app = (App)Application.Current;
+        }
+
+        public async Task<int> OpenMapWindowAsync()
+        {
+            var currentViewId = ApplicationView.GetForCurrentView().Id;
+            var newView = CoreApplication.CreateNewView();
+
+            int newViewId = 0;
+
+            await newView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                // Resolve a fresh VM for the new window (transient). Singletons remain shared.
+                var vm = _app.Services.GetRequiredService<MainPageViewModel>();
+
+                var frame = new Frame();
+                frame.Navigate(typeof(MapWindowPage), vm);
+
+                Window.Current.Content = frame;
+                Window.Current.Activate();
+
+                newViewId = ApplicationView.GetForCurrentView().Id;
+            });
+
+            await ApplicationViewSwitcher.TryShowAsStandaloneAsync(
+                newViewId,
+                ViewSizePreference.Default,
+                currentViewId,
+                ViewSizePreference.Default);
+
+            return newViewId;
+        }
+    }
+}
+
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\UwpSecondaryViewService.cs =====
+
+===== BEGIN FILE: PhialeGis.ComponentSandboxUwp\ViewModels\MainPageViewModel.cs =====
+# Length: 4443 bytes | Modified: 2025-09-22T22:53:41 | SHA256: 880539A32554FFEADCD018D9B49F33CF563AB4BFE91B233B5058031480D547F1
+
+using PhialeGis.ComponentSandboxUwp.Core;
+using PhialeGis.Library.Abstractions.Interactions;
+using PhialeGis.Library.Domain.Map;
+using PhialeGis.Library.Sync.Io;
+using PhialeGis.Library.Sync.Utils;
+using System;
+using System.IO;
+using System.Threading.Tasks; // use Task alias
+using Windows.Storage.Pickers;
+
+namespace PhialeGis.ComponentSandboxUwp.ViewModels
+{
+    /// <summary>
+    /// Main page ViewModel driving the map and DSL editor.
+    /// Keeps platform-specific windowing in ISecondaryViewService.
+    /// </summary>
+    internal class MainPageViewModel : ViewModelBase
+    {
+        private readonly ISecondaryViewService _secondaryViewService;
+
+        public IGisInteractionManager GisInteractionManager { get; }
+        public RelayCommand ChangeViewAction { get; }
+        public RelayCommand ImportLayer { get; }
+        public RelayCommand OpenSecondWindow { get; }   // NEW
+        public PhGis Gis { get; }
+
+        public MainPageViewModel(
+            IGisInteractionManager gisInteractionManager,
+            PhGis gis,
+            ISecondaryViewService secondaryViewService) // NEW
+        {
+            GisInteractionManager = gisInteractionManager ?? throw new ArgumentNullException(nameof(gisInteractionManager));
+            Gis = gis ?? throw new ArgumentNullException(nameof(gis));
+            _secondaryViewService = secondaryViewService ?? throw new ArgumentNullException(nameof(secondaryViewService));
+
+            ChangeViewAction = new RelayCommand(DoChangeViewAction);
+
+            // Important: async lambda for ICommand
+            ImportLayer = new RelayCommand(async () => await DoImportLayerAsync());
+
+            // Open a new window hosting another map (second viewport)
+            OpenSecondWindow = new RelayCommand(async () => await _secondaryViewService.OpenMapWindowAsync()); // NEW
+
+            GisInteractionManager.InvalidateAll();
+        }
+
+        /// <summary>
+        /// Opens a file and imports a layer into the GIS model.
+        /// After import, fits the visual window around the layer bbox with a small padding.
+        /// </summary>
+        private async Task DoImportLayerAsync()
+        {
+            var picker = new FileOpenPicker
+            {
+                ViewMode = PickerViewMode.List,
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+            };
+            picker.FileTypeFilter.Add(".fgb");
+
+            var file = await picker.PickSingleFileAsync();
+            if (file == null) return; // user canceled
+
+            try
+            {
+                PhLayer layer;
+                using (var s = await file.OpenStreamForReadAsync())
+                {
+                    var name = Path.GetFileNameWithoutExtension(file.Name);
+                    layer = FgbLayerLoader.AddLayerFromFgb(Gis, s, name);
+                }
+
+                if (LayerBoundingBox.TryCompute(layer, out var bbox))
+                {
+                    var w = bbox.MaxX - bbox.MinX;
+                    var h = bbox.MaxY - bbox.MinY;
+
+                    // Minimum window size if bbox degenerates to a point/line.
+                    const double minSize = 1e-6;
+                    if (w < minSize) { bbox.MinX -= 0.5; bbox.MaxX += 0.5; w = bbox.MaxX - bbox.MinX; }
+                    if (h < minSize) { bbox.MinY -= 0.5; bbox.MaxY += 0.5; h = bbox.MaxY - bbox.MinY; }
+
+                    const double pad = 0.05;
+                    GisInteractionManager.ApplyVisualWindow(
+                        bbox.MinX - w * pad,
+                        bbox.MinY - h * pad,
+                        bbox.MaxX + w * pad,
+                        bbox.MaxY + h * pad);
+                }
+
+                GisInteractionManager.InvalidateAll();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // For example: PH_FGB not defined or missing packages – log for now.
+                System.Diagnostics.Debug.WriteLine(ex);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+            }
+        }
+
+        /// <summary>
+        /// Demonstration action: sets a fixed visual window.
+        /// </summary>
+        private void DoChangeViewAction()
+        {
+            GisInteractionManager.ApplyVisualWindow(0, 0, 400, 300);
+        }
+    }
+}
+
+
+===== END FILE: PhialeGis.ComponentSandboxUwp\ViewModels\MainPageViewModel.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Bridges\DslEditorConnector.cs =====
+# Length: 9906 bytes | Modified: 2025-10-07T23:42:01 | SHA256: 24CDA2FFE9AF5D59291DBE581EF5D4C0C3451A0E336C1A7A42C76AB89E9632C2
+
+// PhialeGis.Library.UwpUi.Interactions.Bridges/DslEditorConnector.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using PhialeGis.Library.Abstractions.Actions;
+using PhialeGis.Library.Abstractions.Interactions;
+using PhialeGis.Library.Abstractions.Interactions.Dsl;
+using PhialeGis.Library.Abstractions.Interactions.Editors;
+using PhialeGis.Library.DslEditor.Contracts;
+using PhialeGis.Library.DslEditor.Interop;
+using PhialeGis.Library.DslEditor.Runtime;
+
+namespace PhialeGis.Library.UwpUi.Interactions.Bridges
+{
+    /// <summary>
+    /// Bridges the WebView-based editor with the DSL manager.
+    /// - Registers the editor with the manager;
+    /// - Triggers completions on demand;
+    /// - Debounces semantic token refreshes;
+    /// - Never touches DependencyProperties from background threads.
+    /// </summary>
+    internal sealed class DslEditorConnector : IDisposable
+    {
+        private readonly IDslEditorManager _editors;      // DSL editor manager
+        private readonly IEditorInteractive _editor;      // same adapter instance
+        private readonly IEditorTextSource _textSource;   // same adapter instance
+        private readonly int _debounceMs;
+
+        private readonly object _gate = new object();
+        private Timer _debounceTimer;
+        private bool _disposed;
+
+        // Cached snapshot of editor state captured on UI thread via OnTextChanged()/caret move.
+        private volatile string _lastText = string.Empty;
+        private volatile int _lastCaret = 0;
+
+        public event EventHandler<DslSemanticLegendDto> SemanticLegendAvailable;
+        public event EventHandler<DslSemanticTokensDto> SemanticTokensAvailable;
+        public event EventHandler<DslValidationResultDto> ValidationAvailable;
+
+
+        internal event EventHandler<object> CompletionsAvailable;
+
+        /// <summary>
+        /// Raised when the DSL manager pushes a prompt for the active editor.
+        /// The control subscribes to this event to call SetFSMStateAsync().
+        /// </summary>
+        internal event EventHandler<DslPromptDto> PromptAvailable;
+
+        public DslEditorConnector(
+            IDslEditorManager editors,
+            IEditorInteractive editor,
+            IEditorTextSource textSource,
+            int debounceMs = 250)
+        {
+            _editors = editors ?? throw new ArgumentNullException(nameof(editors));
+            _editor = editor ?? throw new ArgumentNullException(nameof(editor));
+            _textSource = textSource ?? throw new ArgumentNullException(nameof(textSource));
+            _debounceMs = debounceMs > 0 ? debounceMs : 1;
+
+            // Always register the editor with the DSL manager
+            _editors.RegisterEditor(_editor);
+
+            _editors.PromptChanged += OnPromptChanged;
+
+            // Initialize cache (we are on UI thread when constructed from the control)
+            _lastText = _textSource.Text ?? string.Empty;
+            _lastCaret = _textSource.CaretOffset;
+        }
+        /// <summary>
+        /// When action prompt is changing
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="dto"></param>
+        private void OnPromptChanged(object sender, DslPromptDto dto)
+        {
+            try
+            {
+                // Forward to the control. The control stays responsible for marshaling to UI thread if needed.
+                PromptAvailable?.Invoke(this, dto);
+            }
+            catch
+            {
+                // Best-effort
+            }
+        }
+
+        /// <summary>
+        /// Called by the control on each text change (UI thread).
+        /// We cache text/caret and schedule a debounced semantic refresh on a timer thread.
+        /// </summary>
+        internal void OnTextChanged()
+        {
+            if (_disposed) return;
+
+            // Cache on UI thread to avoid cross-thread DP access later
+            _lastText = _textSource.Text ?? string.Empty;
+            _lastCaret = _textSource.CaretOffset;
+
+            lock (_gate)
+            {
+                _debounceTimer?.Dispose();
+                _debounceTimer = new Timer(async _ => await DebouncedTickAsync().ConfigureAwait(false),
+                                           null, _debounceMs, Timeout.Infinite);
+            }
+        }
+
+        /// <summary>
+        /// Triggered by Ctrl+Space (UI thread). Uses cached text/caret to avoid cross-thread DP access.
+        /// </summary>
+        internal async void RequestCompletions()
+        {
+            if (_disposed || _editors == null) return;
+
+            try
+            {
+                // Mark this editor as active (optional, helps multi-editor setups)
+                (_editors as DslInteractionManager)?.SetActiveEditor(_editor);
+
+                // Always read the current snapshot from the live text source (no cache here)
+                var text = _textSource?.Text ?? string.Empty;
+                var caret = _textSource?.CaretOffset ?? text.Length;
+
+                // Normalize caret to a valid range
+                if (caret < 0 || caret > text.Length) caret = text.Length;
+
+                // Ask the DSL layer for completions based on the fresh snapshot
+                var list = await _editors.GetCompletionsAsync(text, caret, _editor).ConfigureAwait(false);
+
+                // Push results to the UI
+                CompletionsAvailable?.Invoke(this, list);
+            }
+            catch
+            {
+                // Best-effort: keep the UI responsive even if completions fail
+            }
+        }
+
+
+
+        /// <summary>
+        /// Forces legend + tokens push (used after WebView navigation completes).
+        /// </summary>
+        public void RequestSemanticRefreshNow()
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var legend = await _editors.GetSemanticLegendAsync().ConfigureAwait(false);
+                    SemanticLegendAvailable?.Invoke(this, legend);
+
+
+                    var code = _lastText ?? string.Empty;
+                    var toks = await _editors.GetSemanticTokensAsync(code,_editor).ConfigureAwait(false);
+                    SemanticTokensAvailable?.Invoke(this, toks);
+
+                    var val = await _editors.ValidateAsync(code,_editor).ConfigureAwait(false);
+                    ValidationAvailable?.Invoke(this, val ?? new DslValidationResultDto());
+
+                }
+                catch
+                {
+                    // best-effort
+                }
+            });
+        }
+
+        /// <summary>
+        /// Debounced semantic token refresh using cached text snapshot.
+        /// </summary>
+        private async Task DebouncedTickAsync()
+        {
+            try
+            {
+                var code = _lastText ?? string.Empty;
+                var caret = _lastCaret;
+
+                // 1) Semantyka (bez zmian)
+                var toks = await _editors.GetSemanticTokensAsync(code, _editor).ConfigureAwait(false);
+                SemanticTokensAvailable?.Invoke(this, toks);
+
+                // 2) Heurystyka "piszę token" → wstrzymaj walidację i WYCZYŚĆ poprzednie błędy
+                bool IsWordChar(char ch) => char.IsLetterOrDigit(ch) || ch == '_' || ch == '.' || ch == '-';
+
+                bool caretInsideToken =
+                    (caret > 0 && caret <= code.Length && IsWordChar(code[caret - 1])) ||
+                    (caret < code.Length && IsWordChar(code[caret]));
+
+                if (caretInsideToken)
+                {
+                    // wyczyść stare podkreślenia, żeby nie „wisiała” poprzednia diagnoza
+                    ValidationAvailable?.Invoke(this, new DslValidationResultDto
+                    {
+                        IsValid = true,
+                        Diagnostics = Array.Empty<DslDiagnosticDto>()
+                    });
+                    return;
+                }
+
+                // 3) Walidacja (jedna ścieżka: manager → bindings → engine)
+                var validation = await _editors.ValidateAsync(code, _editor).ConfigureAwait(false);
+                ValidationAvailable?.Invoke(this, validation ?? new DslValidationResultDto());
+            }
+            catch
+            {
+                // cicho
+            }
+        }
+
+
+
+
+
+
+        /// <summary>
+        /// Execute command immediately (Enter / Ctrl+Enter).
+        /// </summary>
+        internal async Task ExecuteNowAsync(string code, bool isScript)
+        {
+            if (_disposed) return;
+
+            try
+            {
+                (_editors as DslInteractionManager)?.SetActiveEditor(_editor);
+
+                object target = null;
+                if (_editor is IEditorViewportLink link)
+                    target = link.GetAttachedViewportAdapterOrNull();
+
+                var env = new DslCommandEnvelope(_editor, target, "enter", isScript, false);
+                await _editors.ExecuteAsync(code ?? string.Empty, env).ConfigureAwait(false);
+            }
+            catch
+            {
+                // keep UI responsive
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+
+            lock (_gate)
+            {
+                _debounceTimer?.Dispose();
+                _debounceTimer = null;
+            }
+
+            try
+            {
+                _editors.PromptChanged -= OnPromptChanged;
+                _editors.UnregisterEditor(_editor);
+            }
+            catch
+            {
+                /* idempotent */
+            }
+        }
+    }
+}
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Bridges\DslEditorConnector.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Bridges\DslEditorTextSource.cs =====
+# Length: 1525 bytes | Modified: 2025-09-14T23:22:03 | SHA256: DB40D8F3663C105BDC90128105DB55814BF23B57379147DE767986880DE61E91
+
+using PhialeGis.Library.Abstractions.Interactions.Editors;
+using PhialeGis.Library.Abstractions.Interactions;
+using PhialeGis.Library.Abstractions.UniversalEvents;
+using PhialeGis.Library.UwpUi.Controls;
+using System;
+
+namespace PhialeGis.Library.UwpUi.Interactions.Bridges
+{
+    /// <summary>Simple text/caret source projected from the PhialeDslEditor.</summary>
+    internal sealed class DslEditorTextSource : IEditorTextSource, IDisposable
+    {
+        private readonly PhialeDslEditor _control;
+        private readonly IEditorInteractive _editor;
+        private int _caretOffset;
+        private bool _disposed;
+
+        public DslEditorTextSource(PhialeDslEditor control, IEditorInteractive editor)
+        {
+            if (control == null) throw new ArgumentNullException("control");
+            if (editor == null) throw new ArgumentNullException("editor");
+            _control = control;
+            _editor = editor;
+            _editor.CaretMovedUniversal += OnCaretMoved;
+        }
+
+        public string Text { get { return _control?.Text ?? string.Empty; } }
+
+        public int CaretOffset { get { return _caretOffset; } }
+
+        private void OnCaretMoved(object sender, UniversalCaretMovedEventArgs e)
+        {
+            _caretOffset = e.Offset;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            try { _editor.CaretMovedUniversal -= OnCaretMoved; } catch { }
+        }
+    }
+}
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Bridges\DslEditorTextSource.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Controls\PhialeDrawBoxUwp.cs =====
+# Length: 10014 bytes | Modified: 2025-10-08T19:40:16 | SHA256: 382A963D4ADA78097BD982A276EE7E5A5D2D6D352D9D2D0F0D1747FA77BD8681
+
+//PhialeDrawBoxUwp.cs
+using PhialeGis.Library.Abstractions.Ui.Enums;
+using PhialeGis.Library.Abstractions.Ui.Rendering;
+using PhialeGis.Library.Core.Interactions;
+using SkiaSharp.Views.UWP;
+using System;
+using Windows.Graphics.Display;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
+using Windows.UI.Xaml.Input;
+
+namespace PhialeGis.Library.UwpUi.Controls
+{
+    /// <summary>
+    /// UWP drawing host control backed by SkiaSharp.
+    /// Uses composition for <see cref="IRedrawable"/> via an internal adapter.
+    /// </summary>
+    [TemplatePart(Name = "ScrollBarVertical", Type = typeof(ScrollBar))]
+    [TemplatePart(Name = "ScrollBarHorizontal", Type = typeof(ScrollBar))]
+    [TemplatePart(Name = "SkiaCanvas", Type = typeof(SKXamlCanvas))]
+    public sealed partial class PhialeDrawBoxUwp : Control
+    {
+        #region Private Fields
+
+        private ScrollBar _scrollBarVertical;
+        private ScrollBar _scrollBarHorizontal;
+
+        private double _dpiX;
+        private double _dpiY;
+
+        private double _lastScrolledValueX = 0;
+        private double _lastScrolledValueY = 0;
+
+        private SKXamlCanvas _skiaCanvas;
+
+        #endregion Private Fields
+
+        #region Composition 
+
+        /// <summary>
+        /// Internal adapter that provides <see cref="IRedrawable"/> without
+        /// exposing non-WinRT interfaces on the control itself.
+        /// </summary>
+        internal sealed partial class RedrawableAdapter : IRenderingComposition
+        {
+            private readonly PhialeDrawBoxUwp _owner;
+            public RedrawableAdapter(PhialeDrawBoxUwp owner) => _owner = owner;
+
+            public double CurrentWidth => _owner.CurrentWidth;
+            public double CurrentHeight => _owner.CurrentHeight;
+            
+
+            public event EventHandler<object> ChangeVisualParams;
+            public event EventHandler<IDisposable> PaintSurface;
+
+            public double GetDpiX()
+            {
+                return _owner.GetDpiX();
+            }
+
+            public double GetDpiY()
+            {
+                return _owner.GetDpiY();
+            }
+
+            /// <summary>
+            /// Requests a redraw of the underlying Skia canvas.
+            /// Safe to call from the UI thread.
+            /// </summary>
+            public void Invalidate() => _owner._skiaCanvas?.Invalidate();
+
+            public void SetCursor(CursorType cursorType)
+            {
+                _owner.SetCursor(cursorType);
+            }
+            
+            /// <summary>
+            /// Raises <see cref="ChangeVisualParams"/>.
+            /// </summary>
+            public void OnVisualParamsChanged()
+            {
+                var handler = ChangeVisualParams;
+                handler?.Invoke(this, EventArgs.Empty);
+            }
+
+            /// <summary>
+            /// Forwards Skia paint requests to subscribers.
+            /// </summary>
+            public void DoPaintSurface(object sender, SKPaintSurfaceEventArgs e)
+            {
+                var handler = PaintSurface;
+                handler?.Invoke(this, e.Surface.Canvas);
+            }
+        }
+
+        /// <summary>
+        /// Internal composition entry point for redraw operations.
+        /// Use <c>Redrawable.Invalidate()</c> instead of calling the control directly.
+        /// </summary>
+        internal RedrawableAdapter Redrawable { get; }
+
+        /// <summary>
+        /// Optional generic exposure of the adapter (API symmetry with UWP).
+        /// </summary>
+        public object CompositionAdapter => Redrawable;
+
+        #endregion Composition (IRedrawable)
+
+        #region Properties
+
+        /// <summary>
+        /// Current width of the Skia canvas in device-independent pixels.
+        /// </summary>
+        public double CurrentWidth => _skiaCanvas != null ? _skiaCanvas.ActualWidth : 0;
+
+        /// <summary>
+        /// Current height of the Skia canvas in device-independent pixels.
+        /// </summary>
+        public double CurrentHeight => _skiaCanvas != null ? _skiaCanvas.ActualHeight : 0;
+
+        /// <summary>
+        /// Current horizontal DPI of the display.
+        /// </summary>
+        public double GetDpiX() => _dpiX;
+
+        /// <summary>
+        /// Current vertical DPI of the display.
+        /// </summary>
+        public double GetDpiY() => _dpiY;
+
+        /// <summary>
+        /// Default manipulation flags applied to the control.
+        /// </summary>
+        public ManipulationModes DefaultManipulationMode { get; set; } = ManipulationModes.All;
+        
+
+        #endregion Properties
+
+        #region Events
+
+        /// <summary>
+        /// Raised when visual parameters change (size/DPI).
+        /// </summary>
+        public event EventHandler<object> ChangeVisualParams;
+
+        /// <summary>
+        /// Raised when the Skia surface is ready to be painted.
+        /// The <see cref="IDisposable"/> argument is the Skia canvas surface.
+        /// </summary>
+        public event EventHandler<IDisposable> PaintSurface;
+
+        
+
+        #endregion Events
+
+        #region Initialization
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PhialeDrawBoxUwp"/>.
+        /// </summary>
+        public PhialeDrawBoxUwp()
+        {
+            this.DefaultStyleKey = typeof(PhialeDrawBoxUwp);
+
+            // Composition instead of inheriting IRedrawable
+            Redrawable = new RedrawableAdapter(this);
+
+            InitializeDpi();
+            DisplayInformation.DisplayContentsInvalidated += DoDpiChanged;
+
+            this.ManipulationMode = ManipulationModes.TranslateX |
+                                    ManipulationModes.TranslateY |
+                                    ManipulationModes.Scale |
+                                    ManipulationModes.Rotate;
+
+            this.SizeChanged += DoSizeChanged;
+        }
+
+        #endregion Initialization
+
+        #region Utility Methods
+
+        /// <summary>
+        /// Reads current DPI from the active display.
+        /// </summary>
+        private void InitializeDpi()
+        {
+            var displayInformation = DisplayInformation.GetForCurrentView();
+            _dpiX = displayInformation.LogicalDpi;
+            _dpiY = displayInformation.LogicalDpi;
+        }
+
+        /// <summary>
+        /// Convenience wrapper for legacy call sites.
+        /// Prefer <c>Redrawable.Invalidate()</c>.
+        /// </summary>
+        internal void Invalidate() => Redrawable.Invalidate();
+
+        /// <summary>
+        /// Sets the core pointer cursor according to the requested cursor type.
+        /// </summary>
+        internal void SetCursor(PhialeGis.Library.Abstractions.Ui.Enums.CursorType cursorType)
+        {
+            var coreWindow = Windows.UI.Core.CoreWindow.GetForCurrentThread();
+            coreWindow.PointerCursor = cursorType == CursorType.Hand
+                ? new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Hand, 0)
+                : new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+        }
+
+        #endregion Utility Methods
+
+        #region Event Handlers        
+
+        /// <summary>
+        /// Handles horizontal scrollbar movement and emits logical surface translation.
+        /// </summary>
+        private void DoHorizontalScrollBarScroll(object sender, ScrollEventArgs e)
+        {
+            double offsetX = e.NewValue - _lastScrolledValueX;
+            var translationX = offsetX * this.ActualWidth;
+            _lastScrolledValueX = e.NewValue;
+            var surfaceMovement = new SurfaceMovement(translationX, 0);
+            Redrawable.RaiseSurfaceShifted(translationX, 0);
+        }
+
+        /// <summary>
+        /// Handles vertical scrollbar movement and emits logical surface translation.
+        /// </summary>
+        private void DoVerticalScrollBarScroll(object sender, ScrollEventArgs e)
+        {
+            double offsetY = _lastScrolledValueY - e.NewValue;
+            var translationY = offsetY * this.ActualHeight;
+            _lastScrolledValueY = e.NewValue;
+            var surfaceMovement = new SurfaceMovement(0, translationY);
+            Redrawable.RaiseSurfaceShifted(0, translationY);
+        }
+
+        /// <summary>
+        /// Updates DPI when display information changes.
+        /// </summary>
+        private void DoDpiChanged(DisplayInformation sender, object args)
+        {
+            _dpiX = sender.LogicalDpi;
+            _dpiY = sender.LogicalDpi;
+            Redrawable.OnVisualParamsChanged();
+        }
+
+        /// <summary>
+        /// Propagates size changes to listeners.
+        /// </summary>
+        private void DoSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            Redrawable.OnVisualParamsChanged();
+        }
+
+        #endregion Event Handlers
+
+        #region Overrides
+
+        /// <summary>
+        /// Resolves template parts and wires up event handlers.
+        /// </summary>
+        protected override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+
+            _scrollBarVertical = GetTemplateChild("ScrollBarVertical") as ScrollBar;
+            _scrollBarHorizontal = GetTemplateChild("ScrollBarHorizontal") as ScrollBar;
+
+            if (_scrollBarVertical != null)
+                _scrollBarVertical.Scroll += DoVerticalScrollBarScroll;
+
+            if (_scrollBarHorizontal != null)
+                _scrollBarHorizontal.Scroll += DoHorizontalScrollBarScroll;
+
+            _skiaCanvas = GetTemplateChild("SkiaCanvas") as SKXamlCanvas;
+            if (_skiaCanvas != null)
+                _skiaCanvas.PaintSurface += Redrawable.DoPaintSurface;
+        }
+
+        #endregion Overrides
+
+        
+    }
+}
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Controls\PhialeDrawBoxUwp.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Controls\PhialeDrawBoxUwp.Events.cs =====
+# Length: 6845 bytes | Modified: 2025-10-08T19:46:37 | SHA256: BCDDB08CCEA4BD817BD82BA908ACDCCEEAD08710ACB976AA9770A24AA6C5BA4D
+
+//PhialeDrawBoxUwp.Events.cs
+
+using PhialeGis.Library.Abstractions.Interactions;
+using PhialeGis.Library.Abstractions.Ui.Rendering;
+using PhialeGis.Library.Core.Interactions;
+using PhialeGis.Library.Abstractions.UniversalEvents;
+using PhialeGis.Library.UwpUi.Conversions;
+using SkiaSharp.Views.UWP;
+using System;
+using Windows.UI.Xaml.Input;
+
+namespace PhialeGis.Library.UwpUi.Controls
+{
+    public partial class PhialeDrawBoxUwp 
+    {
+        internal sealed partial class RedrawableAdapter : IRenderingComposition, IUserInteractive
+        {
+            public event EventHandler<object> SurfaceShifted;
+            public event EventHandler<UniversalPointerRoutedEventArgs> PointerPressedUniversal;
+            public event EventHandler<UniversalPointerRoutedEventArgs> PointerMovedUniversal;
+            public event EventHandler<UniversalPointerRoutedEventArgs> PointerEnteredUniversal;
+            public event EventHandler<UniversalPointerRoutedEventArgs> PointerReleasedUniversal;
+            public event EventHandler<UniversalManipulationStartingRoutedEventArgs> ManipulationStartingUniversal;
+            public event EventHandler<UniversalManipulationStartedRoutedEventArgs> ManipulationStartedUniversal;
+            public event EventHandler<UniversalManipulationDeltaRoutedEventArgs> ManipulationDeltaUniversal;
+            public event EventHandler<UniversalManipulationCompletedRoutedEventArgs> ManipulationCompletedUniversal;
+
+            private SKXamlCanvas _skiaCanvas => _owner._skiaCanvas;
+
+
+            public void RaiseSurfaceShifted(double dx, double dy) => SurfaceShifted?.Invoke(this, new SurfaceMovement(dx, dy));
+
+            public void OnPointerPressed(PointerRoutedEventArgs e)
+            {
+                var handle = PointerPressedUniversal;
+                var uniEvent = UniversalEventConverter.Convert(e, _skiaCanvas);
+                handle?.Invoke(_owner, uniEvent);
+                e.Handled = true;
+                ProcessCustomResponse(uniEvent.Metadata);
+            }
+
+            public  void OnPointerMoved(PointerRoutedEventArgs e)
+            {
+               
+                var handle = PointerMovedUniversal;
+                var uniEvent = UniversalEventConverter.Convert(e, _skiaCanvas);
+                handle?.Invoke(_owner, uniEvent);
+                e.Handled = true;
+                ProcessCustomResponse(uniEvent.Metadata);
+            }
+
+            public  void OnPointerEntered(PointerRoutedEventArgs e)
+            {
+                
+                var handle = PointerEnteredUniversal;
+                var uniEvent = UniversalEventConverter.Convert(e, _skiaCanvas);
+                handle?.Invoke(_owner, uniEvent);
+                e.Handled = true;
+                ProcessCustomResponse(uniEvent.Metadata);
+            }
+
+            public void OnPointerReleased(PointerRoutedEventArgs e)
+            {
+                
+                var handle = PointerReleasedUniversal;
+                var uniEvent = UniversalEventConverter.Convert(e, _skiaCanvas);
+                handle?.Invoke(_owner, uniEvent);
+                e.Handled = true;
+                ProcessCustomResponse(uniEvent.Metadata);
+            }
+
+            public void OnManipulationStarted(ManipulationStartedRoutedEventArgs e)
+            {
+                
+                var handle = ManipulationStartedUniversal;
+                var uniEvent = UniversalEventConverter.Convert(e, _skiaCanvas);
+                handle?.Invoke(_owner, uniEvent);
+                ProcessCustomResponse(uniEvent.Metadata);
+
+            }
+
+            public void OnManipulationStarting(ManipulationStartingRoutedEventArgs e)
+            {
+                
+                var handle = ManipulationStartingUniversal;
+                var uniEvent = UniversalEventConverter.Convert(e, _skiaCanvas);
+                handle?.Invoke(_owner, uniEvent);              
+
+            }
+
+            public void OnManipulationDelta(ManipulationDeltaRoutedEventArgs e)
+            {
+                
+                var handle = ManipulationDeltaUniversal;
+                var uniEvent = UniversalEventConverter.Convert(e, _skiaCanvas);
+                handle?.Invoke(_owner, uniEvent);
+                _owner.ManipulationMode = ManipulationModes.Scale;
+                ProcessCustomResponse(uniEvent.Metadata);
+
+            }
+
+            public void OnManipulationCompleted(ManipulationCompletedRoutedEventArgs e)
+            {
+                
+                var handle = ManipulationCompletedUniversal;
+                var uniEvent = UniversalEventConverter.Convert(e, _skiaCanvas);
+                handle?.Invoke(_owner, uniEvent);
+                ProcessCustomResponse(uniEvent.Metadata);
+            }
+
+
+            //=======================================================//
+            public void ProcessCustomResponse(UniversalMetadata respose)
+            {
+                if (respose == null) return;
+                if (respose.ResetManipulationMode)
+                {
+                    _owner.ManipulationMode = _owner.DefaultManipulationMode;
+                }
+            }
+        }
+
+        protected override void OnPointerPressed(PointerRoutedEventArgs e)
+        {
+            base.OnPointerPressed(e);
+            Redrawable.OnPointerPressed(e);
+        }
+
+        protected override void OnPointerMoved(PointerRoutedEventArgs e)
+        {
+            base.OnPointerMoved(e);
+            Redrawable.OnPointerMoved(e);
+        }
+
+        protected override void OnPointerEntered(PointerRoutedEventArgs e)
+        {
+            base.OnPointerEntered(e);
+            Redrawable.OnPointerEntered(e);
+        }
+
+        protected override void OnPointerReleased(PointerRoutedEventArgs e)
+        {
+            base.OnPointerReleased(e);
+            Redrawable.OnPointerReleased(e);
+        }
+
+        protected override void OnManipulationStarted(ManipulationStartedRoutedEventArgs e)
+        {
+            base.OnManipulationStarted(e);
+            Redrawable.OnManipulationStarted(e);
+
+        }
+
+        protected override void OnManipulationStarting(ManipulationStartingRoutedEventArgs e)
+        {
+            base.OnManipulationStarting(e);
+            Redrawable.OnManipulationStarting(e);
+
+        }
+
+        protected override void OnManipulationDelta(ManipulationDeltaRoutedEventArgs e)
+        {
+            base.OnManipulationDelta(e);
+            Redrawable.OnManipulationDelta(e);
+
+        }
+
+        protected override void OnManipulationCompleted(ManipulationCompletedRoutedEventArgs e)
+        {
+            base.OnManipulationCompleted(e);
+            Redrawable.OnManipulationCompleted(e);
+        }  
+
+       
+    }
+}
+
+===== END FILE: PhialeGis.Library.UwpUi\Controls\PhialeDrawBoxUwp.Events.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Controls\PhialeDrawBoxUwp.Properties.cs =====
+# Length: 6821 bytes | Modified: 2025-10-08T19:46:37 | SHA256: 5D2E49DCAB4E60536C8490C0C37728299F0064ADE2DE4C0C4279FDB0241A1250
+
+//PhialeDrawBoxUwp.Properties.cs
+
+using PhialeGis.Library.Abstractions.Interactions;
+using Windows.UI.Xaml;
+
+namespace PhialeGis.Library.UwpUi.Controls
+{
+    public partial class PhialeDrawBoxUwp
+    {
+        /// <summary>
+        /// Controls the visibility of the vertical scrollbar.
+        /// </summary>
+        public Visibility VerticalScrollBarVisible
+        {
+            get { return (Visibility)GetValue(VerticalScrollBarVisibleProperty); }
+            set { SetValue(VerticalScrollBarVisibleProperty, value); }
+        }
+
+        /// <summary>
+        /// DependencyProperty backing <see cref="VerticalScrollBarVisible"/>.
+        /// </summary>
+        public static DependencyProperty VerticalScrollBarVisibleProperty { get; } =
+            DependencyProperty.Register(
+                "VerticalScrollBarVisible",
+                typeof(Visibility),
+                typeof(PhialeDrawBoxUwp),
+                new PropertyMetadata(Visibility.Collapsed));
+
+        /// <summary>
+        /// Controls the visibility of the horizontal scrollbar.
+        /// </summary>
+        public Visibility HorizontalScrollBarVisible
+        {
+            get { return (Visibility)GetValue(HorizontalScrollBarVisibleProperty); }
+            set { SetValue(HorizontalScrollBarVisibleProperty, value); }
+        }
+
+        /// <summary>
+        /// DependencyProperty backing <see cref="HorizontalScrollBarVisible"/>.
+        /// </summary>
+        public static DependencyProperty HorizontalScrollBarVisibleProperty { get; } =
+            DependencyProperty.Register(
+                "HorizontalScrollBarVisible",
+                typeof(Visibility),
+                typeof(PhialeDrawBoxUwp),
+                new PropertyMetadata(Visibility.Collapsed));
+
+        // ---------------------------------------------------------------------
+        //  IMPORTANT: WinRT projection rule
+        //  Public surface of a UWP control cannot expose non-WinRT types.
+        //  Therefore, we expose the manager as 'object' at the public/DP level,
+        //  and cast to IGisInteractionManager internally where WinRT rules
+        //  no longer apply.
+        // ---------------------------------------------------------------------
+
+        /// <summary>
+        /// Provides a handle to an interaction manager instance.
+        /// 
+        /// NOTE: Exposed as <see cref="object"/> to satisfy WinRT projection
+        /// constraints (UWP cannot surface non-WinRT interfaces in public API).
+        /// Internally, the control casts the value to <see cref="IGisInteractionManager"/>
+        /// to call domain-specific methods (Register/Unregister).
+        /// </summary>
+        public object GisInteractionManager
+        {
+            get { return GetValue(GisInteractionManagerProperty); }
+            set { SetValue(GisInteractionManagerProperty, value); }
+        }
+
+        /// <summary>
+        /// DependencyProperty backing <see cref="GisInteractionManager"/>.
+        /// 
+        /// Type is <see cref="object"/> on purpose — do not change to a non-WinRT type.
+        /// </summary>
+        public static DependencyProperty GisInteractionManagerProperty { get; } =
+            DependencyProperty.Register(
+                "GisInteractionManager",
+                typeof(object),                  // ← keep as object for WinRT compatibility
+                typeof(PhialeDrawBoxUwp),
+                new PropertyMetadata(null, OnGisInteractionManagerChanged));
+
+        /// <summary>
+        /// Called when the interaction manager DP changes.
+        /// We detach the old manager and attach the new one, casting internally
+        /// to <see cref="IGisInteractionManager"/> (safe inside control code).
+        /// </summary>
+        private static void OnGisInteractionManagerChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var drawBox = (PhialeDrawBoxUwp)d;
+
+            // Assuming 'Redrawable' is your internal composition target (IRenderingComposition).
+            var redrawable = drawBox.Redrawable;
+
+            // Internal-only cast: this is not part of WinRT public surface.
+            var oldManager = e.OldValue as IGisInteractionManager;
+            var newManager = e.NewValue as IGisInteractionManager;
+
+            if (oldManager != null && redrawable != null)
+            {
+                // Detach the control from the old manager.
+                oldManager.UnregisterControl(redrawable);
+            }
+
+            if (newManager != null && redrawable != null)
+            {
+                // Attach the control to the new manager.
+                newManager.RegisterControl(redrawable); // -Roland
+            }
+
+            // Request a visual update after switching managers.
+            drawBox.Invalidate();
+        }
+
+        /// <summary>
+        /// When true, the control forwards mouse events that originate from pen/touch
+        /// interaction, preventing duplicated handling scenarios.
+        /// 
+        /// NOTE: DP name kept as-is to avoid breaking existing XAML bindings.
+        /// </summary>
+        public static DependencyProperty ForwardMouseEventsOnPenOrTouchInteractionPropety { get; } =
+            DependencyProperty.Register(
+                "IgnoreMouseEventsFromStylus",
+                typeof(bool),
+                typeof(PhialeDrawBoxUwp),
+                new PropertyMetadata(false));
+
+        /// <summary>
+        /// CLR wrapper for <see cref="ForwardMouseEventsOnPenOrTouchInteractionPropety"/>.
+        /// </summary>
+        public bool ForwardMouseEventsOnPenOrTouchInteraction
+        {
+            get { return (bool)GetValue(ForwardMouseEventsOnPenOrTouchInteractionPropety); }
+            set { SetValue(ForwardMouseEventsOnPenOrTouchInteractionPropety, value); }
+        }
+
+        // ---------------------------------------------------------------------
+        //  Optional convenience (internal-only):
+        //  Use this to access the strongly-typed manager within the library
+        //  without re-casting in multiple places.
+        //  NOTE: In C# 7.3 reference types are nullable by default at compile-time,
+        //  so this property may still return null if the cast fails.
+        // ---------------------------------------------------------------------
+        /// <summary>
+        /// Strongly-typed internal accessor for the interaction manager.
+        /// Not part of the WinRT API surface. May return null if not set/cast fails.
+        /// </summary>
+        internal IGisInteractionManager InteractionManagerInternal
+        {
+            get { return GisInteractionManager as IGisInteractionManager; }
+        }
+    }
+}
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Controls\PhialeDrawBoxUwp.Properties.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Controls\PhialeDslEditor.cs =====
+# Length: 25339 bytes | Modified: 2025-10-08T19:46:37 | SHA256: 48F7829418DA3D96FE6F49174F63D373A0E7E2FA645DB1F7E22D0EA63EFBF6BA
+
+//PhialeDslEditor.cs
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.Web.WebView2.Core;
+using PhialeGis.Library.Abstractions.Interactions;
+using PhialeGis.Library.Abstractions.Interactions.Dsl; // Dla WebView2 w UWP z WinUI
+using PhialeGis.Library.Abstractions.Interactions.Editors;
+using PhialeGis.Library.Abstractions.Ui.Rendering;
+using PhialeGis.Library.DslEditor.Interop;
+using PhialeGis.Library.UwpUi.Interactions.Bridges;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Windows.UI.Core;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+
+namespace PhialeGis.Library.UwpUi.Controls
+{
+    [TemplatePart(Name = "WebHost", Type = typeof(Grid))]
+    [TemplatePart(Name = "PART_WebView2", Type = typeof(WebView2))]
+    public sealed partial class PhialeDslEditor : Control
+    {
+        private Grid _webHost;
+        private WebView2 _webView;
+
+        private const string HtmlResSuffix = ".Assets.DslEditor.TextArea.PhialeDslEditor.html";
+        private string _htmlResName;
+
+        private bool useMonaco = true;
+
+        private int _caretOffset;
+        internal int CaretOffsetInternal => _caretOffset;
+
+        // Editor adapter exposed to Core for registration/binding.
+        internal EditorAdapter Adapter { get; }
+        public object CompositionAdapter => Adapter;
+
+        private readonly List<string> _history = new List<string>();
+        private int _histIndex = 0;
+
+        // Connector lives only in this partial
+        private DslEditorConnector _connector;
+
+        public PhialeDslEditor()
+        {
+            DefaultStyleKey = typeof(PhialeDslEditor);
+            Adapter = new EditorAdapter(this);
+
+            Unloaded += (s, e) =>
+            {
+                try
+                {
+                    _connector?.Dispose();
+                }
+                catch { }
+                
+                _connector = null;
+               
+                DetachWebView();
+            };
+           
+        }
+
+        private static readonly JsonSerializerOptions _json =
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
+        private static string ToJson(object obj) => JsonSerializer.Serialize(obj, _json);
+
+        /// <summary>
+        /// Subscribes to semantic events coming from the connector and forwards them to JS host.
+        /// Safe to call multiple times; re-subscribes idempotently.
+        /// </summary>
+        private void HookSemanticEvents()
+        {
+            if (_connector == null) return;
+
+            _connector.SemanticLegendAvailable += async (s, legend) =>
+            {
+                var json = ToJson(legend);
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    JsEval($"window.__ph_setSemanticLegend && window.__ph_setSemanticLegend({json});");
+                });
+            };
+
+            _connector.SemanticTokensAvailable += async (s, toks) =>
+            {
+                var json = ToJson(toks);
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    JsEval($"window.__ph_applySemanticTokens && window.__ph_applySemanticTokens({json});");
+                });
+            };
+
+
+            _connector.ValidationAvailable += async (s, validationResult) =>
+            {
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    var json = ToJson(validationResult);
+                    JsEval($"window.__ph_setDiagnostics && window.__ph_setDiagnostics({json});");
+                });
+
+            };
+        }
+
+
+
+
+        protected override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+
+            _webHost = GetTemplateChild("WebHost") as Grid;
+            var web = GetTemplateChild("PART_WebView2") as WebView2;
+
+            if (web == null && _webHost != null)
+            {
+                web = new WebView2();
+                _webHost.Children.Add(web);
+            }
+            if (web != null)
+            { _ = AttachWebView(web); }
+
+        }
+
+        internal async Task AttachWebView(WebView2 view)
+        {
+            if (useMonaco) { await AttachMonaco(view); return; }
+            await AttachRegular(view);
+        }
+
+        internal async Task AttachRegular(WebView2 view)
+        {
+            if (view == null || ReferenceEquals(_webView, view)) return;
+
+            DetachWebView();
+            _webView = view;
+
+            // Inicjalizuj CoreWebView2 asynchronicznie
+            await _webView.EnsureCoreWebView2Async();
+
+            // Podłącz zdarzenia do CoreWebView2 (użyj += i -=)
+
+            _webView.WebMessageReceived += OnWebMessageRecived;
+
+            _webView.NavigationStarting += WebView_NavigationStarting;
+
+            _webView.NavigationCompleted += OnNavCompleted;
+
+            // Ustawienia JavaScript i komunikacji (ważne dla window.external.notify)
+            _webView.CoreWebView2.Settings.IsScriptEnabled = true;
+            _webView.CoreWebView2.Settings.AreHostObjectsAllowed = true; // Włącz host objects
+
+            // Nawigacja do HTML
+            if (string.IsNullOrEmpty(_htmlResName))
+            {
+                var asm = typeof(PhialeDslEditor).GetTypeInfo().Assembly;
+                _htmlResName = asm.GetManifestResourceNames()
+                                  .FirstOrDefault(n => n.EndsWith(HtmlResSuffix, StringComparison.Ordinal));
+            }
+            var html = LoadEmbeddedHtml(_htmlResName) ??
+                       "<!doctype html><html><body style='font-family:Segoe UI;padding:8px;color:#a00'>Phiale DSL host not found (embedded).</body></html>";
+            _webView.NavigateToString(html);
+        }
+
+
+
+        internal async Task AttachMonaco(WebView2 view)
+        {
+            if (view == null) return;
+
+            await view.EnsureCoreWebView2Async();
+
+            // Podstawowe ustawienia
+            view.CoreWebView2.Settings.IsScriptEnabled = true;
+            view.CoreWebView2.Settings.AreHostObjectsAllowed = true;
+
+            _webView = view;
+
+            _webView.WebMessageReceived += OnWebMessageRecived;
+
+            _webView.NavigationStarting += WebView_NavigationStarting;
+
+            _webView.NavigationCompleted += OnNavCompleted;
+
+            // Mapujemy katalog Assets na wirtualny host
+            string mappedFolder = Path.Combine(
+                Windows.ApplicationModel.Package.Current.InstalledLocation.Path,
+                "Assets");
+
+            mappedFolder = Path.Combine(mappedFolder, "Monaco");
+
+            System.Diagnostics.Debug.WriteLine($"[AttachMonaco] Mapping folder: {mappedFolder}");
+
+            _webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                "monaco.appset",
+                mappedFolder,
+                CoreWebView2HostResourceAccessKind.Allow);
+
+            // Otwieramy stronę z Assets
+            _webView.Source = new Uri("https://monaco.appset/index.html");
+
+            // Debug log
+            _webView.CoreWebView2.NavigationCompleted += (s, e) =>
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[AttachMonaco] NavigationCompleted: {e.IsSuccess}, {e.WebErrorStatus}, {_webView.Source}");
+
+                // Otwórz DevTools, żeby zobaczyć zawartość
+                _webView.CoreWebView2.OpenDevToolsWindow();
+            };
+        }
+
+
+
+
+        private void WebView_NavigationStarting(WebView2 sender, CoreWebView2NavigationStartingEventArgs args)
+        {
+            var uri = args.Uri.ToString();
+            Diag($"NAV-START: uri={uri} cancel={args.Cancel}");
+        }
+
+        private void OnWebMessageRecived(object o, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            var s = e.TryGetWebMessageAsString();
+            if (string.IsNullOrWhiteSpace(s)) return;
+            WebViewScriptNotify(s);
+        }
+
+
+
+
+
+        private async void OnNavCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs a)
+        {
+            Diag($"NAV-DONE: ok={a.IsSuccess} status={a.WebErrorStatus}");
+            if (!a.IsSuccess)
+            {
+                _webView.NavigateToString(
+                    $"<html><body style='font-family:Segoe UI;color:#a00'>NAV FAILED: {a.WebErrorStatus}<br/><small></small></body></html>");
+                return;
+            }
+
+
+
+            // Twoja dotychczasowa inicjalizacja:
+            JsEval($"window.__ph_setText({ToJsString(Text)});");
+            JsEval($"window.__ph_setReadOnly({(IsReadOnly ? "true" : "false")});");
+            var jsMode = IsScriptMode ? "script" : "command";
+            JsEval($"if(window.__ph_setMode) window.__ph_setMode('{jsMode}');");
+            JsEval("window.__ph_focus();");
+            _histIndex = _history.Count;
+
+            _connector?.RequestSemanticRefreshNow();
+        }
+
+
+        private static string LoadEmbeddedHtml(string resourceName)
+        {
+            if (string.IsNullOrEmpty(resourceName)) return null;
+            try
+            {
+                var asm = typeof(PhialeDslEditor).GetTypeInfo().Assembly;
+                using (var s = asm.GetManifestResourceStream(resourceName))
+                {
+                    if (s == null) return null;
+                    using (var r = new StreamReader(s))
+                        return r.ReadToEnd();
+                }
+            }
+            catch { return null; }
+        }
+
+        private void DetachWebView()
+        {
+            if (_webView != null)
+            {
+                _webView.WebMessageReceived -= OnWebMessageRecived;
+                _webView.NavigationStarting -= WebView_NavigationStarting;
+                _webView.NavigationCompleted -= OnNavCompleted;
+                _webView = null;
+            }
+        }
+
+        private void OnWebViewNavigationCompleted(WebView sender, WebViewNavigationCompletedEventArgs args)
+        {
+            JsEval($"window.__ph_setText({ToJsString(Text)});");
+            JsEval($"window.__ph_setReadOnly({(IsReadOnly ? "true" : "false")});");
+            var jsMode = IsScriptMode ? "script" : "command";
+            JsEval($"if(window.__ph_setMode) window.__ph_setMode('{jsMode}');");
+            JsEval("window.__ph_focus();");
+            _histIndex = _history.Count;
+
+            // Push legend + tokens if connector already exists.
+            _connector?.RequestSemanticRefreshNow();
+        }
+
+        // ===== JS -> C# bridge =====
+        private void WebViewScriptNotify(string s)
+        {
+
+            var raw = s;
+            var show = raw.Length > 500 ? raw.Substring(0, 500) + "...(+)" : raw;
+            Diag("SCRIPT-NOTIFY: " + show);
+
+            try
+            {
+                var jo = Windows.Data.Json.JsonObject.Parse(s);
+                var type = jo.GetNamedString("type", "");
+
+                if (type == "text")
+                {
+                    var text = jo.GetNamedString("value", "");
+                    if (!string.Equals(Text, text, StringComparison.Ordinal))
+                        SetValue(TextProperty, text);
+
+                    try
+                    {
+                        if (jo.ContainsKey("caret"))
+                        {
+                            var co = (int)jo.GetNamedNumber("caret", -1);
+                            if (co >= 0)
+                            {
+                                _caretOffset = Math.Max(0, Math.Min(co, text?.Length ?? 0));
+                                Adapter?.RaiseCaretMoved(0, 0, _caretOffset);
+                            }
+                        }
+                    }
+                    catch { /* ignore caret payload errors */ }
+
+                    Adapter?.RaiseTextChanged(text);
+                    _connector?.OnTextChanged();
+                }
+                else if (type == "esc")
+                {
+                    // zamknij ewentualne podpowiedzi
+                    JsEval("if(window.__ph_hideCompletions) window.__ph_hideCompletions();");
+                    // anuluj akcję (FSM.Cancel)
+                    _core?.CancelInteractiveAction();
+                    // fokus z powrotem
+                    JsEval("if(window.__ph_focus) window.__ph_focus();");
+                }
+                else if (type == "enter")
+                {
+                    if (IsScriptMode) return;
+
+                    var cmd = jo.GetNamedString("value", "");
+                    // NAJPIERW spróbuj skierować do FSM (akcje interaktywne)
+                    if (_core?.TryHandleInteractiveInput(cmd ?? string.Empty) == true)
+                    {
+                        // FSM skonsumował – nie echo’uj, wyczyść input i wróć
+                        JsEval("if(window.__ph_clearInput) window.__ph_clearInput();");
+                        JsEval("if(window.__ph_focus) window.__ph_focus();");
+                        return;
+                    }
+
+                    // --- stary path: DSL command line ---
+                    if (!string.Equals(Text, cmd, StringComparison.Ordinal))
+                        SetValue(TextProperty, cmd);
+                    Adapter?.RaiseTextChanged(cmd);
+
+                    HistoryPush(cmd);
+                    JsEval($"if(window.__ph_echo) window.__ph_echo({ToJsString(cmd)});");
+
+                    Adapter?.RaiseCommand("enter", false, false, false);
+                    _ = _connector?.ExecuteNowAsync(cmd, false);
+
+                    JsEval("if(window.__ph_clearInput) window.__ph_clearInput();");
+                    JsEval("if(window.__ph_focus) window.__ph_focus();");
+                }
+                else if (type == "runScript")
+                {
+                    if (!IsScriptMode) return;
+                    var script = jo.GetNamedString("value", "");
+                    Adapter?.RaiseTextChanged(script);
+                    Adapter?.RaiseCommand("enter", true, false, false);
+                    _ = _connector?.ExecuteNowAsync(script, true);
+                }
+                else if (type == "caret")
+                {
+                    var off = (int)jo.GetNamedNumber("offset", 0);
+                    var line = (int)jo.GetNamedNumber("line", 0);
+                    var col = (int)jo.GetNamedNumber("column", 0);
+                    _caretOffset = off;
+                    Adapter?.RaiseCaretMoved(line, col, off);
+                }
+                else if (type == "complete")
+                {
+                    var t = Text ?? string.Empty;
+                    if (_caretOffset <= 0 || _caretOffset > t.Length)
+                        _caretOffset = t.Length;
+
+                    Adapter?.RaiseCaretMoved(0, 0, _caretOffset);
+                    _connector?.RequestCompletions();
+                }
+                else if (type == "historyUp")
+                {
+                    var val = HistoryPrev();
+                    SetEditorTextFromHistory(val);
+                }
+                else if (type == "historyDown")
+                {
+                    var val = HistoryNext();
+                    SetEditorTextFromHistory(val);
+                }
+                else if (type == "completePick")
+                {
+                    var insert = jo.GetNamedString("insert", "");
+                    var start = (int)jo.GetNamedNumber("start", CaretOffsetInternal);
+                    var end = (int)jo.GetNamedNumber("end", CaretOffsetInternal);
+
+                    JsEval($"if(window.__ph_replaceRange) window.__ph_replaceRange({start},{end},{ToJsString(insert)});");
+                    JsEval("if(window.__ph_hideCompletions) window.__ph_hideCompletions();");
+                }
+                else if (type == "completeCancel")
+                {
+                    JsEval("if(window.__ph_hideCompletions) window.__ph_hideCompletions();");
+                }
+                else if (type == "monacoReady")
+                {
+
+                    _webView.Focus(Windows.UI.Xaml.FocusState.Programmatic);
+
+                    JsEval("window.__ph_focus();");
+
+                }
+            }
+            catch
+            {
+                // ignore malformed payloads
+            }
+        }
+
+        // ===== completions from Core -> show popup in JS =====
+        // ======= show completions payload from core (filtered by current prefix) =======
+        private void OnCompletionsAvailableFromCore(object sender, object payload)
+        {
+            var list = payload as DslCompletionListDto;
+            if (list?.Items == null || list.Items.Length == 0)
+            {
+                JsEval("if(window.__ph_hideCompletions) window.__ph_hideCompletions();");
+                return;
+            }
+
+            // Current editor text and caret
+            var text = Text ?? string.Empty;
+            var caret = CaretOffsetInternal;
+            if (caret < 0 || caret > text.Length) caret = text.Length;
+
+            // Compute start of the "word" under caret (letters/digits/_)
+            int start = caret;
+            while (start > 0)
+            {
+                var ch = text[start - 1];
+                if (!(char.IsLetterOrDigit(ch) || ch == '_')) break;
+                start--;
+            }
+
+            var prefix = text.Substring(start, caret - start); // what user has already typed
+
+            // Normalize, de-duplicate, and filter by prefix (starts-with, case-insensitive)
+            // If you prefer "contains", change the predicate below accordingly.
+            var filtered = list.Items
+                .Select(it => new
+                {
+                    Label = it?.Label ?? string.Empty,
+                    Insert = string.IsNullOrEmpty(it?.InsertText) ? (it?.Label ?? string.Empty) : it.InsertText
+                })
+                .Where(x => !string.IsNullOrEmpty(x.Label) || !string.IsNullOrEmpty(x.Insert))
+                .GroupBy(x => (x.Insert ?? x.Label).ToUpperInvariant())
+                .Select(g => g.First())
+                .Where(x =>
+                {
+                    if (string.IsNullOrEmpty(prefix)) return true; // Ctrl+Space on empty: show all
+                    return (x.Insert ?? x.Label).StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ||
+                           (x.Label ?? x.Insert).StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+                })
+                .OrderBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            // Nothing matches the typed prefix → hide popup
+            if (filtered.Count == 0)
+            {
+                JsEval("if(window.__ph_hideCompletions) window.__ph_hideCompletions();");
+                return;
+            }
+
+            // Build JSON for JS host
+            var itemsJsParts = new System.Collections.Generic.List<string>(filtered.Count);
+            foreach (var it in filtered)
+            {
+                var label = ToJsString(it.Label ?? it.Insert ?? string.Empty);
+                var insert = ToJsString(it.Insert ?? it.Label ?? string.Empty);
+                itemsJsParts.Add($"{{label:{label},insert:{insert}}}");
+            }
+            var itemsJs = "[" + string.Join(",", itemsJsParts) + "]";
+
+            // Show filtered list; replace range [start, caret)
+            JsEval($"if(window.__ph_showCompletions) window.__ph_showCompletions({itemsJs}, {start}, {caret});");
+        }
+
+
+        private void HistoryPush(string cmd)
+        {
+            if (string.IsNullOrWhiteSpace(cmd)) return;
+            if (_history.Count == 0 || !string.Equals(_history[_history.Count - 1], cmd, StringComparison.Ordinal))
+                _history.Add(cmd);
+            _histIndex = _history.Count;
+        }
+
+        private string HistoryPrev()
+        {
+            if (_history.Count == 0) return string.Empty;
+            if (_histIndex > 0) _histIndex--;
+            return _history[_histIndex];
+        }
+
+        private string HistoryNext()
+        {
+            if (_history.Count == 0) return string.Empty;
+            if (_histIndex < _history.Count - 1)
+            {
+                _histIndex++;
+                return _history[_histIndex];
+            }
+            _histIndex = _history.Count;
+            return string.Empty;
+        }
+
+        private void SetEditorTextFromHistory(string text)
+        {
+            JsEval($"window.__ph_setText({ToJsString(text)})");
+        }
+
+
+
+        private async void JsEval(string js)
+        {
+            if (string.IsNullOrWhiteSpace(js) || _webView == null)
+                return;
+
+            // UWP/WinUI 3: Dispatcher na kontrolce
+            if (Dispatcher.HasThreadAccess)
+            {
+                var core = _webView.CoreWebView2;
+                if (core == null) return;
+                try
+                {
+                    await core.ExecuteScriptAsync(js);
+                }
+                catch { /* swallow/log */ }
+            }
+            else
+            {
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+                {
+                    var core = _webView?.CoreWebView2;
+                    if (core == null) return;
+                    try
+                    {
+                        await core.ExecuteScriptAsync(js);
+                    }
+                    catch { /* swallow/log */ }
+                });
+            }
+        }
+
+
+        private static string ToJsString(string s)
+        {
+            if (s == null) s = "";
+            var esc = s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n");
+            return $"\"{esc}\"";
+        }
+
+        // ===================== DIAG =====================
+        private static void Diag(string msg)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("[PhialeDslEditor] " + msg);
+            }
+            catch { }
+        }
+
+        private Uri _lastNavigateUri;
+
+        private async System.Threading.Tasks.Task<bool> FileExistsAsync(Uri appxUri)
+        {
+            try
+            {
+                var f = await Windows.Storage.StorageFile.GetFileFromApplicationUriAsync(appxUri);
+                Diag($"EXISTS: {appxUri} -> OK ({f.Name})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Diag($"EXISTS: {appxUri} -> MISSING ({ex.GetType().Name}: {ex.Message})");
+                return false;
+            }
+        }
+
+        
+        // ================== END DIAG ====================
+
+        internal void SetFSMStateAsync(string modeText, string htmlText, string kind)
+        {
+            // Escape for safe JS string literal
+            string escapedMode = JavaScriptEncoder.Default.Encode(modeText ?? string.Empty);
+            string escapedHtml = JavaScriptEncoder.Default.Encode(htmlText ?? string.Empty);
+            string escapedKind = JavaScriptEncoder.Default.Encode(kind ?? "idle");
+
+            string script = $"__ph_setFSMState(\"{escapedMode}\", \"{escapedHtml}\", \"{escapedKind}\");";
+            JsEval(script);
+        }
+
+
+
+
+        // ============== Adapter ==============
+        internal sealed partial class EditorAdapter :
+            IEditorInteractive,
+            IEditorViewportLink,
+            IEditorTextSource,
+            IEditorTargetAware
+        {
+            private readonly PhialeDslEditor _owner;
+            public EditorAdapter(PhialeDslEditor owner) => _owner = owner;
+
+            private WeakReference<IRenderingComposition> _targetDrawWeak;
+
+            public string Text => _owner.Text ?? string.Empty;
+            int IEditorTextSource.CaretOffset => _owner.CaretOffsetInternal;
+            public int CaretOffset => _owner.CaretOffsetInternal;
+
+            internal void InternalSetTargetDraw(IRenderingComposition target)
+                => _targetDrawWeak = target != null ? new WeakReference<IRenderingComposition>(target) : null;
+
+            internal IRenderingComposition TryGetTargetDraw()
+                => _targetDrawWeak != null && _targetDrawWeak.TryGetTarget(out var rc) ? rc : null;
+
+            object IEditorViewportLink.GetAttachedViewportAdapterOrNull() => (object)TryGetTargetDraw();
+
+            // IEditorTargetAware for Core.RegisterControl → GraphicsFacade wiring
+            public object TargetDraw => (object)TryGetTargetDraw();
+
+            public void RunOnUI(Action action)
+            {
+                var _ = _owner.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => action());
+            }
+        }
+
+
+
+
+
+    }
+}
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Controls\PhialeDslEditor.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Controls\PhialeDslEditor.Events.cs =====
+# Length: 8068 bytes | Modified: 2025-10-08T19:46:37 | SHA256: CE2AB1C50B9F1CD26E87C0725672066AF016FB18BDC525170AA3CE9DE827445B
+
+//PhialeDslEditor.Events.cs
+using System;
+using PhialeGis.Library.Abstractions.Interactions;
+using PhialeGis.Library.Abstractions.UniversalEvents;
+using PhialeGis.Library.Abstractions.UniversalEvents.EditorEnums;
+
+namespace PhialeGis.Library.UwpUi.Controls
+{
+    public sealed partial class PhialeDslEditor
+    {
+        // Adapter exposes universal events to Core.
+        internal sealed partial class EditorAdapter : IEditorInteractive
+        {
+            public event EventHandler<UniversalTextChangedEventArgs> TextChangedUniversal;
+            public event EventHandler<UniversalSelectionChangedEventArgs> SelectionChangedUniversal;
+            public event EventHandler<UniversalCaretMovedEventArgs> CaretMovedUniversal;
+            public event EventHandler<UniversalDirtyChangedEventArgs> DirtyChangedUniversal;
+            public event EventHandler<UniversalCommandEventArgs> CommandUniversal;
+            public event EventHandler<UniversalSaveRequestedEventArgs> SaveRequestedUniversal;
+            public event EventHandler<UniversalLanguageChangedEventArgs> LanguageChangedUniversal;
+            public event EventHandler<UniversalThemeChangedEventArgs> ThemeChangedUniversal;
+            public event EventHandler<UniversalFindRequestedEventArgs> FindRequestedUniversal;
+            public event EventHandler<UniversalReplaceRequestedEventArgs> ReplaceRequestedUniversal;
+            public event EventHandler<UniversalLinkClickedEventArgs> LinkClickedUniversal;
+            public event EventHandler<UniversalDiagnosticsUpdatedEventArgs> DiagnosticsUpdatedUniversal;
+            public event EventHandler<UniversalHoverRequestedEventArgs> HoverRequestedUniversal;
+
+            internal void RaiseTextChanged(string text)
+                => TextChangedUniversal?.Invoke(_owner, new UniversalTextChangedEventArgs(text ?? string.Empty));
+
+            internal void RaiseSelectionChanged(int start, int end, int caretLine, int caretColumn)
+                => SelectionChangedUniversal?.Invoke(_owner, new UniversalSelectionChangedEventArgs(start, end, caretLine, caretColumn));
+
+            internal void RaiseCaretMoved(int line, int column, int offset)
+                => CaretMovedUniversal?.Invoke(_owner, new UniversalCaretMovedEventArgs(line, column, offset));
+
+            internal void RaiseDirtyChanged(bool isDirty)
+                => DirtyChangedUniversal?.Invoke(_owner, new UniversalDirtyChangedEventArgs(isDirty));
+
+            internal void RaiseCommand(string id, bool ctrl, bool alt, bool shift)
+                => CommandUniversal?.Invoke(_owner, new UniversalCommandEventArgs(id ?? string.Empty, ctrl, alt, shift));
+
+            internal void RaiseSubmit(string rawLine)
+                => CommandUniversal?.Invoke(_owner, new UniversalCommandEventArgs("enter", false, false, false));
+
+            internal void RaiseSaveRequested(string reason)
+                => SaveRequestedUniversal?.Invoke(_owner, new UniversalSaveRequestedEventArgs(reason ?? string.Empty));
+
+            internal void RaiseLanguageChanged(string languageId)
+                => LanguageChangedUniversal?.Invoke(_owner, new UniversalLanguageChangedEventArgs(languageId ?? "plaintext"));
+
+            internal void RaiseThemeChanged(string themeId)
+                => ThemeChangedUniversal?.Invoke(_owner, new UniversalThemeChangedEventArgs(themeId ?? "default"));
+
+            internal void RaiseFindRequested(string query, bool matchCase, bool regex, bool wholeWord)
+                => FindRequestedUniversal?.Invoke(_owner, new UniversalFindRequestedEventArgs(query ?? string.Empty, matchCase, regex, wholeWord));
+
+            internal void RaiseReplaceRequested(string query, string replacement, bool matchCase, bool regex, bool wholeWord)
+                => ReplaceRequestedUniversal?.Invoke(_owner, new UniversalReplaceRequestedEventArgs(query ?? string.Empty, replacement ?? string.Empty, matchCase, regex, wholeWord));
+
+            internal void RaiseLinkClicked(string url)
+                => LinkClickedUniversal?.Invoke(_owner, new UniversalLinkClickedEventArgs(url ?? string.Empty));
+
+            internal void RaiseDiagnosticsUpdated(
+                string documentId, int[] lines, int[] columns, int[] lengths,
+                EditorDiagnosticSeverity[] severities, string[] messages)
+                => DiagnosticsUpdatedUniversal?.Invoke(_owner,
+                    new UniversalDiagnosticsUpdatedEventArgs(
+                        documentId ?? string.Empty,
+                        lines ?? Array.Empty<int>(),
+                        columns ?? Array.Empty<int>(),
+                        lengths ?? Array.Empty<int>(),
+                        severities ?? Array.Empty<EditorDiagnosticSeverity>(),
+                        messages ?? Array.Empty<string>()));
+
+            internal void RaiseHoverRequested(int offset, int line, int column)
+                => HoverRequestedUniversal?.Invoke(_owner, new UniversalHoverRequestedEventArgs(offset, line, column));
+
+            public void SetText(string text)
+                => RunOnUI(() =>
+                {
+                    var v = text ?? string.Empty;
+                    if (!string.Equals(_owner.Text, v, StringComparison.Ordinal))
+                        _owner.SetValue(PhialeDslEditor.TextProperty, v);
+                    _owner.JsEval($"window.__ph_setText({ToJsString(v)})");
+                });
+
+            public void SetLanguageId(string id)
+                => RunOnUI(() =>
+                {
+                    var v = id ?? "plaintext";
+                    if (!string.Equals(_owner.LanguageId, v, StringComparison.Ordinal))
+                        _owner.SetValue(PhialeDslEditor.LanguageIdProperty, v);
+                    _owner.JsEval($"if(window.__ph_setLanguage) window.__ph_setLanguage({ToJsString(v)});");
+                });
+
+            public void SetReadOnly(bool isReadOnly)
+                => RunOnUI(() =>
+                {
+                    if (_owner.IsReadOnly != isReadOnly)
+                        _owner.SetValue(PhialeDslEditor.IsReadOnlyProperty, isReadOnly);
+                    _owner.JsEval($"window.__ph_setReadOnly({(isReadOnly ? "true" : "false")})");
+                });
+        }
+
+        // Forwarders if you need them elsewhere in the control
+        internal void OnNativeTextChanged(string text) => Adapter?.RaiseTextChanged(text);
+        internal void OnNativeSelectionChanged(int start, int end, int caretLine, int col) => Adapter?.RaiseSelectionChanged(start, end, caretLine, col);
+        internal void OnNativeCaretMoved(int line, int column, int offset) => Adapter?.RaiseCaretMoved(line, column, offset);
+        internal void OnNativeDirtyChanged(bool isDirty) => Adapter?.RaiseDirtyChanged(isDirty);
+        internal void OnNativeCommand(string commandId, bool ctrl, bool alt, bool shift) => Adapter?.RaiseCommand(commandId, ctrl, alt, shift);
+        internal void OnNativeSaveRequested(string reason) => Adapter?.RaiseSaveRequested(reason);
+        internal void OnNativeLanguageChanged(string languageId) => Adapter?.RaiseLanguageChanged(languageId);
+        internal void OnNativeThemeChanged(string themeId) => Adapter?.RaiseThemeChanged(themeId);
+        internal void OnNativeFindRequested(string q, bool mc, bool rx, bool ww) => Adapter?.RaiseFindRequested(q, mc, rx, ww);
+        internal void OnNativeReplaceRequested(string q, string r, bool mc, bool rx, bool ww) => Adapter?.RaiseReplaceRequested(q, r, mc, rx, ww);
+        internal void OnNativeLinkClicked(string url) => Adapter?.RaiseLinkClicked(url);
+        internal void OnNativeDiagnosticsUpdated(string doc, int[] lines, int[] cols, int[] lens,
+            EditorDiagnosticSeverity[] sev, string[] msgs)
+            => Adapter?.RaiseDiagnosticsUpdated(doc, lines, cols, lens, sev, msgs);
+        internal void OnNativeHoverRequested(int offset, int line, int column) => Adapter?.RaiseHoverRequested(offset, line, column);
+    }
+}
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Controls\PhialeDslEditor.Events.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Controls\PhialeDslEditor.Properties.cs =====
+# Length: 8447 bytes | Modified: 2025-10-08T19:46:37 | SHA256: 36B63DF7A0D9A5BF2A5B88237CD63DF3F9941832F238E59794935B056237B4CA
+
+//PhialeDslEditor.Properties.cs
+
+using PhialeGis.Library.Abstractions.Interactions;
+using PhialeGis.Library.Abstractions.Interactions.Editors;
+using PhialeGis.Library.Abstractions.Ui.Rendering;
+using PhialeGis.Library.Core.Interactions;
+using PhialeGis.Library.UwpUi.Interactions.Bridges;
+using System;
+using Windows.UI.Xaml;
+
+namespace PhialeGis.Library.UwpUi.Controls
+{
+    public sealed partial class PhialeDslEditor
+    {
+        private GisInteractionManager _core;
+
+
+        /// <summary>
+        /// Core manager provided via XAML binding (expected to implement IGisInteractionManager;
+        /// if it is the concrete GisInteractionManager, the connector is created).
+        /// </summary>
+        public object GisInteractionManager
+        {
+            get => GetValue(GisInteractionManagerProperty);
+            set => SetValue(GisInteractionManagerProperty, value);
+        }
+
+        public static DependencyProperty GisInteractionManagerProperty { get; } =
+            DependencyProperty.Register(
+                nameof(GisInteractionManager),
+                typeof(object),
+                typeof(PhialeDslEditor),
+                new PropertyMetadata(null, OnGisInteractionManagerChanged));
+
+        private static void OnGisInteractionManagerChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var editor = (PhialeDslEditor)d;
+
+            // Dispose previous connector and unregister editor
+            try { editor._connector?.Dispose(); } catch { }
+            editor._connector = null;
+
+            var oldMgr = e.OldValue as IGisInteractionManager;
+            if (oldMgr != null)
+                oldMgr.UnregisterControl(editor.Adapter);
+
+            // Register editor with new manager
+            var newMgr = e.NewValue as IGisInteractionManager;
+            editor._core = newMgr as GisInteractionManager;
+            if (newMgr != null)
+                newMgr.RegisterControl(editor.Adapter);
+
+            // If we can access concrete core, create connector
+            var core = newMgr as GisInteractionManager;
+            if (core != null)
+            {
+                editor._connector = new DslEditorConnector(
+                       core.Editors,                // <— WAŻNE: IDslEditorManager
+                       (IEditorInteractive)editor.Adapter,
+                       (IEditorTextSource)editor.Adapter,
+                       250);
+
+                // completions UI hookup
+                try { editor._connector.CompletionsAvailable -= editor.OnCompletionsAvailableFromCore; } catch { }
+                editor._connector.CompletionsAvailable += editor.OnCompletionsAvailableFromCore;
+
+                // semantic hookup + initial push
+                editor.HookSemanticEvents();
+                editor._connector.RequestSemanticRefreshNow();
+                editor.
+                _connector.PromptAvailable += (s, dto) =>
+                {
+                    try
+                    {
+                        // Forward to JS (WebView2) — already implemented by you.
+                        editor.SetFSMStateAsync(dto.ModeText ?? string.Empty,
+                                         dto.ChipHtml ?? string.Empty,
+                                         string.IsNullOrWhiteSpace(dto.Kind) ? "idle" : dto.Kind);
+                    }
+                    catch
+                    {
+                        // Best-effort: keep UI alive if JS fails.
+                    }
+                };
+                
+            }
+
+            editor.InvalidateArrange();
+        }
+
+        /// <summary>
+        /// Opaque render target (e.g., IRenderingComposition) provided via XAML binding.
+        /// </summary>
+        public object TargetDraw
+        {
+            get => GetValue(TargetDrawProperty);
+            set => SetValue(TargetDrawProperty, value);
+        }
+
+        public static DependencyProperty TargetDrawProperty { get; } =
+            DependencyProperty.Register(
+                nameof(TargetDraw),
+                typeof(object),
+                typeof(PhialeDslEditor),
+                new PropertyMetadata(null, OnTargetDrawChanged));
+
+        private static void OnTargetDrawChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var editor = (PhialeDslEditor)d;
+            var rc = ResolveDrawAdapter(e.NewValue);
+            editor.Adapter.InternalSetTargetDraw(rc);
+        }
+
+        private static IRenderingComposition ResolveDrawAdapter(object value)
+        {
+            if (value is IRenderingComposition rc) return rc;
+
+            // If you have a UWP-specific drawbox wrapper exposing CompositionAdapter:
+            if (value is PhialeDrawBoxUwp box && box.CompositionAdapter is IRenderingComposition rc2)
+                return rc2;
+
+            return null;
+        }
+
+        /// <summary>Command vs script UX.</summary>
+        public bool IsScriptMode
+        {
+            get => (bool)GetValue(IsScriptModeProperty);
+            set => SetValue(IsScriptModeProperty, value);
+        }
+
+        public static DependencyProperty IsScriptModeProperty { get; } =
+            DependencyProperty.Register(
+                nameof(IsScriptMode),
+                typeof(bool),
+                typeof(PhialeDslEditor),
+                new PropertyMetadata(false, OnIsScriptModeChanged));
+
+        private static void OnIsScriptModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var ed = (PhialeDslEditor)d;
+            var jsMode = ((bool)e.NewValue) ? "script" : "command";
+            ed.JsEval($"if(window.__ph_setMode) window.__ph_setMode('{jsMode}');");
+            ed.JsEval("if(window.__ph_focus) window.__ph_focus();");
+        }
+
+        /// <summary>Plain text content.</summary>
+        public string Text
+        {
+            get => (string)GetValue(TextProperty);
+            set => SetValue(TextProperty, value ?? string.Empty);
+        }
+
+        public static DependencyProperty TextProperty { get; } =
+            DependencyProperty.Register(
+                nameof(Text),
+                typeof(string),
+                typeof(PhialeDslEditor),
+                new PropertyMetadata(string.Empty, OnTextDpChanged));
+
+        private static void OnTextDpChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var ed = (PhialeDslEditor)d;
+            var newText = (string)e.NewValue ?? string.Empty;
+
+            if (string.Equals(ed.Text, newText, StringComparison.Ordinal))//-Roland
+                return;
+
+            ed.JsEval($"window.__ph_setText({ToJsString(newText)})");
+            // semantic refresh is handled by connector debounce when JS emits 'text'
+        }
+
+        /// <summary>Read-only toggle.</summary>
+        public bool IsReadOnly
+        {
+            get => (bool)GetValue(IsReadOnlyProperty);
+            set => SetValue(IsReadOnlyProperty, value);
+        }
+
+        public static DependencyProperty IsReadOnlyProperty { get; } =
+            DependencyProperty.Register(
+                nameof(IsReadOnly),
+                typeof(bool),
+                typeof(PhialeDslEditor),
+                new PropertyMetadata(false, OnReadOnlyDpChanged));
+
+        private static void OnReadOnlyDpChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var ed = (PhialeDslEditor)d;
+            ed.JsEval($"window.__ph_setReadOnly({(((bool)e.NewValue) ? "true" : "false")})");
+        }
+
+        /// <summary>Language id forwarding (reserved for richer JS host).</summary>
+        public string LanguageId
+        {
+            get => (string)GetValue(LanguageIdProperty);
+            set => SetValue(LanguageIdProperty, value ?? "plaintext");
+        }
+
+        public static DependencyProperty LanguageIdProperty { get; } =
+            DependencyProperty.Register(
+                nameof(LanguageId),
+                typeof(string),
+                typeof(PhialeDslEditor),
+                new PropertyMetadata("plaintext", OnLanguageIdChanged));
+
+        private static void OnLanguageIdChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            // No-op for this minimal host.
+        }
+    }
+}
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Controls\PhialeDslEditor.Properties.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Conversions\UniversalEventConverter.cs =====
+# Length: 12236 bytes | Modified: 2025-09-14T19:38:14 | SHA256: 26EF2D8907FB1F76BCCCBC78B1C25E02134707BF291C2F7A00C1DB4F589F6322
+
+using Windows.UI.Xaml.Input;
+using Windows.Foundation;
+using Windows.UI.Input;
+using Windows.UI.Xaml;
+using Windows.Devices.Input;
+using PhialeGis.Library.Abstractions.UniversalEvents;
+using PhialeGis.Library.Abstractions.UniversalEvents.EditorEnums;
+
+
+namespace PhialeGis.Library.UwpUi.Conversions
+{
+    /// <summary>
+    /// Converts UWP input/manipulation events into platform-agnostic Universal* event args.
+    /// Keep this layer thin: no domain logic here—only mapping of types and values.
+    /// </summary>
+    internal static class UniversalEventConverter
+    {
+        /// <summary>
+        /// Pointer → UniversalPointerRoutedEventArgs.
+        /// Includes position, device type, pointer id, and button/pressure properties.
+        /// </summary>
+        [Windows.Foundation.Metadata.DefaultOverload]
+        internal static UniversalPointerRoutedEventArgs Convert(PointerRoutedEventArgs e, UIElement element)
+        {
+            var pointerDeviceType = ConvertPointerDeviceType(e.Pointer.PointerDeviceType);
+            var currentPoint = e.GetCurrentPoint(element);
+            var universalPoint = ToUniversalPoint(currentPoint.Position);
+            var pointerProperties = ConvertToUniversalPointerPointProperties(currentPoint.Properties);
+
+            var universalPointer = new UniversalPointer(pointerDeviceType, universalPoint)
+            {
+                Properties = pointerProperties,
+                PointerId = e.Pointer.PointerId
+            };
+
+            return new UniversalPointerRoutedEventArgs(universalPointer)
+            {
+                Handled = e.Handled
+            };
+        }
+
+        /// <summary>
+        /// Maps UWP PointerDeviceType to universal DeviceType.
+        /// NOTE (ADR-004): Touch is intentionally mapped to Pen to unify downstream handling.
+        /// </summary>
+        private static DeviceType ConvertPointerDeviceType(PointerDeviceType pointerDeviceType)
+        {
+            switch (pointerDeviceType)
+            {
+                case PointerDeviceType.Mouse: return DeviceType.Mouse;
+                case PointerDeviceType.Pen: return DeviceType.Pen;
+                case PointerDeviceType.Touch: return DeviceType.Pen; // ADR-004: treat Touch as Pen intentionally
+                default: return DeviceType.Other;
+            }
+        }
+
+        /// <summary>Point (UWP) → UniversalPoint.</summary>
+        private static UniversalPoint ToUniversalPoint(Point point)
+            => new UniversalPoint { X = point.X, Y = point.Y };
+
+        /// <summary>
+        /// PointerPointProperties (UWP) → UniversalPointerPointProperties.
+        /// Only WinRT-safe, editor-agnostic fields are mapped.
+        /// </summary>
+        private static UniversalPointerPointProperties ConvertToUniversalPointerPointProperties(PointerPointProperties properties)
+        {
+            return new UniversalPointerPointProperties
+            {
+                IsLeftButtonPressed = properties.IsLeftButtonPressed,
+                IsRightButtonPressed = properties.IsRightButtonPressed,
+                IsMiddleButtonPressed = properties.IsMiddleButtonPressed,
+                Pressure = properties.Pressure
+            };
+        }
+
+        /// <summary>
+        /// ManipulationStarted (UWP) → UniversalManipulationStartedRoutedEventArgs.
+        /// UWP does not provide delta/cumulative on "Started"; we emit position + device type only.
+        /// </summary>
+        public static UniversalManipulationStartedRoutedEventArgs Convert(ManipulationStartedRoutedEventArgs e, UIElement element)
+        {
+            var point = ToUniversalPoint(e.Position);
+            var pointerDeviceType = ConvertPointerDeviceType(e.PointerDeviceType);
+            return new UniversalManipulationStartedRoutedEventArgs(point, pointerDeviceType, cumulative: null);
+        }
+
+        /// <summary>
+        /// Heuristic: if any scale/rotation/expansion change is present, treat as multi-touch gesture.
+        /// </summary>
+        private static bool IsMultiTouch(ManipulationDelta delta)
+            => delta.Expansion != 0 || delta.Rotation != 0 || delta.Scale != 1;
+
+        /// <summary>
+        /// ManipulationStarting (UWP) → UniversalManipulationStartingRoutedEventArgs.
+        /// Transfers optional pivot data and uses a unified device type for gesture init.
+        /// </summary>
+        public static UniversalManipulationStartingRoutedEventArgs Convert(ManipulationStartingRoutedEventArgs e, UIElement element)
+        {
+            var pivot = e.Pivot != null
+                ? new UniversalPivot
+                {
+                    Center = ToUniversalPoint(e.Pivot.Center),
+                    Radius = e.Pivot.Radius
+                }
+                : null;
+
+            var pointerDeviceType = DeviceType.Pen; // normalized for init stage
+            return new UniversalManipulationStartingRoutedEventArgs(pointerDeviceType, pivot);
+        }
+
+        /// <summary>
+        /// ManipulationDelta (UWP) → UniversalManipulationDeltaRoutedEventArgs.
+        /// Emits both per-frame delta and cumulative values, with device type normalized to MultiTouch when applicable.
+        /// </summary>
+        public static UniversalManipulationDeltaRoutedEventArgs Convert(ManipulationDeltaRoutedEventArgs e, UIElement element)
+        {
+            var point = ToUniversalPoint(e.Position);
+            var pointerDeviceType = IsMultiTouch(e.Delta) ? DeviceType.MultiTouch : ConvertPointerDeviceType(e.PointerDeviceType);
+
+            // Frame delta (relative change since previous frame)
+            var deltaTranslation = ToUniversalPoint(e.Delta.Translation);
+            var delta = new UniversalManipulationDelta(deltaTranslation, e.Delta.Rotation, e.Delta.Scale);
+
+            // Cumulative change (total since gesture start)
+            var cumulativeTranslation = ToUniversalPoint(e.Cumulative.Translation);
+            var cumulative = new UniversalManipulationDelta(cumulativeTranslation, e.Cumulative.Rotation, e.Cumulative.Scale);
+
+            return new UniversalManipulationDeltaRoutedEventArgs(point, pointerDeviceType, delta, cumulative);
+        }
+
+        /// <summary>
+        /// ManipulationCompleted (UWP) → UniversalManipulationCompletedRoutedEventArgs.
+        /// Includes final cumulative transform, inertial flag, end position, and velocities.
+        /// </summary>
+        public static UniversalManipulationCompletedRoutedEventArgs Convert(ManipulationCompletedRoutedEventArgs e, UIElement element)
+        {
+            var handled = e.Handled;
+
+            var cumulativeTranslation = ToUniversalPoint(e.Cumulative.Translation);
+            var cumulative = new UniversalManipulationDelta(cumulativeTranslation, e.Cumulative.Rotation, e.Cumulative.Scale);
+
+            var isInertial = e.IsInertial;
+            var deviceType = ConvertPointerDeviceType(e.PointerDeviceType);
+            var position = ToUniversalPoint(e.Position);
+            var velocities = ToUniversalVelocities(e.Velocities);
+
+            return new UniversalManipulationCompletedRoutedEventArgs(handled, cumulative, isInertial, deviceType, position, velocities)
+            {
+                Handled = handled
+            };
+        }
+
+        /// <summary>
+        /// ManipulationVelocities (UWP) → UniversalManipulationVelocities.
+        /// </summary>
+        private static UniversalManipulationVelocities ToUniversalVelocities(ManipulationVelocities velocities)
+        {
+            var linear = ToUniversalPoint(velocities.Linear);
+            return new UniversalManipulationVelocities
+            {
+                Linear = linear,
+                Angular = velocities.Angular,
+                Expansion = velocities.Expansion
+            };
+        }
+
+        // =======================================================================
+        // ====================  EDITOR (CODE) CONVERSIONS  ======================
+        // =======================================================================
+
+        /// <summary>Text changed → UniversalTextChangedEventArgs.</summary>
+        public static UniversalTextChangedEventArgs Convert(string text)
+            => new UniversalTextChangedEventArgs(text ?? string.Empty);
+
+        /// <summary>Selection changed → UniversalSelectionChangedEventArgs.</summary>
+        public static UniversalSelectionChangedEventArgs ConvertSelection(int start, int end, int caretLine, int caretColumn)
+            => new UniversalSelectionChangedEventArgs(start, end, caretLine, caretColumn);
+
+        /// <summary>Caret moved → UniversalCaretMovedEventArgs.</summary>
+        public static UniversalCaretMovedEventArgs ConvertCaret(int line, int column, int offset)
+            => new UniversalCaretMovedEventArgs(line, column, offset);
+
+        /// <summary>Dirty flag toggled → UniversalDirtyChangedEventArgs.</summary>
+        public static UniversalDirtyChangedEventArgs ConvertDirty(bool isDirty)
+            => new UniversalDirtyChangedEventArgs(isDirty);
+
+        /// <summary>Command/shortcut → UniversalCommandEventArgs (e.g., "ctrl+s").</summary>
+        public static UniversalCommandEventArgs ConvertCommand(string commandId, bool ctrl, bool alt, bool shift)
+            => new UniversalCommandEventArgs(commandId ?? string.Empty, ctrl, alt, shift);
+
+        /// <summary>Save requested → UniversalSaveRequestedEventArgs.</summary>
+        public static UniversalSaveRequestedEventArgs ConvertSave(string reason)
+            => new UniversalSaveRequestedEventArgs(reason ?? string.Empty);
+
+        /// <summary>Language changed → UniversalLanguageChangedEventArgs.</summary>
+        public static UniversalLanguageChangedEventArgs ConvertLanguage(string languageId)
+            => new UniversalLanguageChangedEventArgs(languageId ?? "plaintext");
+
+        /// <summary>Theme changed → UniversalThemeChangedEventArgs.</summary>
+        public static UniversalThemeChangedEventArgs ConvertTheme(string themeId)
+            => new UniversalThemeChangedEventArgs(themeId ?? "default");
+
+        /// <summary>Find requested → UniversalFindRequestedEventArgs.</summary>
+        public static UniversalFindRequestedEventArgs ConvertFind(string query, bool matchCase, bool regex, bool wholeWord)
+            => new UniversalFindRequestedEventArgs(query ?? string.Empty, matchCase, regex, wholeWord);
+
+        /// <summary>Replace requested → UniversalReplaceRequestedEventArgs.</summary>
+        public static UniversalReplaceRequestedEventArgs ConvertReplace(string query, string replacement, bool matchCase, bool regex, bool wholeWord)
+            => new UniversalReplaceRequestedEventArgs(query ?? string.Empty, replacement ?? string.Empty, matchCase, regex, wholeWord);
+
+        /// <summary>Link clicked → UniversalLinkClickedEventArgs.</summary>
+        public static UniversalLinkClickedEventArgs ConvertLink(string url)
+            => new UniversalLinkClickedEventArgs(url ?? string.Empty);
+
+        /// <summary>Diagnostics batch → UniversalDiagnosticsUpdatedEventArgs.</summary>
+        public static UniversalDiagnosticsUpdatedEventArgs ConvertDiagnostics(
+            string documentId,
+            int[] lines,
+            int[] columns,
+            int[] lengths,
+            EditorDiagnosticSeverity[] severities,
+            string[] messages)
+            => new UniversalDiagnosticsUpdatedEventArgs(
+                documentId ?? string.Empty,
+                lines ?? System.Array.Empty<int>(),
+                columns ?? System.Array.Empty<int>(),
+                lengths ?? System.Array.Empty<int>(),
+                severities ?? System.Array.Empty<EditorDiagnosticSeverity>(),
+                messages ?? System.Array.Empty<string>());
+
+        /// <summary>Hover requested → UniversalHoverRequestedEventArgs.</summary>
+        public static UniversalHoverRequestedEventArgs ConvertHover(int offset, int line, int column)
+            => new UniversalHoverRequestedEventArgs(offset, line, column);
+    }
+}
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Conversions\UniversalEventConverter.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Conversions\UniversalEventReverter.cs =====
+# Length: 3939 bytes | Modified: 2025-09-14T19:38:14 | SHA256: AC547A24277725FCEAE1C203B5A81D454C9D857E1157037A679994D1CDD545F3
+
+using PhialeGis.Library.Abstractions.UniversalEvents;
+using Windows.Foundation;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Input;
+using PhialeGis.Library.Abstractions.UniversalEvents.EventEnums;
+
+namespace PhialeGis.Library.UwpUi.Conversions
+{
+    /// <summary>
+    /// Reverts universal event data back to UWP-specific event arguments where applicable.
+    /// Keep this thin: only value/type mapping, no domain logic.
+    /// </summary>
+    internal static class UniversalEventReverter
+    {
+        /// <summary>
+        /// Universal → UWP (ManipulationStarting). Sets Mode and optional Pivot.
+        /// </summary>
+        public static void Revert(
+            UniversalManipulationStartingRoutedEventArgs universal,
+            ManipulationStartingRoutedEventArgs original)
+        {
+            original.Mode = RevertToManipulationMode(universal.ManipulationMode);
+            original.Pivot = RevertToPivotOrNull(universal.Pivot);
+            // Container is not set here; use the overload below if needed.
+        }
+
+        /// <summary>
+        /// Universal → UWP (ManipulationStarting). Sets Mode, optional Pivot and Container.
+        /// </summary>
+        public static void Revert(
+            UniversalManipulationStartingRoutedEventArgs universal,
+            ManipulationStartingRoutedEventArgs original,
+            UIElement container)
+        {
+            original.Mode = RevertToManipulationMode(universal.ManipulationMode);
+            original.Pivot = RevertToPivotOrNull(universal.Pivot);
+            if (container != null)
+                original.Container = container;
+        }
+
+        /// <summary>
+        /// UniversalManipulationModes → UWP ManipulationModes (bitwise-compatible).
+        /// </summary>
+        public static ManipulationModes RevertToManipulationMode(UniversalManipulationModes universalMode)
+            => (ManipulationModes)(uint)universalMode;
+
+        /// <summary>
+        /// UniversalPivot → UWP ManipulationPivot. Returns null if universal is null.
+        /// </summary>
+        public static ManipulationPivot RevertToPivotOrNull(UniversalPivot universalPivot)
+        {
+            if (universalPivot == null) return null;
+            return new ManipulationPivot
+            {
+                Center = ToPoint(universalPivot.Center),
+                Radius = universalPivot.Radius
+            };
+        }
+
+        /// <summary>
+        /// Applies the universal "Handled" decision to UWP event args.
+        /// Note: base Windows.UI.Xaml.RoutedEventArgs does not expose Handled; handle concrete types only.
+        /// </summary>
+        public static void ApplyHandled(bool handled, object original)
+        {
+            switch (original)
+            {
+                case PointerRoutedEventArgs e: e.Handled = handled; break;
+                case KeyRoutedEventArgs e: e.Handled = handled; break;
+                case TappedRoutedEventArgs e: e.Handled = handled; break;
+                case DoubleTappedRoutedEventArgs e: e.Handled = handled; break;
+                case RightTappedRoutedEventArgs e: e.Handled = handled; break;
+                case HoldingRoutedEventArgs e: e.Handled = handled; break;
+                case ManipulationStartingRoutedEventArgs e: e.Handled = handled; break;
+                case ManipulationDeltaRoutedEventArgs e: e.Handled = handled; break;
+                case ManipulationCompletedRoutedEventArgs e: e.Handled = handled; break;
+                // Add more RoutedEventArgs types here if needed in the future.
+                default:
+                    // Base RoutedEventArgs has no Handled in UWP; nothing to do.
+                    break;
+            }
+        }
+
+        // ----------------- helpers -----------------
+
+        private static Point ToPoint(UniversalPoint p)
+            => new Point(p.X, p.Y);
+    }
+}
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Conversions\UniversalEventReverter.cs =====
+
+===== BEGIN FILE: PhialeGis.Library.UwpUi\Themes\Generic.xaml =====
+# Length: 3773 bytes | Modified: 2025-10-04T11:00:59 | SHA256: 17E1970BC3D191CCA035E67E434ECF25E605A2C9EA18169FCBE6E30D1F03E27A
+
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PhialeGis.Library.UwpUi.Controls"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:skia="using:SkiaSharp.Views.UWP">
+
+    <Style TargetType="local:PhialeDrawBoxUwp">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:PhialeDrawBoxUwp">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <skia:SKXamlCanvas
+                            x:Name="SkiaCanvas"
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch" />
+
+                        <ScrollBar
+                            x:Name="ScrollBarVertical"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="{TemplateBinding Background}"
+                            IndicatorMode="MouseIndicator"
+                            Orientation="Vertical"
+                            Visibility="{TemplateBinding VerticalScrollBarVisible}" />
+
+                        <ScrollBar
+                            x:Name="ScrollBarHorizontal"
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="{TemplateBinding Background}"
+                            IndicatorMode="MouseIndicator"
+                            Orientation="Horizontal"
+                            Visibility="{TemplateBinding HorizontalScrollBarVisible}" />
+
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  === PhialeDslEditor (WebView2) ===  -->
+    <Style TargetType="local:PhialeDslEditor">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:PhialeDslEditor">
+                    <Grid Background="{TemplateBinding Background}">
+                        <Grid
+                            x:Name="WebHost"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch">
+                            <!--  ZAMIANA: WebView -> WebView2  -->
+                            <muxc:WebView2
+                                x:Name="PART_WebView2"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch" />
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
+
+
+===== END FILE: PhialeGis.Library.UwpUi\Themes\Generic.xaml =====
+

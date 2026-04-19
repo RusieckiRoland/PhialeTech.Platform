@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.WebHost.Abstractions</PackageId>
+    <AssemblyName>PhialeTech.WebHost.Abstractions</AssemblyName>
+    <RootNamespace>PhialeTech.WebHost.Abstractions</RootNamespace>
+    <Description>Shared abstractions for browser-hosted PhialeTech web components.</Description>
+  </PropertyGroup>
+</Project>

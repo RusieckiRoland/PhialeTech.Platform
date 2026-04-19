@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CS3021</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PhialeGis.Library.Abstractions\PhialeGis.Library.Abstractions.csproj" />
+    <ProjectReference Include="..\PhialeGis.Library.Core\PhialeGis.Library.Core.csproj" />
+    <ProjectReference Include="..\PhialeGis.Library.Domain\PhialeGis.Library.Domain.csproj" />
+    <ProjectReference Include="..\..\..\PhialeTech\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Generated\" />
+  </ItemGroup>
+</Project>

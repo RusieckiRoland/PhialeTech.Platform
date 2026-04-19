@@ -1,0 +1,49 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body, #container {
+      height: 100%; width: 100%; margin: 0; overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+
+  <!-- Monaco loader from the mapped virtual host -->
+  <script src="https://monaco.appset/min/vs/loader.js"></script>
+  <script>
+    // Basic AMD path
+    require.config({ paths: { 'vs': 'https://monaco.appset/min/vs' } });
+
+    // Worker config (direct file version; if 404 → use the blob version below)
+    window.MonacoEnvironment = {
+      getWorkerUrl: function () {
+        return 'https://monaco.appset/min/vs/base/worker/workerMain.js';
+      }
+    };
+  </script>
+
+  <!-- Your host JS: this file calls require(['vs/editor/editor.main']) and creates the editor -->
+  <script src="https://monaco.appset/phiale-dsl-host.js"></script>
+
+  <!--
+  If you still get ERR_FILE_NOT_FOUND for workerMain.js, swap the block above for this blob version:
+
+  <script>
+    require.config({ paths: { 'vs': 'https://monaco.appset/min/vs' } });
+    window.MonacoEnvironment = {
+      getWorkerUrl: function () {
+        const base = 'https://monaco.appset/min/';
+        const path = base + 'vs/base/worker/workerMain.js';
+        const code = 'self.MonacoEnvironment={baseUrl:"' + base + '"}; importScripts("' + path + '");';
+        return URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+      }
+    };
+  </script>
+  -->
+</body>
+</html>

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.PdfViewer</PackageId>
+    <AssemblyName>PhialeTech.PdfViewer</AssemblyName>
+    <RootNamespace>PhialeTech.PdfViewer</RootNamespace>
+    <Description>Portable runtime for the PhialeTech PdfViewer component.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Abstractions\PhialeTech.PdfViewer.Abstractions\PhialeTech.PdfViewer.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\PhialeTech.WebHost\PhialeTech.WebHost.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+</Project>

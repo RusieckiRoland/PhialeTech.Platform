@@ -1,0 +1,12 @@
+public sealed class GridOverviewViewModel
+{
+    public GridOverviewViewModel()
+    {
+        Grid = new PhialeGrid.Avalonia.Controls.PhialeGrid
+        {
+            LanguageCode = "en",
+        };
+    }
+
+    public PhialeGrid.Avalonia.Controls.PhialeGrid Grid { get; }
+}

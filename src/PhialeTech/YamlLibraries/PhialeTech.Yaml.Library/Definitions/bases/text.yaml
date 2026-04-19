@@ -1,0 +1,11 @@
+namespace: bases
+
+definitions:
+  baseText:
+    control: YamlTextBox
+    valueType: string
+    multiline: false
+
+  baseMultilineText:
+    extends: baseText
+    multiline: true

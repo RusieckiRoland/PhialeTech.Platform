@@ -1,0 +1,23 @@
+# Active Layer Selector
+Selector.NoActiveLayer=Brak aktywnej warstwy
+Selector.NoLayers=Brak dostępnych warstw
+Selector.Path=Ścieżka
+Selector.Source=Źródło
+Selector.Active=Aktywna
+Selector.SetActive=Ustaw aktywną
+Selector.ShowMore=Pokaż więcej
+Selector.ShowLayersButton=Pokaż warstwy ({0})
+Selector.SearchPlaceholder=Szukaj warstwy...
+Selector.Expand=Rozwiń listę warstw
+Selector.Collapse=Zwiń listę warstw
+Selector.Column.Status=Status
+Selector.Column.Visible=Widoczna
+Selector.Column.Selectable=Selekcja
+Selector.Column.Editable=Edycja
+Selector.Column.Snappable=Snap
+Selector.Column.Type=Typ
+Selector.Column.LayerInfo=Informacje o warstwie
+Selector.Capability.Visible=Widoczna
+Selector.Capability.Selectable=Selekcja
+Selector.Capability.Editable=Edycja
+Selector.Capability.Snappable=Snap

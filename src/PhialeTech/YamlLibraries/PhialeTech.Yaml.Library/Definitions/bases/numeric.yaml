@@ -1,0 +1,6 @@
+namespace: bases.numeric
+
+definitions:
+  baseInteger:
+    control: YamlIntegerBox
+    valueType: int

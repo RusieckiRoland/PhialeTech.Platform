@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #0f172a;
+    }
+
+    body {
+      box-sizing: border-box;
+    }
+
+    #editor-shell,
+    #editor-root {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0f172a;
+    }
+  </style>
+  <script>
+    (function () {
+      var basePath = window.location.origin + '/Monaco/min/';
+      window.MonacoEnvironment = {
+        getWorkerUrl: function (moduleId, label) {
+          switch (label) {
+            case 'json':
+              return basePath + 'vs/language/json/jsonWorker.js';
+            case 'css':
+            case 'scss':
+            case 'less':
+              return basePath + 'vs/language/css/cssWorker.js';
+            case 'html':
+            case 'handlebars':
+            case 'razor':
+              return basePath + 'vs/language/html/htmlWorker.js';
+            case 'typescript':
+            case 'javascript':
+              return basePath + 'vs/language/typescript/tsWorker.js';
+            default:
+              return basePath + 'vs/base/worker/workerMain.js';
+          }
+        }
+      };
+    })();
+  </script>
+  <script src="../Monaco/min/vs/loader.js"></script>
+  <script>
+    require.config({ paths: { vs: '../Monaco/min/vs' } });
+  </script>
+</head>
+<body>
+  <div id="editor-shell">
+    <div id="editor-root"></div>
+  </div>
+  <script src="phiale-monaco-host.js"></script>
+</body>
+</html>

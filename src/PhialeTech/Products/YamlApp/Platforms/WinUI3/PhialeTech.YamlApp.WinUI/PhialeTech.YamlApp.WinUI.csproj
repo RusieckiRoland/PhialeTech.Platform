@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>PhialeTech.YamlApp.WinUI</RootNamespace>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackageId>PhialeTech.YamlApp.WinUI</PackageId>
+    <AssemblyName>PhialeTech.YamlApp.WinUI</AssemblyName>
+    <Description>WinUI 3 adapter for the PhialeTech YamlApp product family.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250916003" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Abstractions\PhialeTech.YamlApp.Abstractions\PhialeTech.YamlApp.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Definitions\PhialeTech.YamlApp.Definitions\PhialeTech.YamlApp.Definitions.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeTech.YamlApp.Core\PhialeTech.YamlApp.Core.csproj" />
+    <ProjectReference Include="..\..\..\Runtime\PhialeTech.YamlApp.Runtime\PhialeTech.YamlApp.Runtime.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+</Project>

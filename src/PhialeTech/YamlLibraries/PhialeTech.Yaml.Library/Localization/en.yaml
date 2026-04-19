@@ -1,0 +1,10 @@
+person.firstName.caption: First name
+person.firstName.placeholder: Enter first name
+person.lastName.caption: Last name
+person.lastName.placeholder: Enter last name
+person.age.caption: Age
+person.age.placeholder: Enter age
+person.notes.caption: Notes
+person.notes.placeholder: Enter additional information
+actions.ok.caption: OK
+actions.cancel.caption: Cancel

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.YamlApp.Wpf</PackageId>
+    <AssemblyName>PhialeTech.YamlApp.Wpf</AssemblyName>
+    <RootNamespace>PhialeTech.YamlApp.Wpf</RootNamespace>
+    <Description>WPF adapter for the PhialeTech YamlApp product family.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="3.119.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Abstractions\PhialeTech.YamlApp.Abstractions\PhialeTech.YamlApp.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Definitions\PhialeTech.YamlApp.Definitions\PhialeTech.YamlApp.Definitions.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeTech.YamlApp.Core\PhialeTech.YamlApp.Core.csproj" />
+    <ProjectReference Include="..\..\..\Runtime\PhialeTech.YamlApp.Runtime\PhialeTech.YamlApp.Runtime.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\PhialeTech.Styles.Wpf\PhialeTech.Styles.Wpf.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\..\..\..\..\Shared\PhialeTech.Styles.Wpf\Themes.Linked\YamlApp\Generic.xaml" Link="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+</Project>

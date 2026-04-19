@@ -1,0 +1,21 @@
+using System.Collections.Generic;
+using PhialeGrid.Core.Columns;
+using PhialeGrid.Core.Query;
+using PhialeTech.Components.Shared.Model;
+using PhialeTech.Components.Shared.Services;
+
+public sealed class GridOverviewViewModel
+{
+    public IReadOnlyList<GridColumnDefinition> GridColumns { get; } = new[]
+    {
+        new GridColumnDefinition("Family", "Family", width: 150d, displayIndex: 0, valueType: typeof(string)),
+        new GridColumnDefinition("Product", "Product", width: 260d, displayIndex: 1, valueType: typeof(string)),
+        new GridColumnDefinition("Year2018", "2018", width: 130d, displayIndex: 2, valueType: typeof(decimal)),
+        new GridColumnDefinition("Actual", "Actual", width: 150d, displayIndex: 3, valueType: typeof(decimal)),
+    };
+
+    public IReadOnlyList<DemoSalesRecordViewModel> GridRecords { get; } = new DemoFeatureCatalog().GetSalesRecords();
+
+    public IReadOnlyList<GridGroupDescriptor> GridGroups { get; set; } =
+        new[] { new GridGroupDescriptor("Family", GridSortDirection.Ascending) };
+}

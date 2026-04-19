@@ -1,0 +1,258 @@
+<UserControl x:Class="PhialeTech.Components.Wpf.Controls.YamlTextBoxPureWpf"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:PhialeTech.Components.Wpf.Controls"
+             x:Name="Root"
+             MinHeight="{DynamicResource YamlTextBox.Framed.MinHeight}"
+             SnapsToDevicePixels="True"
+             UseLayoutRounding="True"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="Auto">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <Style x:Key="PureCardBorderStyle" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="{DynamicResource Brush.Surface0}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource YamlTextBox.Card.CornerRadius.Border}" />
+            <Setter Property="Padding" Value="14,12,14,12" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="UseLayoutRounding" Value="True" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowError, ElementName=Root}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Brush.Danger.Fill}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger.Border}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsEnabled, ElementName=Root}" Value="False">
+                    <Setter Property="Opacity" Value="0.6" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PureInputBorderStyle" TargetType="{x:Type Border}">
+            <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource YamlTextBox.Input.CornerRadius.Border}" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="UseLayoutRounding" Value="True" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowError, ElementName=Root}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger.Border}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PureInteractionOutlineStyle" TargetType="{x:Type Border}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, ElementName=InputFrame}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsInputFocused, ElementName=Root}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsEnabled, ElementName=Root}" Value="False" />
+                        <Condition Binding="{Binding IsMouseOver, ElementName=InputFrame}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PureFocusBottomAccentStyle" TargetType="{x:Type Border}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsInputFocused, ElementName=Root}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="YamlTextBoxPureWpf.ClearButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="ClearButtonHost"
+                                Width="{TemplateBinding Width}"
+                                Height="{TemplateBinding Height}"
+                                Background="Transparent"
+                                SnapsToDevicePixels="True">
+                            <Border x:Name="ClearButtonChrome"
+                                    Width="15"
+                                    Height="15"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    SnapsToDevicePixels="True"
+                                    UseLayoutRounding="True">
+                                <Grid>
+                                    <Path x:Name="ClearGlyph"
+                                          Width="9"
+                                          Height="9"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Data="M 1 1 L 8 8 M 8 1 L 1 8"
+                                          Stretch="Uniform"
+                                          Stroke="{TemplateBinding Foreground}"
+                                          StrokeThickness="1.2"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          SnapsToDevicePixels="True" />
+                                    <Path x:Name="RestoreGlyph"
+                                          Width="10"
+                                          Height="10"
+                                          Visibility="Collapsed"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Data="M 3.7 1.6 L 1.6 3.7 L 3.7 5.8 M 1.6 3.7 H 5.6 C 7.0 3.7 8.1 4.8 8.1 6.2 C 8.1 7.3 7.2 8.2 6.1 8.2 H 4.8"
+                                          Stretch="Uniform"
+                                          Stroke="{TemplateBinding Foreground}"
+                                          StrokeThickness="1.35"
+                                          StrokeLineJoin="Round"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          SnapsToDevicePixels="True" />
+                                </Grid>
+                            </Border>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding ShowRestoreButton, RelativeSource={RelativeSource AncestorType={x:Type local:YamlTextBoxPureWpf}}}" Value="True">
+                                <Setter TargetName="ClearGlyph" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="RestoreGlyph" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsInputFocused, RelativeSource={RelativeSource AncestorType={x:Type local:YamlTextBoxPureWpf}}}" Value="True">
+                                <Setter TargetName="ClearGlyph" Property="Stroke" Value="{DynamicResource Brush.Focus.Ring}" />
+                                <Setter TargetName="RestoreGlyph" Property="Stroke" Value="{DynamicResource Brush.Focus.Ring}" />
+                                <Setter TargetName="ClearGlyph" Property="StrokeThickness" Value="1.35" />
+                                <Setter TargetName="RestoreGlyph" Property="StrokeThickness" Value="1.35" />
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ClearButtonChrome" Property="Background" Value="{DynamicResource Brush.Hover.Fill}" />
+                                <Setter TargetName="ClearButtonChrome" Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+                                <Setter TargetName="ClearGlyph" Property="Stroke" Value="{DynamicResource Brush.Text.Primary}" />
+                                <Setter TargetName="RestoreGlyph" Property="Stroke" Value="{DynamicResource Brush.Text.Primary}" />
+                                <Setter TargetName="ClearGlyph" Property="StrokeThickness" Value="1.3" />
+                                <Setter TargetName="RestoreGlyph" Property="StrokeThickness" Value="1.3" />
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsInputFocused, RelativeSource={RelativeSource AncestorType={x:Type local:YamlTextBoxPureWpf}}}" Value="True" />
+                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="ClearButtonChrome" Property="Background" Value="{DynamicResource Brush.Hover.Fill}" />
+                                <Setter TargetName="ClearButtonChrome" Property="BorderBrush" Value="{DynamicResource Brush.Focus.Ring}" />
+                                <Setter TargetName="ClearGlyph" Property="Stroke" Value="{DynamicResource Brush.Focus.Ring}" />
+                                <Setter TargetName="RestoreGlyph" Property="Stroke" Value="{DynamicResource Brush.Focus.Ring}" />
+                                <Setter TargetName="ClearGlyph" Property="StrokeThickness" Value="1.45" />
+                                <Setter TargetName="RestoreGlyph" Property="StrokeThickness" Value="1.45" />
+                            </MultiDataTrigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ClearButtonHost" Property="Opacity" Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource PureCardBorderStyle}">
+        <StackPanel>
+            <TextBlock Text="{Binding Caption, ElementName=Root}"
+                       FontFamily="{DynamicResource YamlTextBox.Caption.FontFamily}"
+                       FontSize="{DynamicResource YamlTextBox.Caption.FontSize}"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.Text.Primary}"
+                       SnapsToDevicePixels="True"
+                       UseLayoutRounding="True" />
+
+            <Grid x:Name="InputFrame"
+                  Height="38"
+                  Margin="0,10,0,0"
+                  SnapsToDevicePixels="True"
+                  UseLayoutRounding="True">
+                <Border Style="{StaticResource PureInputBorderStyle}" />
+
+                <Grid Margin="1"
+                      SnapsToDevicePixels="True"
+                      UseLayoutRounding="True">
+                    <TextBox x:Name="Editor"
+                             MinHeight="24"
+                             Padding="9,0,28,1"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             CaretBrush="{DynamicResource Brush.Text.Primary}"
+                             FocusVisualStyle="{x:Null}"
+                             FontFamily="{DynamicResource YamlTextBox.Editor.FontFamily}"
+                             FontSize="{DynamicResource YamlTextBox.Framed.Editor.FontSize}"
+                             Foreground="{DynamicResource Brush.Text.Primary}"
+                             Template="{DynamicResource ChromeHostedTextBoxTemplate}"
+                             Text="{Binding Text, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             TextOptions.TextFormattingMode="Display"
+                             TextOptions.TextRenderingMode="Auto"
+                             VerticalContentAlignment="Center"
+                             GotKeyboardFocus="HandleEditorGotKeyboardFocus"
+                             LostKeyboardFocus="HandleEditorLostKeyboardFocus"
+                             SnapsToDevicePixels="True"
+                             UseLayoutRounding="True" />
+
+                    <TextBlock Margin="10,0,32,0"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource Brush.Text.Muted}"
+                               FontFamily="{DynamicResource YamlTextBox.Editor.FontFamily}"
+                               FontSize="{DynamicResource YamlTextBox.Framed.Editor.FontSize}"
+                               IsHitTestVisible="False"
+                               Text="{Binding Placeholder, ElementName=Root}"
+                               Visibility="{Binding PlaceholderVisibility, ElementName=Root}" />
+
+                    <Button Width="{DynamicResource YamlTextBox.Framed.ClearButton.Width}"
+                            Height="{DynamicResource YamlTextBox.Framed.ClearButton.Height}"
+                            Margin="0,0,8,0"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding TrailingActionVisibility, ElementName=Root}"
+                            Click="HandleClearButtonClick"
+                            Style="{StaticResource YamlTextBoxPureWpf.ClearButtonStyle}" />
+                </Grid>
+
+                <Border BorderBrush="{DynamicResource Brush.Focus.Ring}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource YamlTextBox.Input.CornerRadius.Border}"
+                        IsHitTestVisible="False"
+                        Style="{StaticResource PureInteractionOutlineStyle}" />
+
+                <Border Height="2"
+                        Margin="2,0,2,1"
+                        VerticalAlignment="Bottom"
+                        Background="{DynamicResource Brush.Focus.Ring}"
+                        CornerRadius="0,0,8,8"
+                        IsHitTestVisible="False"
+                        Style="{StaticResource PureFocusBottomAccentStyle}" />
+            </Grid>
+
+            <TextBlock Margin="0,8,0,0"
+                       FontFamily="{DynamicResource YamlTextBox.Support.FontFamily}"
+                       FontSize="{DynamicResource YamlTextBox.Support.FontSize}"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource Brush.Danger.Text}"
+                       SnapsToDevicePixels="True"
+                       Text="{Binding ErrorMessage, ElementName=Root}"
+                       UseLayoutRounding="True"
+                       Visibility="{Binding ShowError, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        </StackPanel>
+    </Border>
+</UserControl>

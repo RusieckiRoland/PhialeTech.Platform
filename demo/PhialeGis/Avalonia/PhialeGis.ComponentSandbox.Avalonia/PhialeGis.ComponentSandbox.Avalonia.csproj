@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AvaloniaUseCompiledBindings>true</AvaloniaUseCompiledBindings>
+    <AppendRuntimeIdentifierToOutputPath>true</AppendRuntimeIdentifierToOutputPath>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(_ActiveDebugProfileFromUserFile)' == '' and Exists('$(MSBuildProjectFullPath).user')">
+    <_ActiveDebugProfileFromUserFile>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildProjectFullPath).user')), '&lt;ActiveDebugProfile&gt;([^&lt;]+)&lt;/ActiveDebugProfile&gt;').Groups[1].Value)</_ActiveDebugProfileFromUserFile>
+  </PropertyGroup>
+  <!--
+		WSL profile in Visual Studio may build on Windows host without Linux OS context.
+		Force Linux RID/x64 when running on Linux, dotnet launch profile "WSL",
+		or Visual Studio active debug profile "WSL" (including value from .csproj.user),
+		so CEF assets are copied
+		into the runtime output (CefGlueBrowserProcess + linux native files).
+	-->
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) Or '$(LaunchProfile)' == 'WSL' Or '$(ActiveDebugProfile)' == 'WSL' Or '$(_ActiveDebugProfileFromUserFile)' == 'WSL'">
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">linux-x64</RuntimeIdentifier>
+    <CefGlueTargetPlatform>linux-x64</CefGlueTargetPlatform>
+    <PlatformTarget Condition="'$(PlatformTarget)' == ''">x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <!-- Keep debugger attached in VS WSL runs; WinExe may exit host process early. -->
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.7" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.7" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.7" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.7" />
+    <PackageReference Include="cef.redist.linux64" Version="120.1.8" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="PhialeGis.WebAssets" Version="1.0.0" />
+    <PackageVersion Include="SkiaSharp" Version="2.88.6" />
+    <PackageVersion Include="SkiaSharp.Views" Version="2.88.6" />
+    <PackageVersion Include="SkiaSharp.Views.WPF" Version="2.88.6" />
+    <PackageVersion Include="SkiaSharp.Views.WinUI" Version="2.88.6" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.6" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.Library.Domain\PhialeGis.Library.Domain.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.Library.Dsl\PhialeGis.Library.Dsl.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.Library.Renderer.Skia\PhialeGis.Library.Renderer.Skia.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.Library.Sync\PhialeGis.Library.Sync.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Platforms\Avalonia\PhialeGis.Library.AvaloniaUi\PhialeGis.Library.AvaloniaUi.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+  <Target Name="CopyLinuxCefRuntimeToOutputRoot" AfterTargets="Build" Condition="'$(CefGlueTargetPlatform)' == 'linux-x64' and '@(CefRedistLinux64)' != ''">
+    <Copy SourceFiles="@(CefRedistLinux64)" DestinationFiles="@(CefRedistLinux64-&gt;'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>PhialeGis.Library.WinUi</RootNamespace>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Themes\Generic.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250916003" />
+    <PackageReference Include="PhialeGis.WebAssets" Version="1.0.0" />
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
+    <PackageReference Include="SkiaSharp.Views.WinUI" Version="3.119.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="Assets\Monaco\min\vs\basic-languages\st\st.js" />
+    <Content Remove="Assets\Monaco\min\vs\basic-languages\st.js" />
+    <Content Remove="Assets\Monaco\**\*.nls.zh-cn.js" />
+    <Content Remove="Assets\Monaco\**\*.nls.zh-tw.js" />
+    <PRIResource Remove="Assets\Monaco\min\vs\basic-languages\st\st.js" />
+    <PRIResource Remove="Assets\Monaco\min\vs\basic-languages\st.js" />
+    <PRIResource Remove="Assets\Monaco\**\*.nls.zh-cn.js" />
+    <PRIResource Remove="Assets\Monaco\**\*.nls.zh-tw.js" />
+    <None Remove="Assets\Monaco\min\vs\basic-languages\st\st.js" />
+    <None Remove="Assets\Monaco\min\vs\basic-languages\st.js" />
+    <None Remove="Assets\Monaco\**\*.nls.zh-cn.js" />
+    <None Remove="Assets\Monaco\**\*.nls.zh-tw.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Features\PhialeGis.Library.DslEditor\PhialeGis.Library.DslEditor.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeGis.Library.Abstractions\PhialeGis.Library.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeGis.Library.Core\PhialeGis.Library.Core.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeGis.Library.Dsl\PhialeGis.Library.Dsl.csproj" />
+    <ProjectReference Include="..\..\..\..\PhialeTech\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+</Project>

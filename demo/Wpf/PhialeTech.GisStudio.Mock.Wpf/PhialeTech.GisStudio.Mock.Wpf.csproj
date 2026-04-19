@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <AssemblyName>PhialeTech.GisStudio.Mock.Wpf</AssemblyName>
+    <RootNamespace>PhialeTech.GisStudio.Mock.Wpf</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PhialeTech\Shared\PhialeTech.Components.Shared\PhialeTech.Components.Shared.csproj" />
+    <ProjectReference Include="..\..\..\src\PhialeTech\Products\ActiveLayerSelector\Platforms\Wpf\PhialeTech.ActiveLayerSelector.Wpf\PhialeTech.ActiveLayerSelector.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\src\PhialeTech\Products\Grid\Platforms\Wpf\PhialeGrid.Wpf\PhialeGrid.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\src\PhialeTech\Shared\PhialeTech.Styles.Wpf\PhialeTech.Styles.Wpf.csproj" />
+  </ItemGroup>
+</Project>

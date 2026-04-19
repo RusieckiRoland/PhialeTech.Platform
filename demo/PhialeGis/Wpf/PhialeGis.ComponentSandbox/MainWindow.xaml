@@ -1,0 +1,83 @@
+﻿<!--  MainWindow.xaml (WPF / MahApps)  -->
+<mah:MetroWindow
+    x:Class="MahAppTestApp.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Controls="clr-namespace:PhialeGis.Library.WpfUi.Controls;assembly=PhialeGis.Library.WpfUi"
+    xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:MahAppTestApp"
+    xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="MainWindow"
+    Width="800"
+    Height="450"
+    Dialog:DialogParticipation.Register="{Binding}"
+    Topmost="True"
+    WindowState="Maximized"
+    WindowStyle="None"
+    mc:Ignorable="d">
+
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!--  Columns: 15% | 70% | 15%  -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.15*" />
+            <ColumnDefinition Width="0.7*" />
+            <ColumnDefinition Width="0.15*" />
+        </Grid.ColumnDefinitions>
+
+        <!--  Rows: 5% | 60% | 30% | 5%  -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.05*" />
+            <RowDefinition Height="0.60*" />
+            <RowDefinition Height="0.30*" />
+            <RowDefinition Height="0.05*" />
+        </Grid.RowDefinitions>
+
+        <!--  Right-side control panel  -->
+        <StackPanel
+            Grid.Row="1"
+            Grid.Column="2"
+            VerticalAlignment="Top"
+            Orientation="Vertical">
+            <!--  Use per-control margins (WPF StackPanel has no Spacing)  -->
+            <Button
+                Width="125"
+                Height="50"
+                Margin="0,0,0,8"
+                Command="{Binding ChangeViewAction}"
+                Content="Show shape" />
+            <Button
+                Width="125"
+                Height="50"
+                Margin="0,0,0,8"
+                Command="{Binding ImportLayer}"
+                Content="Import layer" />
+            <Button
+                Width="125"
+                Height="50"
+                Command="{Binding OpenSecondWindow}"
+                Content="Open second map" />
+        </StackPanel>
+
+        <!--  Map  -->
+        <Controls:PhialeDrawBox
+            x:Name="Map"
+            Grid.Row="1"
+            Grid.Column="1"
+            Margin="0,11,0,42"
+            Background="Pink"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            HorizontalScrollBarVisible="Visible"
+            VerticalScrollBarVisible="Visible" />
+
+        <!--  DSL editor  -->
+        <Controls:PhialeDslEditor
+            Grid.Row="2"
+            Grid.Column="1"
+            BorderBrush="red"
+            BorderThickness="2"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            TargetDraw="{Binding ElementName=Map, Path=CompositionAdapter}" />
+    </Grid>
+</mah:MetroWindow>

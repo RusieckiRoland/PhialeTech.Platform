@@ -1,0 +1,1242 @@
+<Window x:Class="PhialeTech.GisStudio.Mock.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:grid="clr-namespace:PhialeTech.PhialeGrid.Wpf.Controls;assembly=PhialeTech.Grid.Wpf"
+        xmlns:local="clr-namespace:PhialeTech.GisStudio.Mock.Wpf"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:selector="clr-namespace:PhialeTech.ActiveLayerSelector.Wpf.Controls;assembly=PhialeTech.ActiveLayerSelector.Wpf"
+        mc:Ignorable="d"
+        Title="{Binding AppTitle}"
+        Width="1680"
+        Height="980"
+        MinWidth="1380"
+        MinHeight="860"
+        Background="{DynamicResource GisMock.WindowBackgroundBrush}"
+        FontFamily="Bahnschrift"
+        PreviewKeyDown="HandleWindowPreviewKeyDown">
+    <Window.Resources>
+        <DataTemplate x:Key="NavigationDrawerContentTemplate">
+            <Grid Margin="16,16,16,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Nawigacja"
+                               Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                    <TextBlock Margin="0,6,0,0"
+                               Text="{Binding AppDrawerTitle}"
+                               Style="{StaticResource Text.Secondary}" />
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1"
+                              Margin="0,18,0,18"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Workspace"
+                                   Style="{StaticResource Text.Secondary}" />
+
+                        <ToggleButton Margin="0,12,0,8"
+                                      Click="HandleNavigationItemClick"
+                                      PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                      HorizontalContentAlignment="Stretch"
+                                      Style="{StaticResource GisMock.NavToggleButtonStyle}"
+                                      IsChecked="{Binding IsHomeSelected, Mode=TwoWay}"
+                                      ToolTip="Start Workspace">
+                            <StackPanel>
+                                <TextBlock Text="Start Workspace"
+                                           Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                <TextBlock Margin="0,2,0,0"
+                                           Text="Hub startowy dla map, danych i procesów"
+                                           Style="{StaticResource Text.Secondary}" />
+                            </StackPanel>
+                        </ToggleButton>
+
+                        <ToggleButton Click="HandleNavigationItemClick"
+                                      PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                      HorizontalContentAlignment="Stretch"
+                                      Style="{StaticResource GisMock.NavToggleButtonStyle}"
+                                      IsChecked="{Binding IsStudioSelected, Mode=TwoWay}"
+                                      ToolTip="Studio GIS">
+                            <StackPanel>
+                                <TextBlock Text="Studio GIS"
+                                           Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                <TextBlock Margin="0,2,0,0"
+                                           Text="Dokumenty mapowe, edycja i analiza"
+                                           Style="{StaticResource Text.Secondary}" />
+                            </StackPanel>
+                        </ToggleButton>
+
+                        <ToggleButton Click="HandleNavigationItemClick"
+                                      PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                      HorizontalContentAlignment="Stretch"
+                                      Style="{StaticResource GisMock.NavToggleButtonStyle}"
+                                      IsChecked="{Binding IsCatalogSelected, Mode=TwoWay}"
+                                      ToolTip="Katalog Danych">
+                            <StackPanel>
+                                <TextBlock Text="Katalog Danych"
+                                           Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                <TextBlock Margin="0,2,0,0"
+                                           Text="Połączenia, importy i źródła"
+                                           Style="{StaticResource Text.Secondary}" />
+                            </StackPanel>
+                        </ToggleButton>
+
+                        <ToggleButton Click="HandleNavigationItemClick"
+                                      PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                      HorizontalContentAlignment="Stretch"
+                                      Style="{StaticResource GisMock.NavToggleButtonStyle}"
+                                      IsChecked="{Binding IsBusinessSelected, Mode=TwoWay}"
+                                      ToolTip="Procesy Biznesowe">
+                            <StackPanel>
+                                <TextBlock Text="Procesy Biznesowe"
+                                           Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                <TextBlock Margin="0,2,0,0"
+                                           Text="Kolejki pracy, formularze i sprawy"
+                                           Style="{StaticResource Text.Secondary}" />
+                            </StackPanel>
+                        </ToggleButton>
+
+                        <ToggleButton Click="HandleNavigationItemClick"
+                                      PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                      HorizontalContentAlignment="Stretch"
+                                      Style="{StaticResource GisMock.NavToggleButtonStyle}"
+                                      IsChecked="{Binding IsReportsSelected, Mode=TwoWay}"
+                                      ToolTip="Raporty i Eksport">
+                            <StackPanel>
+                                <TextBlock Text="Raporty i Eksport"
+                                           Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                <TextBlock Margin="0,2,0,0"
+                                           Text="Wydruki, PDF i publikacje"
+                                           Style="{StaticResource Text.Secondary}" />
+                            </StackPanel>
+                        </ToggleButton>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2"
+                        Style="{StaticResource GisMock.FloatingCardBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding AppDrawerTitle}"
+                                   Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding AppDrawerSubtitle}"
+                                   Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+    <Grid ClipToBounds="True">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="56" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border x:Name="LeftRailHost"
+              Grid.Row="1"
+              Grid.Column="0"
+              Width="56"
+              Background="{DynamicResource GisMock.RailBackgroundBrush}"
+              BorderBrush="{DynamicResource GisMock.TopBarBorderBrush}"
+              BorderThickness="0,0,1,0"
+              Panel.ZIndex="20">
+            <Grid Margin="4,12,4,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <ToggleButton Width="48"
+                              Height="48"
+                              MinWidth="48"
+                              MinHeight="48"
+                              HorizontalAlignment="Left"
+                              VerticalAlignment="Top"
+                              Style="{StaticResource GisMock.IconToggleButtonStyle}"
+                              IsChecked="{Binding IsAppDrawerOpen, Mode=TwoWay}"
+                              ToolTip="Otwórz lub zamknij drawer">
+                    <TextBlock FontFamily="Segoe MDL2 Assets"
+                               FontSize="16"
+                               Text="&#xE700;" />
+                </ToggleButton>
+
+                <StackPanel Grid.Row="1"
+                            Margin="0,18,0,18">
+                    <ToggleButton Width="48"
+                                  Height="48"
+                                  Padding="0"
+                                  Click="HandleNavigationItemClick"
+                                  PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                  HorizontalContentAlignment="Center"
+                                  Style="{StaticResource GisMock.IconToggleButtonStyle}"
+                                  IsChecked="{Binding IsHomeSelected, Mode=TwoWay}"
+                                  ToolTip="Start Workspace">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"
+                                   Text="&#xE80F;" />
+                    </ToggleButton>
+
+                    <ToggleButton Width="48"
+                                  Height="48"
+                                  Padding="0"
+                                  Click="HandleNavigationItemClick"
+                                  PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                  HorizontalContentAlignment="Center"
+                                  Style="{StaticResource GisMock.IconToggleButtonStyle}"
+                                  IsChecked="{Binding IsStudioSelected, Mode=TwoWay}"
+                                  ToolTip="Studio GIS">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"
+                                   Text="&#xE81E;" />
+                    </ToggleButton>
+
+                    <ToggleButton Width="48"
+                                  Height="48"
+                                  Padding="0"
+                                  Click="HandleNavigationItemClick"
+                                  PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                  HorizontalContentAlignment="Center"
+                                  Style="{StaticResource GisMock.IconToggleButtonStyle}"
+                                  IsChecked="{Binding IsCatalogSelected, Mode=TwoWay}"
+                                  ToolTip="Katalog Danych">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"
+                                   Text="&#xE14C;" />
+                    </ToggleButton>
+
+                    <ToggleButton Width="48"
+                                  Height="48"
+                                  Padding="0"
+                                  Click="HandleNavigationItemClick"
+                                  PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                  HorizontalContentAlignment="Center"
+                                  Style="{StaticResource GisMock.IconToggleButtonStyle}"
+                                  IsChecked="{Binding IsBusinessSelected, Mode=TwoWay}"
+                                  ToolTip="Procesy Biznesowe">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"
+                                   Text="&#xE821;" />
+                    </ToggleButton>
+
+                    <ToggleButton Width="48"
+                                  Height="48"
+                                  Padding="0"
+                                  Click="HandleNavigationItemClick"
+                                  PreviewMouseLeftButtonDown="HandleNavigationItemPointerDown"
+                                  HorizontalContentAlignment="Center"
+                                  Style="{StaticResource GisMock.IconToggleButtonStyle}"
+                                  IsChecked="{Binding IsReportsSelected, Mode=TwoWay}"
+                                  ToolTip="Raporty i Eksport">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"
+                                   Text="&#xE9D2;" />
+                    </ToggleButton>
+                </StackPanel>
+
+                <Button Grid.Row="2"
+                        Width="48"
+                        Height="48"
+                        MinWidth="48"
+                        MinHeight="48"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Style="{StaticResource GisMock.IconButtonStyle}"
+                        ToolTip="Ustawienia">
+                    <TextBlock FontFamily="Segoe MDL2 Assets"
+                               FontSize="16"
+                               Text="&#xE713;" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <Border x:Name="PushDrawerHost"
+                Grid.Row="1"
+                Grid.Column="1"
+                Width="0"
+                HorizontalAlignment="Left"
+                ClipToBounds="True"
+                Visibility="{Binding IsPushDrawerMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Background="{DynamicResource GisMock.RailBackgroundBrush}"
+                BorderBrush="{DynamicResource GisMock.TopBarBorderBrush}"
+                BorderThickness="0,0,1,0"
+                Panel.ZIndex="10">
+            <ContentControl Content="{Binding}"
+                            ContentTemplate="{StaticResource NavigationDrawerContentTemplate}" />
+        </Border>
+
+        <Canvas x:Name="OverlayDrawerLayer"
+                Grid.Row="1"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                ClipToBounds="True"
+                Visibility="{Binding IsOverlayDrawerMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Panel.ZIndex="15">
+            <Border x:Name="OverlayDrawerHost"
+                    Width="240"
+                    Height="{Binding ActualHeight, ElementName=OverlayDrawerLayer}"
+                    Canvas.Left="0"
+                    Canvas.Top="0"
+                    Background="{DynamicResource GisMock.RailBackgroundBrush}"
+                    BorderBrush="{DynamicResource GisMock.TopBarBorderBrush}"
+                    BorderThickness="0,0,1,0">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="OverlayDrawerTransform" />
+                </Border.RenderTransform>
+                <ContentControl Content="{Binding}"
+                                ContentTemplate="{StaticResource NavigationDrawerContentTemplate}" />
+            </Border>
+        </Canvas>
+
+        <Border Grid.Row="0"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Panel.ZIndex="30"
+                Background="{DynamicResource GisMock.TopBarBackgroundBrush}"
+                BorderBrush="{DynamicResource GisMock.TopBarBorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid Margin="16,12,24,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border Width="40"
+                        Height="40"
+                        Style="{StaticResource GisMock.BrandBadgeBorderStyle}">
+                    <TextBlock Text="PG"
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource Brush.Text.Inverse}"
+                               FontFamily="Bahnschrift SemiBold"
+                               FontSize="16" />
+                </Border>
+
+                <StackPanel Grid.Column="1"
+                            Margin="14,0,0,0"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding SelectedSectionTitle}"
+                               Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                    <TextBlock Margin="0,4,0,0"
+                               Text="{Binding SelectedSectionSubtitle}"
+                               Style="{StaticResource Text.Secondary}" />
+                </StackPanel>
+
+                <Border Grid.Column="3"
+                        Style="{StaticResource GisMock.BadgeBorderStyle}"
+                        Margin="0,0,14,0"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="desktop demo"
+                               Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                               FontSize="12"
+                               FontFamily="Bahnschrift SemiBold" />
+                </Border>
+
+                <StackPanel Grid.Column="4"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding IsStudioSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                VerticalAlignment="Center">
+                        <ToggleButton Style="{StaticResource GisMock.SegmentToggleButtonStyle}"
+                                      IsChecked="{Binding IsAppDrawerOpen, Mode=TwoWay}"
+                                      Content="Explorer" />
+                        <ToggleButton Style="{StaticResource GisMock.SegmentToggleButtonStyle}"
+                                      IsChecked="{Binding SelectedMapDocument.IsInspectorOpen, Mode=TwoWay}"
+                                      IsEnabled="{Binding HasSelectedMapDocument}"
+                                      Content="Panel" />
+                        <ToggleButton Style="{StaticResource GisMock.SegmentToggleButtonStyle}"
+                                      IsChecked="{Binding SelectedMapDocument.IsDslOpen, Mode=TwoWay}"
+                                      IsEnabled="{Binding HasSelectedMapDocument}"
+                                      Content="DSL" />
+                        <ToggleButton Style="{StaticResource GisMock.SegmentToggleButtonStyle}"
+                                      IsChecked="{Binding SelectedMapDocument.IsAttributeTableMaximized, Mode=TwoWay}"
+                                      IsEnabled="{Binding HasSelectedMapDocument}"
+                                      Content="Tabela" />
+                        <Border Style="{StaticResource GisMock.BadgeBorderStyle}"
+                                Margin="8,0,8,0"
+                                Visibility="{Binding HasSelectedMapDocument, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{Binding SelectedMapDocument.ActiveLayerName}"
+                                       Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                       FontSize="11" />
+                        </Border>
+                        <Border Style="{StaticResource GisMock.BadgeBorderStyle}"
+                                Margin="0,0,14,0"
+                                Visibility="{Binding HasSelectedMapDocument, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{Binding SelectedMapDocument.ActiveGeometryType}"
+                                       Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                       FontSize="11" />
+                        </Border>
+                        <Button Style="{StaticResource GisMock.SecondaryHeroButtonStyle}"
+                                Margin="0,0,10,0"
+                                Content="Duplikuj"
+                                IsEnabled="{Binding HasSelectedMapDocument}"
+                                Click="HandleDuplicateMapClick" />
+                        <Button Style="{StaticResource GisMock.SecondaryHeroButtonStyle}"
+                                Margin="0,0,14,0"
+                                Content="{Binding SelectedMapDocument.ViewportWindowButtonText}"
+                                IsEnabled="{Binding HasSelectedMapDocument}"
+                                Click="HandleDetachMapClick" />
+                    </StackPanel>
+
+                    <ToggleButton Style="{StaticResource GisMock.SegmentToggleButtonStyle}"
+                                  IsChecked="{Binding IsDayThemeSelected, Mode=TwoWay}"
+                                  Content="Dzień" />
+                    <ToggleButton Style="{StaticResource GisMock.SegmentToggleButtonStyle}"
+                                  IsChecked="{Binding IsNightThemeSelected, Mode=TwoWay}"
+                                  Margin="0,0,14,0"
+                                  Content="Noc" />
+                    <Button Style="{StaticResource GisMock.SecondaryHeroButtonStyle}"
+                            Margin="0,0,10,0"
+                            Content="Nowy proces" />
+                    <Button Style="{StaticResource GisMock.PrimaryHeroButtonStyle}"
+                            Content="Nowa mapa"
+                            Click="HandleCreateMapClick" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid x:Name="WorkspaceHost"
+              Grid.Row="1"
+              Grid.Column="2"
+              Margin="24,22,24,24">
+            <ScrollViewer x:Name="HomeWorkspaceView"
+                          VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding IsHomeSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Margin="0,0,28,0">
+                                <TextBlock Text="Workspace startowy dla analityka GIS i użytkownika biznesowego"
+                                           Style="{StaticResource GisMock.PageTitleTextStyle}" />
+                                <TextBlock Margin="0,12,0,0"
+                                           Text="Lekki shell inspirowany Felt, ale zorganizowany jak aplikacja desktopowa: mapy, dane, procesy i raporty w jednym miejscu."
+                                           Style="{StaticResource GisMock.PageLeadTextStyle}" />
+                                <WrapPanel Margin="0,22,0,0">
+                                    <Button Style="{StaticResource GisMock.PrimaryHeroButtonStyle}"
+                                            Margin="0,0,10,10"
+                                            Content="Przejdź do Studio GIS" />
+                                    <Button Style="{StaticResource GisMock.SecondaryHeroButtonStyle}"
+                                            Margin="0,0,10,10"
+                                            Content="Dodaj źródło danych" />
+                                    <Button Style="{StaticResource GisMock.SecondaryHeroButtonStyle}"
+                                            Margin="0,0,10,10"
+                                            Content="Otwórz case biznesowy" />
+                                </WrapPanel>
+                            </StackPanel>
+
+                            <Grid Grid.Column="1">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Style="{StaticResource GisMock.PlaceholderBorderStyle}" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="Mapa robocza: Region północny"
+                                                   Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                        <TextBlock Margin="0,6,0,0"
+                                                   Text="WMS + warstwy operacyjne + analiza zmian"
+                                                   Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Row="1" Style="{StaticResource GisMock.PlaceholderBorderStyle}" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="Kolejka operacyjna"
+                                                   Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                        <TextBlock Margin="0,6,0,0"
+                                                   Text="12 zadań do weryfikacji terenowej, 4 oczekują na decyzję"
+                                                   Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Row="2" Style="{StaticResource GisMock.PlaceholderBorderStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Raport poranny"
+                                                   Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                        <TextBlock Margin="0,6,0,0"
+                                                   Text="Eksport PDF, zestawienie zmian i podsumowanie produkcyjne"
+                                                   Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <Grid Margin="0,22,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.2*" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource GisMock.SurfaceCardBorderStyle}" Margin="0,0,16,0">
+                            <StackPanel>
+                                <TextBlock Text="Ostatnie mapy i workspace"
+                                           Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <Border Style="{StaticResource GisMock.ListRowBorderStyle}" Margin="0,14,0,0">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Monitoring sieci wodnej" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                            <TextBlock Text="ostatnio: 11 minut temu" Style="{StaticResource Text.Secondary}" />
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Style="{StaticResource GisMock.BadgeBorderStyle}">
+                                            <TextBlock Text="GIS" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                                <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Analiza awarii energetycznych" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                            <TextBlock Text="ostatnio: dzisiaj 08:10" Style="{StaticResource Text.Secondary}" />
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Style="{StaticResource GisMock.BadgeBorderStyle}">
+                                            <TextBlock Text="OPS" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                                <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Podglad wydruku - raport tygodniowy" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                        <TextBlock Text="ostatnio: wczoraj 17:42" Style="{StaticResource Text.Secondary}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource GisMock.SurfaceCardBorderStyle}" Margin="0,0,16,0">
+                            <StackPanel>
+                                <TextBlock Text="Źródła danych"
+                                           Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="Tu ma być prosty punkt wejścia do plików, baz i usług."
+                                           Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}" Margin="0,16,0,10">
+                                    <TextBlock Text="TU BĘDZIE KATALOG: WMS / SHP / GML / PostGIS / GeoTIFF"
+                                               Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                </Border>
+                                <Button Style="{StaticResource GisMock.SecondaryHeroButtonStyle}"
+                                        Content="Nowe połączenie" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource GisMock.SurfaceCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Moduly biznesowe"
+                                           Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <TextBlock Margin="0,10,0,0"
+                                           Text="GIS nie jest osobnym światem. Użytkownik musi przejść z mapy do sprawy, formularza, procesu i raportu."
+                                           Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}" Margin="0,16,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Karta sprawy / formularz klienta" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                        <TextBlock Margin="0,6,0,0" Text="Tu będzie zwykła aplikacyjna karta robocza." Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Kolejka zadań i akceptacji" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                        <TextBlock Margin="0,6,0,0" Text="Tu będzie standardowy workflow biznesowy." Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid x:Name="StudioWorkspaceView"
+                  Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="320" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="460" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="360" />
+                </Grid.ColumnDefinitions>
+
+                <WrapPanel Grid.ColumnSpan="3" Margin="0,0,0,16">
+                    <ToggleButton Style="{StaticResource GisMock.DocumentToggleButtonStyle}" IsChecked="True" Content="Mapa główna" />
+                    <ToggleButton Style="{StaticResource GisMock.DocumentToggleButtonStyle}" Content="Paper layout A3" />
+                    <ToggleButton Style="{StaticResource GisMock.DocumentToggleButtonStyle}" Content="Porównanie monitor 2" />
+                </WrapPanel>
+
+                <Border Grid.Row="1"
+                        Grid.Column="0"
+                        Style="{StaticResource GisMock.SurfaceCardBorderStyle}"
+                        Margin="0,0,16,16">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top">
+                            <TextBlock Text="Explorer warstw"
+                                       Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Aktywna warstwa steruje kontekstem rysowania, gridem i inspectorem."
+                                       Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                            <Border Style="{StaticResource GisMock.BadgeBorderStyle}"
+                                    Margin="0,14,0,14"
+                                    HorizontalAlignment="Left">
+                                <TextBlock Text="{Binding ActiveLayerCapabilitiesText}"
+                                           Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                           FontSize="11" />
+                            </Border>
+                            <selector:ActiveLayerSelector x:Name="StudioLayerSelector"
+                                                          State="{Binding ActiveLayerSelectorState}"
+                                                          LanguageCode="pl"
+                                                          InitialVisibleItemCount="6"
+                                                          HorizontalAlignment="Stretch"
+                                                          VerticalAlignment="Top" />
+                        </StackPanel>
+
+                        <StackPanel DockPanel.Dock="Bottom"
+                                    Margin="0,18,0,0">
+                            <TextBlock Text="Katalog danych"
+                                       Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                            <ItemsControl Margin="0,12,0,0"
+                                          ItemsSource="{Binding CatalogItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding}"
+                                                           Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                                <Button Grid.Column="1"
+                                                        Style="{StaticResource Button.Secondary}"
+                                                        Padding="10,4"
+                                                        Content="Otwórz" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <Border Grid.Row="1"
+                        Grid.Column="1"
+                        Grid.ColumnSpan="2"
+                        Background="{DynamicResource GisMock.MapBackdropBrush}"
+                        BorderBrush="{DynamicResource GisMock.TopBarBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="24"
+                        Padding="18"
+                        Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <WrapPanel>
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Select" />
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Pan" />
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Zoom" />
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Linia" />
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Polygon" />
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Snapping" />
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Analiza" />
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Druk" />
+                            </WrapPanel>
+                            <Border Grid.Column="1"
+                                    Style="{StaticResource GisMock.BadgeBorderStyle}">
+                                <TextBlock Text="{Binding ViewportStatusTitle}"
+                                           Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                           FontSize="11" />
+                            </Border>
+                        </Grid>
+
+                        <Border Grid.Row="1"
+                                Margin="0,16,0,16"
+                                Background="{DynamicResource GisMock.MapInsetBrush}"
+                                BorderBrush="{DynamicResource GisMock.StrongBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="20">
+                            <Grid>
+                                <Canvas Margin="16"
+                                        ClipToBounds="True">
+                                    <Rectangle Width="1400"
+                                               Height="820"
+                                               Fill="{DynamicResource GisMock.MapInsetBrush}" />
+                                    <Path Stroke="{DynamicResource GisMock.StrongBorderBrush}"
+                                          StrokeThickness="2.5"
+                                          Data="M 20,170 C 180,80 320,100 430,200 S 660,380 840,300 S 1090,100 1320,170" />
+                                    <Path Stroke="{DynamicResource Brush.Accent}"
+                                          StrokeThickness="2"
+                                          Data="M 120,520 C 240,470 350,520 440,600 S 690,760 860,690 S 1110,510 1280,560" />
+                                    <Ellipse Width="16" Height="16" Fill="{DynamicResource Brush.Accent}" Canvas.Left="430" Canvas.Top="212" />
+                                    <Ellipse Width="14" Height="14" Fill="{DynamicResource Brush.Accent}" Canvas.Left="516" Canvas.Top="268" />
+                                    <Ellipse Width="18" Height="18" Fill="{DynamicResource Brush.Accent}" Canvas.Left="788" Canvas.Top="298" />
+                                    <Ellipse Width="15" Height="15" Fill="{DynamicResource Brush.Accent}" Canvas.Left="1060" Canvas.Top="230" />
+                                </Canvas>
+
+                                <Border HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Width="278"
+                                        Margin="18"
+                                        Style="{StaticResource GisMock.FloatingCardBorderStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Kontekst mapy"
+                                                   Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                        <TextBlock Margin="0,6,0,0"
+                                                   Text="Aktywna warstwa, szybkie filtry, notatki terenowe i status dokumentu."
+                                                   Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                        <Border Style="{StaticResource GisMock.BadgeBorderStyle}"
+                                                Margin="0,12,0,0"
+                                                HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding ActiveLayerName}"
+                                                       Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                                       FontSize="11" />
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border HorizontalAlignment="Left"
+                                        VerticalAlignment="Bottom"
+                                        Width="248"
+                                        Margin="18"
+                                        Style="{StaticResource GisMock.FloatingCardBorderStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Legenda robocza"
+                                                   Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                        <TextBlock Margin="0,8,0,0"
+                                                   Text="Warstwa aktywna + obszary referencyjne"
+                                                   Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel HorizontalAlignment="Right"
+                                            VerticalAlignment="Bottom"
+                                            Margin="18">
+                                    <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Margin="0,0,0,8" Content="+" />
+                                    <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Margin="0,0,0,8" Content="-" />
+                                    <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="N" />
+                                </StackPanel>
+
+                                <ToggleButton HorizontalAlignment="Right"
+                                              VerticalAlignment="Top"
+                                              Margin="0,18,18,0"
+                                              Style="{StaticResource GisMock.SegmentToggleButtonStyle}"
+                                              IsChecked="{Binding IsInspectorOpen, Mode=TwoWay}"
+                                              Content="Panel"
+                                              Visibility="{Binding IsInspectorClosed, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                                <Border HorizontalAlignment="Right"
+                                        VerticalAlignment="Stretch"
+                                        Width="360"
+                                        Margin="0,18,18,18"
+                                        Style="{StaticResource GisMock.FloatingCardBorderStyle}"
+                                        Visibility="{Binding IsInspectorOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding DrawerHeadline}" Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                                <TextBlock Margin="0,4,0,0" Text="{Binding ActiveLayerPath}" Style="{StaticResource Text.Secondary}" />
+                                            </StackPanel>
+                                            <ToggleButton Grid.Column="1"
+                                                          Style="{StaticResource GisMock.SegmentToggleButtonStyle}"
+                                                          IsChecked="{Binding IsInspectorOpen, Mode=TwoWay}"
+                                                          Content="Ukryj" />
+                                        </Grid>
+                                        <WrapPanel Grid.Row="1" Margin="0,16,0,14">
+                                            <ToggleButton Style="{StaticResource GisMock.SegmentToggleButtonStyle}" IsChecked="{Binding IsStyleInspectorSelected, Mode=TwoWay}" Content="Styl" />
+                                            <ToggleButton Style="{StaticResource GisMock.SegmentToggleButtonStyle}" IsChecked="{Binding IsDataInspectorSelected, Mode=TwoWay}" Content="Dane" />
+                                            <ToggleButton Style="{StaticResource GisMock.SegmentToggleButtonStyle}" IsChecked="{Binding IsPrintInspectorSelected, Mode=TwoWay}" Content="Druk" />
+                                        </WrapPanel>
+                                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                                            <StackPanel>
+                                                <StackPanel Visibility="{Binding IsStyleInspectorSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="Widoczność etykiet" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                                    <CheckBox Margin="0,8,0,0" IsChecked="{Binding ShowLabels, Mode=TwoWay}" Content="Pokaż etykiety warstwy" />
+                                                    <CheckBox Margin="0,6,0,0" IsChecked="{Binding UseScaleVisibility, Mode=TwoWay}" Content="Uwzględnij zakres skali" />
+                                                    <CheckBox Margin="0,6,0,0" IsChecked="{Binding LockLayerEditing, Mode=TwoWay}" Content="Zablokuj edycję tej warstwy" />
+                                                    <TextBlock Margin="0,18,0,0" Text="Przezroczystość" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                                    <Slider Margin="0,8,0,0" Minimum="0" Maximum="100" Value="{Binding LayerOpacity, Mode=TwoWay}" />
+                                                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}" Margin="0,8,0,0" HorizontalAlignment="Left">
+                                                        <TextBlock Text="{Binding LayerOpacityText}" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <StackPanel Visibility="{Binding IsDataInspectorSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="Definicja warstwy" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                                    <TextBox Margin="0,8,0,0" Text="{Binding DefinitionQueryText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                    <WrapPanel Margin="0,16,0,0">
+                                                        <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Zoom do warstwy" />
+                                                        <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Odśwież" />
+                                                        <Button Style="{StaticResource GisMock.ToolChipButtonStyle}" Content="Otwórz źródło" />
+                                                    </WrapPanel>
+                                                    <TextBlock Margin="0,18,0,0" Text="{Binding DataStatusText}" Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                                </StackPanel>
+                                                <StackPanel Visibility="{Binding IsPrintInspectorSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="Format" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                                    <ComboBox Margin="0,8,0,0" ItemsSource="{Binding AvailablePaperFormats}" SelectedItem="{Binding SelectedPaperFormat, Mode=TwoWay}" />
+                                                    <TextBlock Margin="0,16,0,0" Text="Skala" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                                    <ComboBox Margin="0,8,0,0" ItemsSource="{Binding AvailableScales}" SelectedItem="{Binding SelectedScale, Mode=TwoWay}" />
+                                                    <CheckBox Margin="0,18,0,0" IsChecked="{Binding IncludeLegend, Mode=TwoWay}" Content="Dodaj legendę" />
+                                                    <CheckBox Margin="0,6,0,0" IsChecked="{Binding IncludeNorthArrow, Mode=TwoWay}" Content="Dodaj strzałkę północy" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Row="2"
+                                Style="{StaticResource GisMock.FloatingCardBorderStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}" Margin="0,0,8,0">
+                                        <TextBlock Text="EPSG:2180" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                    </Border>
+                                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}" Margin="0,0,8,0">
+                                        <TextBlock Text="{Binding SelectedScale}" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                    </Border>
+                                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}">
+                                        <TextBlock Text="{Binding DrawModeText}" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           Text="X: 542341.22  Y: 481239.10"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource Text.Secondary}" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Style="{StaticResource GisMock.SurfaceCardBorderStyle}"
+                        Margin="0,0,16,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Tabela atrybutow"
+                                           Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Text="{Binding RecordSummaryText}"
+                                           Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                            </StackPanel>
+                            <WrapPanel Grid.Column="1">
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                        Content="Filtr" />
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                        Content="Sortowanie" />
+                                <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                        Content="Eksport" />
+                            </WrapPanel>
+                        </Grid>
+                        <grid:PhialeGrid x:Name="StudioGrid"
+                                         Grid.Row="1"
+                                         ItemsSource="{Binding GridRecords}"
+                                         Columns="{Binding GridColumns}"
+                                         Summaries="{Binding GridSummaries}"
+                                         IsGridReadOnly="{Binding IsGridReadOnly}"
+                                         LanguageCode="pl" />
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="2" Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*" />
+                        <RowDefinition Height="0.82*" />
+                    </Grid.RowDefinitions>
+                    <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="DSL / automatyzacja" Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                            <TextBlock Margin="0,8,0,0" Text="Edytor i live preview maja pozostac wypinane i pracowac na tym samym kontekscie dokumentu." Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                            <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}" Margin="0,16,0,0">
+                                        <TextBlock Text="TU BĘDZIE: Monaco / DSL host / prompt / autouzupełnianie" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="1" Style="{StaticResource GisMock.SurfaceCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Diagnostyka i zadania" Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                            <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}" Margin="0,16,0,0">
+                                <TextBlock Text="TU BĘDZIE: diagnostics / jobs / import progress / warnings" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <Grid x:Name="StudioProductWorkspaceView"
+                  Visibility="{Binding IsStudioSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TabControl Margin="0,0,0,16"
+                            ItemsSource="{Binding MapDocuments}"
+                            SelectedItem="{Binding SelectedMapDocument, Mode=TwoWay}">
+                    <TabControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Title}" />
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
+                    <TabControl.ContentTemplate>
+                        <DataTemplate>
+                            <local:MapDocumentView />
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+                    </TabControl>
+            </Grid>
+
+            <ScrollViewer x:Name="CatalogWorkspaceView"
+                          VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding IsCatalogSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.15*" />
+                        <ColumnDefinition Width="0.95*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}"
+                            Margin="0,0,16,0">
+                        <StackPanel>
+                            <TextBlock Text="Katalog zrodel danych"
+                                       Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Centralne miejsce do konfiguracji WMS, SHP, GML, PostGIS i importow wsadowych."
+                                       Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                            <ItemsControl Margin="0,18,0,0"
+                                          ItemsSource="{Binding CatalogItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding}"
+                                                               Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                                    <TextBlock Text="Status: gotowe do podłączenia / walidacji"
+                                                               Style="{StaticResource Text.Secondary}" />
+                                                </StackPanel>
+                                                <WrapPanel Grid.Column="1">
+                                                    <Button Style="{StaticResource Button.Secondary}"
+                                                            Padding="10,4"
+                                                            Content="Podłącz" />
+                                                    <Button Style="{StaticResource Button.Secondary}"
+                                                            Padding="10,4"
+                                                            Content="Waliduj" />
+                                                </WrapPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Column="1">
+                        <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}"
+                                Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Status połączeń"
+                                           Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <Border Style="{StaticResource GisMock.ListRowBorderStyle}"
+                                        Margin="0,14,0,0">
+                                    <TextBlock Text="WMS wojewódzki: online / cache 14 min"
+                                               Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                </Border>
+                                <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                    <TextBlock Text="PostGIS sieć wodna: online / sync 2 min"
+                                               Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                </Border>
+                                <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                    <TextBlock Text="Import GML: oczekuje na walidację geometrii"
+                                               Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Operacje na danych"
+                                           Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <WrapPanel Margin="0,16,0,0">
+                                    <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                            Content="Nowe połączenie" />
+                                    <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                            Content="Import GML" />
+                                    <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                            Content="Odśwież cache" />
+                                </WrapPanel>
+                                <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}"
+                                        Margin="0,16,0,0">
+                                    <TextBlock Text="TU BĘDZIE: harmonogram synchronizacji / log importu / alerty połączeń"
+                                               Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="BusinessWorkspaceView"
+                          VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding IsBusinessSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="300" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="340" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource GisMock.SurfaceCardBorderStyle}" Margin="0,0,16,0">
+                        <StackPanel>
+                            <TextBlock Text="Kolejka pracy" Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                            <TextBlock Margin="0,8,0,0" Text="Zwykła kolejka zadań biznesowych, ale z możliwością wejścia na mapę z poziomu rekordu." Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                            <Border Style="{StaticResource GisMock.ListRowBorderStyle}" Margin="0,14,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Awaria 2026/03/117" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                    <TextBlock Text="Wymaga weryfikacji geometrii" Style="{StaticResource Text.Secondary}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Wniosek terenowy 2026/03/212" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                    <TextBlock Text="Oczekuje na decyzję kierownika" Style="{StaticResource Text.Secondary}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Import GML - obręb 14" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                    <TextBlock Text="Do potwierdzenia zmian" Style="{StaticResource Text.Secondary}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                        <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Karta sprawy / formularz roboczy" Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <TextBlock Margin="0,8,0,0" Text="Tutaj użytkownik przechodzi z analizy przestrzennej do zwykłego procesu aplikacyjnego." Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}" Margin="0,16,0,12">
+                                    <TextBlock Text="TU BĘDZIE: header sprawy / formularz / status / historia" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                </Border>
+                                <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}">
+                                    <TextBlock Text="TU BĘDZIE: osadzony komponent mapy albo karta lokalizacji" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Relacje z GIS" Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <TextBlock Margin="0,10,0,0" Text="Mapa ma tu być narzędziem wspierającym decyzje: kontekst, lokalizacja, analiza, zasięg, raport." Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                <WrapPanel Margin="0,16,0,0">
+                                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}" Margin="0,0,8,8">
+                                        <TextBlock Text="lokalizacja obiektu" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                    </Border>
+                                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}" Margin="0,0,8,8">
+                                        <TextBlock Text="otwórz na mapie" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                    </Border>
+                                    <Border Style="{StaticResource GisMock.BadgeBorderStyle}" Margin="0,0,8,8">
+                                        <TextBlock Text="sprawdź zasięg" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                    </Border>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Wskaźniki" Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}" Margin="0,16,0,10">
+                                    <TextBlock Text="TU BĘDZIE: KPI / SLA / obciążenie zespołu" Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                </Border>
+                                <Border Style="{StaticResource GisMock.BadgeBorderStyle}" HorizontalAlignment="Left">
+                                    <TextBlock Text="9 spraw z mapowym kontekstem" Foreground="{DynamicResource GisMock.BadgeTextBrush}" FontSize="11" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Następne kroki" Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <Border Style="{StaticResource GisMock.ListRowBorderStyle}" Margin="0,14,0,0">
+                                    <TextBlock Text="Akceptuj aktualizację geometrii" Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                </Border>
+                                <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                    <TextBlock Text="Wygeneruj raport PDF" Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                </Border>
+                                <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                    <TextBlock Text="Przekaż do obsługi klienta" Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="ReportsWorkspaceView"
+                          VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding IsReportsSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.05*" />
+                        <ColumnDefinition Width="0.95*" />
+                        <ColumnDefinition Width="0.8*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}"
+                            Margin="0,0,16,0">
+                        <StackPanel>
+                            <TextBlock Text="Raporty gotowe do publikacji"
+                                       Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                            <Border Style="{StaticResource GisMock.ListRowBorderStyle}"
+                                    Margin="0,14,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Raport zmian sieci wodnej - dzisiaj 09:40"
+                                               Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                    <TextBlock Text="PDF + legenda + mapa poglądowa"
+                                               Style="{StaticResource Text.Secondary}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Zestawienie obiektów wymagających inspekcji"
+                                               Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                    <TextBlock Text="CSV + XLSX + paczka map"
+                                               Style="{StaticResource Text.Secondary}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Raport SLA dla procesów terenowych"
+                                               Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                                    <TextBlock Text="Dashboard + PDF dla kierownika"
+                                               Style="{StaticResource Text.Secondary}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Column="1"
+                                Margin="0,0,16,0">
+                        <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}"
+                                Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Generator wydruków"
+                                           Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="{Binding PrintSummaryText}"
+                                           Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                <WrapPanel Margin="0,16,0,0">
+                                    <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                            Content="Nowy PDF" />
+                                    <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                            Content="Eksport XLSX" />
+                                    <Button Style="{StaticResource GisMock.ToolChipButtonStyle}"
+                                            Content="Publikuj" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource GisMock.SurfaceCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Ostatnie akcje"
+                                           Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                                <ItemsControl Margin="0,14,0,0"
+                                              ItemsSource="{Binding RecentActionItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource GisMock.ListRowBorderStyle}">
+                                                <TextBlock Text="{Binding}"
+                                                           Style="{StaticResource GisMock.CardBodyTextStyle}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <Border Grid.Column="2"
+                            Style="{StaticResource GisMock.SurfaceCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Publikacje"
+                                       Style="{StaticResource GisMock.SectionTitleTextStyle}" />
+                            <Border Style="{StaticResource GisMock.PlaceholderBorderStyle}"
+                                    Margin="0,16,0,10">
+                                <TextBlock Text="TU BĘDZIE: status publikacji web / portal / kolejka eksportów"
+                                           Style="{StaticResource GisMock.CardTitleTextStyle}" />
+                            </Border>
+                            <Border Style="{StaticResource GisMock.BadgeBorderStyle}"
+                                    HorizontalAlignment="Left">
+                                <TextBlock Text="3 raporty oczekują na publikację"
+                                           Foreground="{DynamicResource GisMock.BadgeTextBrush}"
+                                           FontSize="11" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

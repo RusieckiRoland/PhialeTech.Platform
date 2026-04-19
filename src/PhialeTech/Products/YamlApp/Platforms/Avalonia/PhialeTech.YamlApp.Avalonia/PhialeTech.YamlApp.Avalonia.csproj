@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <PackageId>PhialeTech.YamlApp.Avalonia</PackageId>
+    <AssemblyName>PhialeTech.YamlApp.Avalonia</AssemblyName>
+    <RootNamespace>PhialeTech.YamlApp.Avalonia</RootNamespace>
+    <Description>Avalonia adapter for the PhialeTech YamlApp product family.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.7" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Abstractions\PhialeTech.YamlApp.Abstractions\PhialeTech.YamlApp.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Definitions\PhialeTech.YamlApp.Definitions\PhialeTech.YamlApp.Definitions.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeTech.YamlApp.Core\PhialeTech.YamlApp.Core.csproj" />
+    <ProjectReference Include="..\..\..\Runtime\PhialeTech.YamlApp.Runtime\PhialeTech.YamlApp.Runtime.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+</Project>

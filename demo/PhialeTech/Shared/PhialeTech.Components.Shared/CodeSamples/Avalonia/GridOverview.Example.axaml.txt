@@ -1,0 +1,22 @@
+<Grid RowDefinitions="Auto,*"
+      ColumnDefinitions="168,24,*"
+      Margin="0,24,0,0">
+  <Border Grid.ColumnSpan="3"
+          Padding="14"
+          Background="#F6FAF9"
+          BorderBrush="#D5E5E0"
+          BorderThickness="1"
+          CornerRadius="10">
+    <TextBlock Text="{Binding GroupingBarText}" />
+  </Border>
+
+  <ItemsControl Grid.Row="1"
+                Margin="0,18,0,0"
+                ItemsSource="{Binding MetricCards}" />
+
+  <DataGrid Grid.Row="1"
+            Grid.Column="2"
+            Margin="0,18,0,0"
+            AutoGenerateColumns="False"
+            ItemsSource="{Binding SalesRecords}" />
+</Grid>

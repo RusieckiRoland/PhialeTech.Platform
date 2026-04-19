@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.ActiveLayerSelector</PackageId>
+    <AssemblyName>PhialeTech.ActiveLayerSelector</AssemblyName>
+    <RootNamespace>PhialeTech.ActiveLayerSelector</RootNamespace>
+    <Description>Portable core state, view model and localization for the Active Layer Selector component.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Shared\PhialeTech.ComponentHost.Abstractions\PhialeTech.ComponentHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Languages\*.lang">
+      <Link>PhialeTech.ActiveLayerSelector\Languages\%(Filename)%(Extension)</Link>
+      <TargetPath>PhialeTech.ActiveLayerSelector\Languages\%(Filename)%(Extension)</TargetPath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+</Project>

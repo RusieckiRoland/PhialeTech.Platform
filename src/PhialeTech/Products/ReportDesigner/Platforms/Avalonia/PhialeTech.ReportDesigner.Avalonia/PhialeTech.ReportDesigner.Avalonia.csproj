@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.ReportDesigner.Avalonia</PackageId>
+    <AssemblyName>PhialeTech.ReportDesigner.Avalonia</AssemblyName>
+    <RootNamespace>PhialeTech.ReportDesigner.Avalonia</RootNamespace>
+    <Description>Avalonia control for the reusable PhialeTech ReportDesigner component.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Abstractions\PhialeTech.ReportDesigner.Abstractions\PhialeTech.ReportDesigner.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeTech.ReportDesigner\PhialeTech.ReportDesigner.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\Platforms\Avalonia\PhialeTech.WebHost.Avalonia\PhialeTech.WebHost.Avalonia.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,11 @@
+<Border Background="#FBFBF9"
+        BorderBrush="#DDD8CF"
+        BorderThickness="1"
+        CornerRadius="14"
+        Padding="18"
+        xmlns:grid="clr-namespace:PhialeTech.PhialeGrid.Wpf.Controls;assembly=PhialeGrid.Wpf">
+  <grid:PhialeGrid ItemsSource="{Binding GridRecords}"
+                   Columns="{Binding GridColumns}"
+                   Groups="{Binding GridGroups, Mode=TwoWay}"
+                   LanguageCode="{Binding LanguageCode}" />
+</Border>

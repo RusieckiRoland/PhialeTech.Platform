@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AvaloniaUseCompiledBindings>false</AvaloniaUseCompiledBindings>
+    <AssemblyName>PhialeTech.Components.Avalonia</AssemblyName>
+    <RootNamespace>PhialeTech.Components.Avalonia</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.7" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.7" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\Grid\Platforms\Avalonia\PhialeGrid.Avalonia\PhialeGrid.Avalonia.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\PdfViewer\Platforms\Avalonia\PhialeTech.PdfViewer.Avalonia\PhialeTech.PdfViewer.Avalonia.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\ReportDesigner\Platforms\Avalonia\PhialeTech.ReportDesigner.Avalonia\PhialeTech.ReportDesigner.Avalonia.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\Platforms\Avalonia\PhialeTech.WebHost.Avalonia\PhialeTech.WebHost.Avalonia.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.WebAssets\PhialeTech.WebAssets.csproj" />
+    <ProjectReference Include="..\\..\\Shared\\PhialeTech.Components.Shared\\PhialeTech.Components.Shared.csproj" />
+  </ItemGroup>
+</Project>

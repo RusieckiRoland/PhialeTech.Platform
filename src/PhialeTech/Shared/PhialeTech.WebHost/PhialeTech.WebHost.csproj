@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.WebHost</PackageId>
+    <AssemblyName>PhialeTech.WebHost</AssemblyName>
+    <RootNamespace>PhialeTech.WebHost</RootNamespace>
+    <Description>Shared runtime and infrastructure for browser-hosted PhialeTech components.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+</Project>

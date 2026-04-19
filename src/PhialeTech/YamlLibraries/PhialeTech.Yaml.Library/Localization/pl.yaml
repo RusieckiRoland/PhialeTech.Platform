@@ -1,0 +1,10 @@
+person.firstName.caption: Imie
+person.firstName.placeholder: Wpisz imie
+person.lastName.caption: Nazwisko
+person.lastName.placeholder: Wpisz nazwisko
+person.age.caption: Wiek
+person.age.placeholder: Wpisz wiek
+person.notes.caption: Notatki
+person.notes.placeholder: Wpisz dodatkowe informacje
+actions.ok.caption: OK
+actions.cancel.caption: Anuluj

@@ -1,0 +1,40 @@
+﻿<Window x:Class="PhialeGis.ComponentSandbox.Views.MapWithDslEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PhialeGis.ComponentSandbox.Views" xmlns:Controls="clr-namespace:PhialeGis.Library.WpfUi.Controls;assembly=PhialeGis.Library.WpfUi"
+        mc:Ignorable="d"
+        Title="MapWithDslEditorWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.05*"/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="0.05*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.05*"/>
+            <RowDefinition Height="70*" />
+            <RowDefinition Height="20*"/>
+            <RowDefinition Height="0.05*"/>
+        </Grid.RowDefinitions>
+        <Controls:PhialeDrawBox
+    x:Name="Map"
+    Grid.Row="1"
+    Grid.Column="1"
+    Margin="0,11,0,42"
+    GisInteractionManager="{Binding GisInteractionManager}"
+    HorizontalScrollBarVisible="Visible"
+    VerticalScrollBarVisible="Visible" />
+
+        <!--  DSL editor  -->
+        <Controls:PhialeDslEditor
+    Grid.Row="2"
+    Grid.Column="1"
+    BorderBrush="red"
+    BorderThickness="2"
+    GisInteractionManager="{Binding GisInteractionManager}"
+    TargetDraw="{Binding ElementName=Map, Path=CompositionAdapter}" />
+
+    </Grid>
+</Window>

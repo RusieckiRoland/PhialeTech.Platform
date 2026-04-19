@@ -1,0 +1,170 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Key="GisMock.PageTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Bahnschrift SemiBold" />
+        <Setter Property="FontSize" Value="30" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    </Style>
+
+    <Style x:Key="GisMock.PageLeadTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="GisMock.SectionTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Bahnschrift SemiBold" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    </Style>
+
+    <Style x:Key="GisMock.CardTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Bahnschrift SemiBold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="GisMock.CardBodyTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="GisMock.LabelTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Muted}" />
+        <Setter Property="FontFamily" Value="Bahnschrift SemiBold" />
+    </Style>
+
+    <Style x:Key="GisMock.SurfaceCardBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource GisMock.CardBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GisMock.CardBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="18" />
+        <Setter Property="Padding" Value="20" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <Style x:Key="GisMock.FloatingCardBorderStyle" TargetType="Border" BasedOn="{StaticResource GisMock.SurfaceCardBorderStyle}">
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GisMock.StrongBorderBrush}" />
+    </Style>
+
+    <Style x:Key="GisMock.PlaceholderBorderStyle" TargetType="Border" BasedOn="{StaticResource GisMock.SurfaceCardBorderStyle}">
+        <Setter Property="Background" Value="{DynamicResource GisMock.PlaceholderBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GisMock.PlaceholderBorderBrush}" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="CornerRadius" Value="16" />
+    </Style>
+
+    <Style x:Key="GisMock.BadgeBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource GisMock.BadgeBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GisMock.BadgeBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="Padding" Value="10,4" />
+    </Style>
+
+    <Style x:Key="GisMock.BrandBadgeBorderStyle" TargetType="Border" BasedOn="{StaticResource GisMock.BadgeBorderStyle}">
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
+    </Style>
+
+    <Style x:Key="GisMock.NavToggleButtonStyle" TargetType="ToggleButton">
+        <Setter Property="Background" Value="#00FFFFFF" />
+        <Setter Property="BorderBrush" Value="#00FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FocusVisualStyle.Ring}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="NavBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="14"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="NavBorder" Property="Background" Value="{DynamicResource Brush.Hover.Fill}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="NavBorder" Property="Background" Value="{DynamicResource GisMock.AccentSoftBrush}" />
+                            <Setter TargetName="NavBorder" Property="BorderBrush" Value="{DynamicResource GisMock.AccentSoftBorderBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource GisMock.AccentSoftTextBrush}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="GisMock.SegmentToggleButtonStyle" TargetType="ToggleButton" BasedOn="{StaticResource GisMock.NavToggleButtonStyle}">
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+        <Setter Property="MinWidth" Value="74" />
+    </Style>
+
+    <Style x:Key="GisMock.IconToggleButtonStyle" TargetType="ToggleButton" BasedOn="{StaticResource GisMock.NavToggleButtonStyle}">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="MinWidth" Value="48" />
+        <Setter Property="MinHeight" Value="48" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="GisMock.IconButtonStyle" TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="MinWidth" Value="48" />
+        <Setter Property="MinHeight" Value="48" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="GisMock.DocumentToggleButtonStyle" TargetType="ToggleButton" BasedOn="{StaticResource GisMock.NavToggleButtonStyle}">
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="Margin" Value="0,0,10,0" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface0}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    </Style>
+
+    <Style x:Key="GisMock.ToolChipButtonStyle" TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="Margin" Value="0,0,8,8" />
+        <Setter Property="MinHeight" Value="30" />
+    </Style>
+
+    <Style x:Key="GisMock.PrimaryHeroButtonStyle" TargetType="Button" BasedOn="{StaticResource Button.Primary}">
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="38" />
+    </Style>
+
+    <Style x:Key="GisMock.SecondaryHeroButtonStyle" TargetType="Button" BasedOn="{StaticResource Button.Secondary}">
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="38" />
+    </Style>
+
+    <Style x:Key="GisMock.ListRowBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="#00FFFFFF" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="Padding" Value="0,12" />
+    </Style>
+</ResourceDictionary>

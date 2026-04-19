@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.Grid.Avalonia</PackageId>
+    <AssemblyName>PhialeTech.Grid.Avalonia</AssemblyName>
+    <RootNamespace>PhialeGrid.Avalonia</RootNamespace>
+    <Description>Avalonia host for the PhialeGrid control.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Core\PhialeGrid.Core\PhialeGrid.Core.csproj" />
+    <ProjectReference Include="..\..\..\Localization\PhialeGrid.Localization\PhialeGrid.Localization.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Themes\Generic.axaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\..\Localization\PhialeGrid.Localization\Languages\*.lang" Link="PhialeGrid.Localization\Languages\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

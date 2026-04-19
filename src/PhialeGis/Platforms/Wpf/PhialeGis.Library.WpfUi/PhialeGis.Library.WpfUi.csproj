@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <UseWPF>true</UseWPF>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <NoWarn>$(NoWarn);CS8632</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Page Remove="Themes\BaseTheme.xaml" />
+    <Page Remove="Themes\DarkTheme.xaml" />
+    <Page Remove="Themes\LightTheme.xaml" />
+    <Page Remove="Themes\Generic.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="3.119.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="*" />
+    <PackageReference Include="PhialeGis.WebAssets" Version="1.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Core\PhialeGis.Library.Abstractions\PhialeGis.Library.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeGis.Library.Core\PhialeGis.Library.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\PhialeTech\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\..\PhialeTech\Shared\PhialeTech.Styles.Wpf\Themes.Linked\PhialeGis.WpfUi\BaseTheme.xaml" Link="Themes\BaseTheme.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Resource>
+    <Resource Include="..\..\..\..\PhialeTech\Shared\PhialeTech.Styles.Wpf\Themes.Linked\PhialeGis.WpfUi\DarkTheme.xaml" Link="Themes\DarkTheme.xaml">
+      <Generator>
+      </Generator>
+    </Resource>
+    <Resource Include="..\..\..\..\PhialeTech\Shared\PhialeTech.Styles.Wpf\Themes.Linked\PhialeGis.WpfUi\LightTheme.xaml" Link="Themes\LightTheme.xaml">
+      <Generator>
+      </Generator>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\..\..\..\PhialeTech\Shared\PhialeTech.Styles.Wpf\Themes.Linked\PhialeGis.WpfUi\Generic.xaml" Link="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Assets\" />
+  </ItemGroup>
+</Project>

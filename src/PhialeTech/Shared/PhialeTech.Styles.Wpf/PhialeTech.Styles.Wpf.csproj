@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.Styles.Wpf</PackageId>
+    <AssemblyName>PhialeTech.Styles.Wpf</AssemblyName>
+    <RootNamespace>PhialeTech.Styles.Wpf</RootNamespace>
+    <Description>Shared WPF style library used by PhialeTech components.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <Page Remove="Themes.Linked\**\*.xaml" />
+    <None Include="Themes.Linked\**\*.xaml" />
+  </ItemGroup>
+</Project>

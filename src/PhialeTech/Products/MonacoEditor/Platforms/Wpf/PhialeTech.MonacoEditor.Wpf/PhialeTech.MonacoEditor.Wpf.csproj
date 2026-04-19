@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587;CS8632</NoWarn>
+    <PackageId>PhialeTech.MonacoEditor.Wpf</PackageId>
+    <AssemblyName>PhialeTech.MonacoEditor.Wpf</AssemblyName>
+    <RootNamespace>PhialeTech.MonacoEditor.Wpf</RootNamespace>
+    <Description>WPF control for the reusable PhialeTech MonacoEditor component.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Abstractions\PhialeTech.MonacoEditor.Abstractions\PhialeTech.MonacoEditor.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeTech.MonacoEditor\PhialeTech.MonacoEditor.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\Platforms\Wpf\PhialeTech.WebHost.Wpf\PhialeTech.WebHost.Wpf.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,379 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PhialeTech.Components.Avalonia.MainWindow"
+        x:Name="Root"
+        Width="1560"
+        Height="920"
+        MinWidth="1280"
+        MinHeight="760"
+        Background="#F3F1EC"
+        Title="{Binding AppTitle}">
+  <Grid ColumnDefinitions="296,*">
+    <Border Background="#ECE8DE"
+            BorderBrush="#D8D2C4"
+            BorderThickness="0,0,1,0">
+      <DockPanel Margin="18">
+        <StackPanel DockPanel.Dock="Top">
+          <TextBlock Text="{Binding AppTitle}"
+                     FontFamily="Bahnschrift"
+                     FontWeight="SemiBold"
+                     FontSize="28"
+                     Foreground="#17212B" />
+          <TextBlock Margin="0,4,0,0"
+                     Text="{Binding AppSubtitle}"
+                     FontSize="13"
+                     Foreground="#52606D" />
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Top" Margin="0,28,0,0">
+          <TextBlock Text="{Binding SearchPlaceholder}"
+                     FontFamily="Bahnschrift"
+                     FontWeight="SemiBold"
+                     FontSize="14"
+                     Foreground="#3A4754"
+                     Margin="0,0,0,8" />
+          <TextBox Background="#FBFBF9"
+                   BorderBrush="#D5D0C5"
+                   Padding="12,9"
+                   Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Top" Margin="0,26,0,0">
+          <TextBlock Text="{Binding ComponentsTitle}"
+                     FontFamily="Bahnschrift"
+                     FontWeight="SemiBold"
+                     FontSize="14"
+                     Foreground="#3A4754"
+                     Margin="0,0,0,8" />
+          <ItemsControl ItemsSource="{Binding DrawerGroups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Margin="0,0,0,12"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Command="{Binding #Root.DataContext.SelectDrawerGroupCommand}"
+                        CommandParameter="{Binding Id}">
+                  <Border Background="#FBFBF9"
+                          BorderBrush="#D5D0C5"
+                          BorderThickness="1"
+                          CornerRadius="12"
+                          Padding="12">
+                    <Grid ColumnDefinitions="Auto,*">
+                      <Ellipse Width="10"
+                               Height="10"
+                               Fill="{Binding AccentHex}"
+                               VerticalAlignment="Top"
+                               Margin="0,5,0,0" />
+                      <StackPanel Grid.Column="1"
+                                  Margin="12,0,0,0">
+                        <TextBlock Text="{Binding Title}"
+                                   FontFamily="Bahnschrift"
+                                   FontWeight="SemiBold"
+                                   FontSize="16"
+                                   Foreground="#17212B" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding Description}"
+                                   FontSize="12"
+                                   Foreground="#52606D"
+                                   TextWrapping="Wrap" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom">
+          <TextBlock Text="{Binding LanguageLabelText}"
+                     FontFamily="Bahnschrift"
+                     FontWeight="SemiBold"
+                     FontSize="14"
+                     Foreground="#3A4754"
+                     Margin="0,0,0,8" />
+          <ComboBox SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding DisplayName}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+            <ComboBox.ItemsSource>
+              <Binding Path="LanguageOptions" />
+            </ComboBox.ItemsSource>
+          </ComboBox>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <Grid Grid.Column="1" Margin="30,26,30,26">
+      <ScrollViewer IsVisible="{Binding IsOverviewVisible}">
+        <StackPanel>
+          <TextBlock Text="{Binding OverviewTitle}"
+                     FontFamily="Bahnschrift"
+                     FontWeight="SemiBold"
+                     FontSize="30"
+                     Foreground="#17212B" />
+          <TextBlock Margin="0,8,0,26"
+                     Text="{Binding OverviewSubtitle}"
+                     FontSize="15"
+                     Foreground="#52606D"
+                     TextWrapping="Wrap" />
+          <TextBlock IsVisible="{Binding HasNoOverviewResults}"
+                     Text="{Binding EmptySearchText}"
+                     Foreground="#52606D"
+                     Margin="0,0,0,22" />
+          <ItemsControl ItemsSource="{Binding VisibleSections}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Margin="0,0,0,28">
+                  <TextBlock Text="{Binding Title}"
+                             FontFamily="Bahnschrift"
+                             FontWeight="SemiBold"
+                             FontSize="18"
+                             Foreground="#1F2933"
+                             Margin="0,0,0,14" />
+                  <ItemsControl ItemsSource="{Binding Examples}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Width="330"
+                                Height="168"
+                                Margin="0,0,16,16"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding #Root.DataContext.SelectExampleCommand}"
+                                CommandParameter="{Binding Id}">
+                          <Border Background="#FBFBF9"
+                                  BorderBrush="#DDD8CF"
+                                  BorderThickness="1"
+                                  CornerRadius="14">
+                            <Grid ColumnDefinitions="8,*">
+                              <Border Background="{Binding AccentHex}" CornerRadius="14,0,0,14" />
+                              <StackPanel Grid.Column="1" Margin="18,16">
+                                <TextBlock Text="{Binding Title}"
+                                           FontFamily="Bahnschrift"
+                                           FontWeight="SemiBold"
+                                           FontSize="18"
+                                           Foreground="#16202A"
+                                           Margin="0,0,0,10" />
+                                <TextBlock Text="{Binding Description}"
+                                           FontSize="13"
+                                           Foreground="#52606D"
+                                           TextWrapping="Wrap" />
+                              </StackPanel>
+                            </Grid>
+                          </Border>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </ScrollViewer>
+
+      <Grid IsVisible="{Binding IsDetailVisible}">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Button Padding="14,8"
+                  Background="#FBFBF9"
+                  BorderBrush="#D5D0C5"
+                  Command="{Binding ShowOverviewCommand}"
+                  Content="{Binding BackToOverviewText}" />
+          <Border Grid.Column="2"
+                  Padding="12,8"
+                  Background="#E6F4F1"
+                  BorderBrush="#B8DDD7"
+                  BorderThickness="1"
+                  CornerRadius="10">
+            <TextBlock Text="{Binding PlatformBadgeText}"
+                       FontFamily="Bahnschrift"
+                       FontWeight="SemiBold"
+                       FontSize="13"
+                       Foreground="#0F766E" />
+          </Border>
+        </Grid>
+
+        <StackPanel Grid.Row="1" Margin="0,26,0,20">
+          <TextBlock Text="{Binding DetailHeadline}"
+                     FontFamily="Bahnschrift"
+                     FontWeight="SemiBold"
+                     FontSize="34"
+                     Foreground="#17212B" />
+          <TextBlock Margin="0,8,0,0"
+                     Text="{Binding SelectedExampleDescription}"
+                     FontSize="15"
+                     Foreground="#52606D"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+
+        <TabControl Grid.Row="2" SelectedIndex="{Binding SelectedTabIndex}">
+          <TabItem Header="{Binding DemoTabText}">
+            <Grid>
+              <ScrollViewer x:Name="DefaultDemoSurfaceScrollViewer">
+                <StackPanel Margin="0,20,0,0">
+                  <Border Padding="14"
+                          Background="#F6FAF9"
+                          BorderBrush="#D5E5E0"
+                          BorderThickness="1"
+                          CornerRadius="12">
+                    <TextBlock Text="{Binding GroupingBarText}"
+                               FontFamily="Bahnschrift"
+                               FontWeight="SemiBold"
+                               FontSize="14"
+                               Foreground="#2F5D57" />
+                  </Border>
+
+                  <Grid Margin="0,18,0,0" ColumnDefinitions="176,24,*">
+                    <StackPanel>
+                      <TextBlock Text="{Binding MetricDeckTitle}"
+                                 FontFamily="Bahnschrift"
+                                 FontWeight="SemiBold"
+                                 FontSize="18"
+                                 Foreground="#17212B"
+                                 Margin="0,0,0,14" />
+                      <ItemsControl ItemsSource="{Binding MetricCards}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Border Margin="0,0,0,14"
+                                    Padding="18,16"
+                                    Background="{Binding AccentHex}"
+                                    CornerRadius="12">
+                              <Grid RowDefinitions="Auto,Auto">
+                                <TextBlock Text="{Binding Title}"
+                                           FontFamily="Bahnschrift"
+                                           FontWeight="SemiBold"
+                                           FontSize="18"
+                                           Foreground="White" />
+                                <TextBlock Grid.Row="1"
+                                           Margin="0,22,0,0"
+                                           HorizontalAlignment="Right"
+                                           FontFamily="Bahnschrift"
+                                           FontWeight="SemiBold"
+                                           FontSize="16"
+                                           Foreground="White"
+                                           Text="{Binding DeltaText}" />
+                              </Grid>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                      <TextBlock Text="{Binding PreviewUsageTitle}"
+                                 FontFamily="Bahnschrift"
+                                 FontWeight="SemiBold"
+                                 FontSize="18"
+                                 Foreground="#17212B" />
+                      <TextBlock Margin="0,8,0,16"
+                                 Text="{Binding PreviewHintText}"
+                                 FontSize="14"
+                                 Foreground="#52606D"
+                                 TextWrapping="Wrap" />
+                      <Border Background="#FBFBF9"
+                              BorderBrush="#DDD8CF"
+                              BorderThickness="1"
+                              CornerRadius="14">
+                        <Grid RowDefinitions="Auto,*">
+                          <Grid Margin="18,16,18,12" ColumnDefinitions="2.8*,1*,1*,1*,1.3*,1.3*">
+                            <TextBlock Text="{Binding CategoryColumnText}" FontFamily="Bahnschrift" FontWeight="SemiBold" Foreground="#445565" />
+                            <TextBlock Grid.Column="1" Text="{Binding ObjectNameColumnText}" FontFamily="Bahnschrift" FontWeight="SemiBold" Foreground="#445565" />
+                            <TextBlock Grid.Column="2" Text="{Binding MunicipalityColumnText}" FontFamily="Bahnschrift" FontWeight="SemiBold" Foreground="#445565" />
+                            <TextBlock Grid.Column="3" Text="{Binding StatusColumnText}" FontFamily="Bahnschrift" FontWeight="SemiBold" Foreground="#445565" />
+                            <TextBlock Grid.Column="4" Text="{Binding AreaColumnText}" FontFamily="Bahnschrift" FontWeight="SemiBold" Foreground="#445565" />
+                            <TextBlock Grid.Column="5" Text="{Binding LastInspectionColumnText}" FontFamily="Bahnschrift" FontWeight="SemiBold" Foreground="#445565" />
+                          </Grid>
+                          <ScrollViewer Grid.Row="1">
+                            <ItemsControl ItemsSource="{Binding PreviewRows}">
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                  <Border BorderBrush="#EEE8DE" BorderThickness="0,1,0,0" Padding="18,14">
+                                    <Grid ColumnDefinitions="2.8*,1*,1*,1*,1.3*,1.3*">
+                                      <TextBlock Text="{Binding Category}" Foreground="#17212B" TextWrapping="Wrap" />
+                                      <TextBlock Grid.Column="1" Text="{Binding ObjectName}" Foreground="#17212B" />
+                                      <TextBlock Grid.Column="2" Text="{Binding Municipality}" Foreground="#17212B" />
+                                      <TextBlock Grid.Column="3" Text="{Binding Status}" Foreground="#17212B" />
+                                      <TextBlock Grid.Column="4" Text="{Binding AreaDisplay}" Foreground="{Binding StatusForegroundHex}" />
+                                      <TextBlock Grid.Column="5" Text="{Binding InspectionDisplay}" Foreground="{Binding InspectionForegroundHex}" />
+                                    </Grid>
+                                  </Border>
+                                </DataTemplate>
+                              </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                          </ScrollViewer>
+                        </Grid>
+                      </Border>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </ScrollViewer>
+              <Border x:Name="WebHostSurfaceContainer"
+                      IsVisible="False"
+                      Background="#FBFBF9"
+                      BorderBrush="#DDD8CF"
+                      BorderThickness="1"
+                      CornerRadius="14"
+                      Padding="18"
+                      Margin="0,20,0,0">
+                <ContentControl x:Name="WebHostSurfacePresenter" />
+              </Border>
+            </Grid>
+          </TabItem>
+
+          <TabItem Header="{Binding CodeTabText}">
+            <StackPanel Margin="0,20,0,0">
+              <TextBlock Text="{Binding FileLabelText}"
+                         FontFamily="Bahnschrift"
+                         FontWeight="SemiBold"
+                         FontSize="14"
+                         Foreground="#3A4754" />
+              <ComboBox Margin="0,10,0,16"
+                        Width="260"
+                        SelectedItem="{Binding SelectedCodeFile, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding FileName}" />
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+                <ComboBox.ItemsSource>
+                  <Binding Path="AvailableCodeFiles" />
+                </ComboBox.ItemsSource>
+              </ComboBox>
+              <Border Background="#131A22"
+                      BorderBrush="#2E3642"
+                      BorderThickness="1"
+                      CornerRadius="14">
+                <TextBox Text="{Binding SourceCodeText}"
+                         IsReadOnly="True"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Foreground="#F4F7FB"
+                         FontFamily="Consolas"
+                         FontSize="13"
+                         Padding="18"
+                         AcceptsReturn="True"
+                         TextWrapping="NoWrap" />
+              </Border>
+            </StackPanel>
+          </TabItem>
+        </TabControl>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>
+

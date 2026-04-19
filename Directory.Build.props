@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <!-- Never compile generated files from intermediate folders as source files. -->
+    <DefaultItemExcludesInProjectFolder>$(DefaultItemExcludesInProjectFolder);obj/**;wsl_obj/**</DefaultItemExcludesInProjectFolder>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) Or $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">
+    <!-- Keep Linux intermediates separate from Windows/VS obj to avoid cross-overwrites.
+         Do not switch WPF/WinUI projects to wsl_obj just because the active VS debug profile is named WSL. -->
+    <BaseIntermediateOutputPath>wsl_obj/</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+</Project>

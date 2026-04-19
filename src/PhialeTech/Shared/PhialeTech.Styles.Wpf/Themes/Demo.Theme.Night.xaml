@@ -1,0 +1,84 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="ThemeTokens.Night.xaml" />
+        <ResourceDictionary Source="Controls.Core.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <SolidColorBrush x:Key="DemoWindowBackgroundBrush" Color="#101722" />
+    <SolidColorBrush x:Key="DemoSidebarBackgroundBrush" Color="#161E2A" />
+    <SolidColorBrush x:Key="DemoSidebarBorderBrush" Color="#2F3C52" />
+    <SolidColorBrush x:Key="DemoPanelBackgroundBrush" Color="#171C25" />
+    <SolidColorBrush x:Key="DemoPanelBorderBrush" Color="#343C4B" />
+    <SolidColorBrush x:Key="DemoPrimaryTextBrush" Color="#F4F6FA" />
+    <SolidColorBrush x:Key="DemoSecondaryTextBrush" Color="#BBC5D4" />
+    <SolidColorBrush x:Key="DemoHeaderTextBrush" Color="#C8D0DE" />
+    <SolidColorBrush x:Key="DemoInputBackgroundBrush" Color="#1E232D" />
+    <SolidColorBrush x:Key="DemoInputBorderBrush" Color="#3E4657" />
+    <SolidColorBrush x:Key="DemoPlatformBadgeBackgroundBrush" Color="#1B3047" />
+    <SolidColorBrush x:Key="DemoPlatformBadgeBorderBrush" Color="#355174" />
+    <SolidColorBrush x:Key="DemoPlatformBadgeTextBrush" Color="#8DC2FF" />
+    <SolidColorBrush x:Key="DemoHintBackgroundBrush" Color="#1A2431" />
+    <SolidColorBrush x:Key="DemoHintBorderBrush" Color="#3A4658" />
+    <SolidColorBrush x:Key="DemoHintTextBrush" Color="#C9D7EA" />
+    <SolidColorBrush x:Key="DemoToolbarButtonBackgroundBrush" Color="#2A3240" />
+    <SolidColorBrush x:Key="DemoToolbarButtonBorderBrush" Color="#4A556A" />
+    <SolidColorBrush x:Key="DemoToolbarButtonTextBrush" Color="#ECF1F8" />
+    <SolidColorBrush x:Key="DemoToolbarButtonHoverBackgroundBrush" Color="#364154" />
+    <SolidColorBrush x:Key="DemoToolbarButtonHoverBorderBrush" Color="#66748C" />
+    <SolidColorBrush x:Key="DemoCommitButtonBackgroundBrush" Color="#4B8DFF" />
+    <SolidColorBrush x:Key="DemoCommitButtonBorderBrush" Color="#4B8DFF" />
+    <SolidColorBrush x:Key="DemoCommitButtonTextBrush" Color="#F8FBFF" />
+    <SolidColorBrush x:Key="DemoCommitButtonHoverBackgroundBrush" Color="#66A0FF" />
+    <SolidColorBrush x:Key="DemoCommitButtonHoverBorderBrush" Color="#90BAFF" />
+    <SolidColorBrush x:Key="DemoCancelButtonBackgroundBrush" Color="#49332A" />
+    <SolidColorBrush x:Key="DemoCancelButtonBorderBrush" Color="#A66A52" />
+    <SolidColorBrush x:Key="DemoCancelButtonTextBrush" Color="#FFD4C2" />
+    <SolidColorBrush x:Key="DemoCancelButtonHoverBackgroundBrush" Color="#5B3D31" />
+    <SolidColorBrush x:Key="DemoCancelButtonHoverBorderBrush" Color="#D08A6C" />
+    <SolidColorBrush x:Key="DemoWarningBackgroundBrush" Color="#3B3221" />
+    <SolidColorBrush x:Key="DemoWarningBorderBrush" Color="#A8801D" />
+    <SolidColorBrush x:Key="DemoWarningTextBrush" Color="#FFD882" />
+    <SolidColorBrush x:Key="DemoTabHeaderBackgroundBrush" Color="#1A2230" />
+    <SolidColorBrush x:Key="DemoTabHeaderBorderBrush" Color="#354050" />
+    <SolidColorBrush x:Key="DemoTabHeaderSelectedBackgroundBrush" Color="#171C25" />
+    <SolidColorBrush x:Key="DemoTabHeaderSelectedBorderBrush" Color="#4A556A" />
+    <SolidColorBrush x:Key="DemoTabHeaderTextBrush" Color="#A7B4C8" />
+    <SolidColorBrush x:Key="DemoTabContentBackgroundBrush" Color="#171C25" />
+    <SolidColorBrush x:Key="DemoTabContentBorderBrush" Color="#343C4B" />
+    <SolidColorBrush x:Key="DemoCodeBackgroundBrush" Color="#0F141C" />
+    <SolidColorBrush x:Key="DemoCodeBorderBrush" Color="#2F3C52" />
+    <SolidColorBrush x:Key="DemoCodeTextBrush" Color="#F4F7FB" />
+    <SolidColorBrush x:Key="DemoTokenBackgroundBrush" Color="#1E2634" />
+    <SolidColorBrush x:Key="DemoTokenBorderBrush" Color="#3E4A5F" />
+    <SolidColorBrush x:Key="DemoTokenTextBrush" Color="#C9D4E4" />
+    <SolidColorBrush x:Key="DemoGridBackgroundBrush" Color="#171C25" />
+    <SolidColorBrush x:Key="DemoGridBorderBrush" Color="#343C4B" />
+    <SolidColorBrush x:Key="DemoGridTextBrush" Color="#F4F6FA" />
+
+    <Color x:Key="{x:Static SystemColors.WindowColorKey}">#171C25</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#171C25" />
+    <Color x:Key="{x:Static SystemColors.ControlColorKey}">#1E232D</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#1E232D" />
+    <Color x:Key="{x:Static SystemColors.ControlLightColorKey}">#232B38</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="#232B38" />
+    <Color x:Key="{x:Static SystemColors.ControlLightLightColorKey}">#2A3240</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlLightLightBrushKey}" Color="#2A3240" />
+    <Color x:Key="{x:Static SystemColors.ControlDarkColorKey}">#3E4657</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlDarkBrushKey}" Color="#3E4657" />
+    <Color x:Key="{x:Static SystemColors.ControlDarkDarkColorKey}">#4A556A</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlDarkDarkBrushKey}" Color="#4A556A" />
+    <Color x:Key="{x:Static SystemColors.ControlTextColorKey}">#F4F6FA</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="#F4F6FA" />
+    <Color x:Key="{x:Static SystemColors.WindowTextColorKey}">#F4F6FA</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="#F4F6FA" />
+    <Color x:Key="{x:Static SystemColors.GrayTextColorKey}">#96A2B6</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="#96A2B6" />
+    <Color x:Key="{x:Static SystemColors.HighlightColorKey}">#274E7A</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#274E7A" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#274E7A" />
+    <Color x:Key="{x:Static SystemColors.HighlightTextColorKey}">#F8FBFF</Color>
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#F8FBFF" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#F8FBFF" />
+</ResourceDictionary>

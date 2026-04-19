@@ -1,0 +1,8 @@
+namespace: medium.numeric
+imports:
+  - bases.numeric
+
+definitions:
+  nonNegativeInteger:
+    extends: baseInteger
+    minValue: 0

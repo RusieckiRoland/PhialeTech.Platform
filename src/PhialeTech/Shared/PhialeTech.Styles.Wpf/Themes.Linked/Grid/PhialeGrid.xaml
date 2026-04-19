@@ -1,0 +1,736 @@
+<UserControl x:Class="PhialeTech.PhialeGrid.Wpf.Controls.PhialeGrid"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:surface="clr-namespace:PhialeTech.PhialeGrid.Wpf.Surface"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="520"
+             d:DesignWidth="980">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/ThemeTokens.Day.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/Controls.Core.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/PhialeGrid.Shared.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/PhialeGrid.Controls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <Style x:Key="PgRegionHeaderActionButtonStyle" TargetType="Button" BasedOn="{StaticResource PgActionButtonStyle}">
+                <Setter Property="MinWidth" Value="28" />
+                <Setter Property="Height" Value="28" />
+                <Setter Property="Padding" Value="6,2" />
+                <Setter Property="Margin" Value="8,0,0,0" />
+            </Style>
+            <Style x:Key="PgRegionCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource PgRegionHeaderActionButtonStyle}">
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Content" Value="×" />
+            </Style>
+            <Style x:Key="PgRegionExpanderButtonStyle" TargetType="Button" BasedOn="{StaticResource PgRegionHeaderActionButtonStyle}">
+                <Setter Property="Width" Value="22" />
+                <Setter Property="MinWidth" Value="22" />
+                <Setter Property="Height" Value="22" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0,0,8,0" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Width="{TemplateBinding Width}"
+                                    Height="{TemplateBinding Height}"
+                                    Background="{DynamicResource PgSurfaceBrush}"
+                                    BorderBrush="{DynamicResource PgPanelBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="11">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="PgRegionSplitterHorizontalStyle" TargetType="GridSplitter">
+                <Setter Property="Height" Value="12" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="GridSplitter">
+                            <Grid Background="Transparent">
+                                <Border Height="2"
+                                        Margin="12,0"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource PgPanelBorderBrush}"
+                                        Opacity="1" />
+                                <Border Width="28"
+                                        Height="12"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource PgSurfaceBrush}"
+                                        BorderBrush="{DynamicResource PgPanelBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6">
+                                    <StackPanel HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal">
+                                        <Border Width="2"
+                                                Height="7"
+                                                Margin="0,0,3,0"
+                                                Background="{DynamicResource PgMutedTextBrush}"
+                                                CornerRadius="1" />
+                                        <Border Width="2"
+                                                Height="7"
+                                                Background="{DynamicResource PgMutedTextBrush}"
+                                                CornerRadius="1" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="PgRegionSplitterVerticalStyle" TargetType="GridSplitter">
+                <Setter Property="Width" Value="12" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="GridSplitter">
+                            <Grid Background="Transparent">
+                                <Border Width="1"
+                                        Margin="0,16"
+                                        HorizontalAlignment="Center"
+                                        Background="{DynamicResource PgPanelBorderBrush}"
+                                        Opacity="0.85" />
+                                <Border Width="10"
+                                        Height="28"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource PgSurfaceBrush}"
+                                        BorderBrush="{DynamicResource PgPanelBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="5">
+                                    <StackPanel HorizontalAlignment="Center"
+                                                VerticalAlignment="Center">
+                                        <Border Width="6"
+                                                Height="2"
+                                                Margin="0,0,0,3"
+                                                Background="{DynamicResource PgMutedTextBrush}"
+                                                CornerRadius="1" />
+                                        <Border Width="6"
+                                                Height="2"
+                                                Background="{DynamicResource PgMutedTextBrush}"
+                                                CornerRadius="1" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="TopCommandStripRow" Height="0" />
+            <RowDefinition x:Name="TopCommandStripUtilityRow" Height="0" />
+            <RowDefinition x:Name="GroupingRegionRow" Height="56" />
+            <RowDefinition x:Name="GroupingRegionSplitterRow" Height="12" />
+            <RowDefinition Height="*" />
+            <RowDefinition x:Name="SummaryBottomRegionSplitterRow" Height="12" />
+            <RowDefinition x:Name="SummaryBottomRegionRow" Height="56" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="TopCommandStripHost"
+              Grid.Row="0"
+              Margin="0,0,0,6">
+            <Border x:Name="TopCommandStripShell"
+                    Padding="10,6,8,6"
+                    Background="{DynamicResource PgPanelBackgroundBrush}"
+                    BorderBrush="{DynamicResource PgPanelBorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer Grid.Column="0"
+                                  x:Name="TopCommandStripContentHost"
+                                  VerticalAlignment="Center"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  HorizontalScrollBarVisibility="Auto">
+                        <ContentPresenter x:Name="TopCommandStripContentPresenter"
+                                          Content="{Binding ElementName=Root, Path=TopCommandContent}" />
+                    </ScrollViewer>
+
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <Button x:Name="TopCommandStripToggleButton"
+                                Width="24"
+                                Height="24"
+                                Margin="8,0,0,0"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Visibility="{Binding ElementName=Root, Path=CanToggleTopCommandStrip, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Foreground="{DynamicResource PgPanelTextBrush}"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Tag="TopCommandRegion"
+                                Click="HandleRegionToggleButtonClick"
+                                Content="{Binding ElementName=Root, Path=TopCommandStripToggleText}" />
+                        <Button x:Name="TopCommandStripCloseButton"
+                                Width="24"
+                                Height="24"
+                                Margin="4,0,0,0"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Visibility="{Binding ElementName=Root, Path=CanCloseTopCommandStrip, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Foreground="{DynamicResource PgPanelTextBrush}"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Tag="TopCommandRegion"
+                                Click="HandleRegionCloseButtonClick"
+                                Content="×" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="2"
+              x:Name="GroupingRegionHost">
+            <Border x:Name="GroupingRegionShell"
+                    Padding="10,6,10,6"
+                    Background="{DynamicResource PgPanelBackgroundBrush}"
+                    BorderBrush="{DynamicResource PgPanelBorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <Border x:Name="GroupingPanelHost"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Style="{StaticResource PgGroupingPanelVisibilityStyle}"
+                        AllowDrop="{Binding ElementName=Root, Path=AllowsGroupingDrag}"
+                        DragEnter="HandleGroupingDragEnter"
+                        DragLeave="HandleGroupingDragLeave"
+                        DragOver="HandleGroupingDragOver"
+                        Drop="HandleGroupingDrop">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <DockPanel Grid.Row="0" LastChildFill="False">
+                            <StackPanel DockPanel.Dock="Left"
+                                        Orientation="Horizontal">
+                                <Button x:Name="GroupingRegionExpanderButton"
+                                        Visibility="{Binding ElementName=Root, Path=CanCollapseGroupingRegion, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Style="{StaticResource PgRegionExpanderButtonStyle}"
+                                        Tag="GroupingRegion"
+                                        Click="HandleRegionToggleButtonClick"
+                                        Content="{Binding ElementName=Root, Path=GroupingRegionToggleText}" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="{Binding ElementName=Root, Path=GroupingDropText}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PgPanelTextBrush}" />
+                            </StackPanel>
+
+                            <StackPanel DockPanel.Dock="Right"
+                                        Orientation="Horizontal">
+                                <StackPanel Orientation="Horizontal"
+                                            Visibility="{Binding ElementName=Root, Path=HasGroups, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Button Margin="0,0,8,0"
+                                            Style="{StaticResource PgActionButtonStyle}"
+                                            Click="HandleExpandAllGroupsClick">
+                                        <Button.Content>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Margin="0,0,6,0"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="12"
+                                                           Text="⊞" />
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Text="{Binding ElementName=Root, Path=GroupingExpandAllText}" />
+                                            </StackPanel>
+                                        </Button.Content>
+                                    </Button>
+                                    <Button Margin="0,0,8,0"
+                                            Style="{StaticResource PgActionButtonStyle}"
+                                            Click="HandleCollapseAllGroupsClick">
+                                        <Button.Content>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Margin="0,0,6,0"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="12"
+                                                           Text="⊟" />
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Text="{Binding ElementName=Root, Path=GroupingCollapseAllText}" />
+                                            </StackPanel>
+                                        </Button.Content>
+                                    </Button>
+                                </StackPanel>
+                                <Button x:Name="GroupingRegionCloseButton"
+                                        Visibility="{Binding ElementName=Root, Path=CanCloseGroupingRegion, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Style="{StaticResource PgRegionCloseButtonStyle}"
+                                        Tag="GroupingRegion"
+                                        Click="HandleRegionCloseButtonClick" />
+                            </StackPanel>
+                        </DockPanel>
+
+                        <ScrollViewer x:Name="GroupingRegionContentScrollViewer"
+                                      Grid.Row="1"
+                                      Margin="0,4,0,0"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <ItemsControl Margin="0,0,0,0"
+                                              ItemsSource="{Binding ElementName=Root, Path=GroupChips}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,10,10"
+                                                    Background="{DynamicResource PgAltRowBackgroundBrush}"
+                                                    BorderBrush="{DynamicResource PgControlBorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="8"
+                                                    Style="{StaticResource PgGroupChipBorderStyle}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Click="HandleToggleDirectionClick"
+                                                            Style="{StaticResource ColumnChipButtonStyle}"
+                                                            Tag="{Binding ColumnId}">
+                                                        <TextBlock Text="{Binding DisplayText}"
+                                                                   FontWeight="Normal"
+                                                                   Foreground="{DynamicResource PgSecondaryMutedBrush}"
+                                                                   Style="{StaticResource PgGroupChipTextStyle}" />
+                                                    </Button>
+                                                    <Button Click="HandleRemoveGroupClick"
+                                                            Style="{StaticResource ColumnChipActionButtonStyle}"
+                                                            Tag="{Binding ColumnId}">
+                                                        <TextBlock Text="x"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource PgMutedTextBrush}"
+                                                                   Style="{StaticResource PgGroupChipActionTextStyle}" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock Margin="0,0,0,0"
+                                           Text="{Binding ElementName=Root, Path=GroupingEmptyText}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource PgMutedTextBrush}"
+                                           Visibility="{Binding ElementName=Root, Path=HasNoGroups, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Border>
+        </Grid>
+
+        <GridSplitter x:Name="GroupingRegionSplitter"
+                      Grid.Row="3"
+                      Style="{StaticResource PgRegionSplitterHorizontalStyle}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      ResizeBehavior="PreviousAndNext"
+                      ResizeDirection="Rows"
+                      ShowsPreview="True"
+                      Tag="GroupingRegion"
+                      DragCompleted="HandleRegionSplitterDragCompleted" />
+
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="SideToolRegionSplitterColumn" Width="0" />
+                <ColumnDefinition x:Name="SideToolRegionColumn" Width="0" />
+            </Grid.ColumnDefinitions>
+
+            <Grid x:Name="SurfaceTopViewportHost"
+                  Grid.Column="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{Binding ElementName=Root, Path=ResolvedRowHeaderWidth}" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="{Binding ElementName=Root, Path=SurfaceVerticalScrollBarGutterWidth}" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition x:Name="SurfaceHeaderBandRow"
+                                   Height="{Binding ElementName=Root, Path=SurfaceColumnHeaderHeight}" />
+                    <RowDefinition x:Name="SurfaceFilterRow"
+                                   Height="{Binding ElementName=Root, Path=SurfaceFilterRowHeight}" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <surface:GridSurfaceHost x:Name="SurfaceHost"
+                                         Grid.Row="2"
+                                         Grid.ColumnSpan="3" />
+
+                <Grid x:Name="SurfaceTopChromeHost"
+                      Grid.ColumnSpan="3"
+                      Grid.RowSpan="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{Binding ElementName=Root, Path=ResolvedRowHeaderWidth}" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="{Binding ElementName=Root, Path=SurfaceVerticalScrollBarGutterWidth}" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="{Binding ElementName=Root, Path=SurfaceColumnHeaderHeight}" />
+                        <RowDefinition Height="{Binding ElementName=Root, Path=SurfaceFilterRowHeight}" />
+                    </Grid.RowDefinitions>
+
+                    <Border x:Name="SurfaceHeaderBandHost"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Background="{x:Null}"
+                            IsHitTestVisible="False" />
+                    <surface:GridSurfaceColumnHeaderBand x:Name="SurfaceColumnHeaderBand"
+                                                         Grid.Row="0"
+                                                         Grid.Column="1" />
+
+                    <Border x:Name="SurfaceHeaderCornerHost"
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Background="{DynamicResource PgHeaderBackgroundBrush}"
+                            BorderBrush="{DynamicResource PgHeaderBorderBrush}"
+                            BorderThickness="{DynamicResource PgGridRowHeaderBorderThickness}"
+                            IsHitTestVisible="True">
+                        <Button x:Name="SurfaceHeaderCornerButton"
+                                Width="{Binding ElementName=Root, Path=ResolvedRowHeaderWidth}"
+                                Height="{Binding ElementName=Root, Path=SurfaceColumnHeaderHeight}"
+                                Padding="0"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Style="{StaticResource PgGridCornerOptionsButtonStyle}"
+                                Click="HandleGridOptionsButtonClick"
+                                AutomationProperties.AutomationId="surface.grid-options-button"
+                                Content="..." />
+                    </Border>
+
+                    <Border x:Name="SurfaceHeaderRightInset"
+                            Grid.Row="0"
+                            Grid.Column="2"
+                            Background="{DynamicResource PgHeaderBackgroundBrush}"
+                            BorderBrush="{DynamicResource PgHeaderBorderBrush}"
+                            BorderThickness="0,0,0,2"
+                            IsHitTestVisible="False" />
+
+                    <Grid x:Name="SurfaceFilterRowHost"
+                          Grid.Row="1"
+                          Grid.ColumnSpan="3"
+                          Style="{StaticResource PgFilterPanelVisibilityStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{Binding ElementName=Root, Path=ResolvedRowHeaderWidth}" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="{Binding ElementName=Root, Path=SurfaceVerticalScrollBarGutterWidth}" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border x:Name="FilterRowHeaderSpacer"
+                                Grid.Column="0"
+                                Background="{DynamicResource PgFilterRowBackgroundBrush}"
+                                BorderBrush="{DynamicResource PgFilterRowBorderBrush}"
+                                BorderThickness="{DynamicResource PgGridRowHeaderBorderThickness}">
+                            <Path Style="{StaticResource PgGridFilterIconPathStyle}"
+                                  Data="F1 M 0 1 L 12 1 L 7.2 6.2 L 7.2 10.6 L 4.8 9.2 L 4.8 6.2 Z" />
+                        </Border>
+
+                        <ScrollViewer x:Name="FilterScrollViewer"
+                                      Grid.Column="1"
+                                      Background="{DynamicResource PgFilterRowBackgroundBrush}"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Disabled"
+                                      CanContentScroll="False">
+                            <ItemsControl x:Name="FilterItemsControl"
+                                          ItemsSource="{Binding ElementName=Root, Path=VisibleColumns}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Width="{Binding Width}"
+                                                Background="{DynamicResource PgFilterRowBackgroundBrush}"
+                                                BorderBrush="{DynamicResource PgFilterRowBorderBrush}"
+                                                BorderThickness="0,0,1,2">
+                                            <Grid>
+                                                <TextBox Style="{StaticResource PgGridFilterTextBoxStyle}"
+                                                         AutomationProperties.HelpText="{Binding ElementName=Root, Path=FilterLabelText}"
+                                                         Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+                                                <Button Width="{DynamicResource PgGridFilterClearButtonSize}"
+                                                        Height="{DynamicResource PgGridFilterClearButtonSize}"
+                                                        Margin="0,0,4,0"
+                                                        Padding="0"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center"
+                                                        Style="{StaticResource Button.Tertiary}"
+                                                        Content="×"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Foreground="{DynamicResource PgMutedTextBrush}"
+                                                        Click="HandleClearFilterColumnClick"
+                                                        Visibility="{Binding HasFilterText, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        
+                    </Grid>
+                </Grid>
+
+                <Border Background="{DynamicResource PgEmptyBackgroundBrush}"
+                        Grid.ColumnSpan="3"
+                        Grid.Row="2"
+                        BorderBrush="{DynamicResource PgEmptyBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Style="{StaticResource PgEmptyRowsBorderStyle}">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Text="{Binding ElementName=Root, Path=EmptyNoRowsText}"
+                               FontSize="14"
+                               Foreground="{DynamicResource PgMutedTextBrush}" />
+                </Border>
+            </Grid>
+
+            <GridSplitter x:Name="SideToolRegionSplitter"
+                          Grid.Column="1"
+                          Style="{StaticResource PgRegionSplitterVerticalStyle}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          ResizeBehavior="PreviousAndNext"
+                          ResizeDirection="Columns"
+                          ShowsPreview="True"
+                          Tag="SideToolRegion"
+                          DragCompleted="HandleRegionSplitterDragCompleted" />
+
+            <Grid x:Name="SideToolRegionHost"
+                  Grid.Column="2">
+                <Grid>
+                    <Border x:Name="SideToolRegionCollapsedRail"
+                            Width="36"
+                            Margin="8,0,0,0"
+                            Visibility="Collapsed"
+                            Background="{DynamicResource PgPanelBackgroundBrush}"
+                            BorderBrush="{DynamicResource PgPanelBorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Button Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Tag="SideToolRegion"
+                                Click="HandleRegionToggleButtonClick">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Margin="0,10,0,0"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Top"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PgMutedTextBrush}"
+                                           Text="{Binding ElementName=Root, Path=SideToolRegionToggleText}" />
+                                <TextBlock Grid.Row="1"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PgPanelTextBrush}"
+                                           Text="{Binding ElementName=Root, Path=ToolsRegionTitleText}">
+                                    <TextBlock.LayoutTransform>
+                                        <RotateTransform Angle="90" />
+                                    </TextBlock.LayoutTransform>
+                                </TextBlock>
+                            </Grid>
+                        </Button>
+                    </Border>
+
+                    <Border x:Name="SideToolRegionExpandedShell"
+                            Margin="10,0,0,0"
+                            Padding="10,8"
+                            Background="{DynamicResource PgPanelBackgroundBrush}"
+                            BorderBrush="{DynamicResource PgPanelBorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="SideToolRegionExpandedShellTransform" />
+                        </Border.RenderTransform>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.Row="0"
+                                       LastChildFill="False">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button x:Name="SideToolRegionExpanderButton"
+                                            Visibility="{Binding ElementName=Root, Path=CanCollapseSideToolRegion, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            Style="{StaticResource PgRegionExpanderButtonStyle}"
+                                            Tag="SideToolRegion"
+                                            Click="HandleRegionToggleButtonClick"
+                                            Content="{Binding ElementName=Root, Path=SideToolRegionToggleText}" />
+                                    <TextBlock VerticalAlignment="Center"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource PgPanelTextBrush}"
+                                               Text="{Binding ElementName=Root, Path=ToolsRegionTitleText}" />
+                                </StackPanel>
+
+                                <StackPanel DockPanel.Dock="Right"
+                                            Orientation="Horizontal">
+                                    <Button x:Name="SideToolRegionCloseButton"
+                                            Tag="SideToolRegion"
+                                            Click="HandleRegionCloseButtonClick">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource PgRegionCloseButtonStyle}">
+                                                <Setter Property="Visibility" Value="{Binding ElementName=Root, Path=CanCloseSideToolRegion, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ElementName=Root, Path=SideToolRegionUsesDrawerChrome}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </StackPanel>
+                            </DockPanel>
+
+                            <ScrollViewer x:Name="SideToolRegionContentScrollViewer"
+                                          Grid.Row="1"
+                                          Margin="0,8,0,0"
+                                          VerticalScrollBarVisibility="Auto">
+                                <ContentPresenter x:Name="SideToolRegionContentPresenter"
+                                                  Content="{Binding ElementName=Root, Path=SideToolContent}" />
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <GridSplitter x:Name="SummaryBottomRegionSplitter"
+                      Grid.Row="5"
+                      Style="{StaticResource PgRegionSplitterHorizontalStyle}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      ResizeBehavior="PreviousAndNext"
+                      ResizeDirection="Rows"
+                      ShowsPreview="True"
+                      Tag="SummaryBottomRegion"
+                      DragCompleted="HandleRegionSplitterDragCompleted" />
+
+        <Grid x:Name="SummaryBottomRegionHost"
+              Grid.Row="6">
+            <Border x:Name="SummaryBottomRegionShell"
+                    Padding="10,6,10,6"
+                    Background="{DynamicResource PgPanelBackgroundBrush}"
+                    BorderBrush="{DynamicResource PgPanelBorderBrush}"
+                    BorderThickness="0,1,0,0">
+                <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <DockPanel Grid.Row="0" LastChildFill="False">
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="SummaryBottomRegionExpanderButton"
+                                Visibility="{Binding ElementName=Root, Path=CanCollapseSummaryBottomRegion, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource PgRegionExpanderButtonStyle}"
+                                Tag="SummaryBottomRegion"
+                                Click="HandleRegionToggleButtonClick"
+                                Content="{Binding ElementName=Root, Path=SummaryBottomRegionToggleText}" />
+                        <TextBlock VerticalAlignment="Center"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PgStatusTextBrush}"
+                                   Text="{Binding ElementName=Root, Path=SummaryRegionTitleText}" />
+                    </StackPanel>
+
+                    <StackPanel DockPanel.Dock="Right"
+                                Orientation="Horizontal">
+                        <Button x:Name="SummaryBottomRegionCloseButton"
+                                Visibility="{Binding ElementName=Root, Path=CanCloseSummaryBottomRegion, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource PgRegionCloseButtonStyle}"
+                                Tag="SummaryBottomRegion"
+                                Click="HandleRegionCloseButtonClick" />
+                    </StackPanel>
+                </DockPanel>
+
+                <ScrollViewer x:Name="SummaryBottomRegionContentScrollViewer"
+                              Grid.Row="1"
+                              Margin="0,4,0,0"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding ElementName=Root, Path=SummaryItems}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,10,6"
+                                        Padding="8,5"
+                                        Background="{DynamicResource PgPanelBackgroundBrush}"
+                                        BorderBrush="{DynamicResource PgSummaryCardBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Label}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource PgStatusTextBrush}" />
+                                        <TextBlock Margin="8,0,0,0"
+                                                   Text="{Binding ValueText}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource PgSummaryValueBrush}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border x:Name="BottomStatusStripHost"
+                Grid.Row="7"
+                Padding="10,8,10,0"
+                Background="Transparent"
+                BorderBrush="{DynamicResource PgGridLineBrush}"
+                BorderThickness="0,1,0,0">
+            <WrapPanel>
+                <TextBlock Margin="0,0,12,8"
+                           Text="{Binding ElementName=Root, Path=SelectionStatusText}"
+                           FontSize="12"
+                           Foreground="{DynamicResource PgStatusTextBrush}" />
+                <TextBlock Margin="0,0,12,8"
+                           Text="{Binding ElementName=Root, Path=CurrentCellText}"
+                           FontSize="12"
+                           Foreground="{DynamicResource PgStatusTextBrush}" />
+                <TextBlock Margin="0,0,12,8"
+                           Text="{Binding ElementName=Root, Path=EditStatusText}"
+                           FontSize="12"
+                           Foreground="{DynamicResource PgStatusTextBrush}" />
+                <TextBlock Margin="0,0,0,8"
+                           Text="{Binding ElementName=Root, Path=PagingStatusText}"
+                           FontSize="12"
+                           Foreground="{DynamicResource PgStatusTextBrush}" />
+            </WrapPanel>
+        </Border>
+    </Grid>
+</UserControl>

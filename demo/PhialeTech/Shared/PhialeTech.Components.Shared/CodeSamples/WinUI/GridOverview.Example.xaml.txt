@@ -1,0 +1,20 @@
+<Grid RowDefinitions="Auto,*"
+      Margin="0,24,0,0">
+  <Border Padding="14"
+          Background="#F6FAF9"
+          BorderBrush="#D5E5E0"
+          BorderThickness="1"
+          CornerRadius="10">
+    <TextBlock Text="{Binding GroupingBarText}" />
+  </Border>
+
+  <Grid Grid.Row="1"
+        Margin="0,18,0,0"
+        ColumnDefinitions="168,24,*">
+    <ItemsRepeater ItemsSource="{Binding MetricCards}" />
+
+    <controls:DataGrid Grid.Column="2"
+                       AutoGenerateColumns="False"
+                       ItemsSource="{Binding SalesRecords}" />
+  </Grid>
+</Grid>

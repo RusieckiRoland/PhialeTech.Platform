@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <PackageId>PhialeTech.WebAssets</PackageId>
+    <Version>1.0.0</Version>
+    <PackageOutputPath>..\..\..\..\.nuget\local-feed</PackageOutputPath>
+    <Authors>Roland Rusiecki</Authors>
+    <Description>PhialeTech web assets package for offline cross-platform browser-hosted components.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>Readme.md</PackageReadmeFile>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <ContentTargetFolders>contentFiles</ContentTargetFolders>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="Readme.md" Pack="true" PackagePath="\" />
+    <Content Include="Assets\**">
+      <Pack>true</Pack>
+      <PackagePath>contentFiles\any\any\Assets\</PackagePath>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+      <PackageFlatten>false</PackageFlatten>
+      <BuildAction>None</BuildAction>
+    </Content>
+  </ItemGroup>
+</Project>

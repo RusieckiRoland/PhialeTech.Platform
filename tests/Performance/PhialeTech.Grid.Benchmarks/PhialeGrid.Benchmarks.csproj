@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <AssemblyName>PhialeTech.Grid.Benchmarks</AssemblyName>
+    <RootNamespace>PhialeGrid.Benchmarks</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\PhialeTech\Products\Grid\Core\PhialeGrid.Core\PhialeGrid.Core.csproj" />
+    <ProjectReference Include="..\..\..\demo\PhialeTech\Shared\PhialeTech.Components.Shared\PhialeTech.Components.Shared.csproj" />
+  </ItemGroup>
+</Project>

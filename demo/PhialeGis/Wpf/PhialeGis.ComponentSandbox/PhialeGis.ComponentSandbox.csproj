@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <UseWPF>true</UseWPF>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <NoWarn>$(NoWarn);CS8632</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="splash.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DryIoc.dll" Version="5.4.3" />
+    <PackageReference Include="MahApps.Metro" Version="2.4.10" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="PhialeGis.WebAssets" Version="1.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.Library.Domain\PhialeGis.Library.Domain.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.Library.Dsl\PhialeGis.Library.Dsl.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.Library.Renderer.Skia\PhialeGis.Library.Renderer.Skia.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.Library.Sync\PhialeGis.Library.Sync.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Platforms\Wpf\PhialeGis.Library.WpfUi\PhialeGis.Library.WpfUi.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <SplashScreen Include="splash.png" />
+  </ItemGroup>
+</Project>

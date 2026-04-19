@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PhialeTech.Components.WinUI (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "PhialeTech.Components.WinUI (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

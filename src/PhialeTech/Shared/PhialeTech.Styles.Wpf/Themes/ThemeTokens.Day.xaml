@@ -1,0 +1,100 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="Color.Surface0">#FFFFFF</Color>
+    <Color x:Key="Color.Surface1">#F8FAFC</Color>
+    <Color x:Key="Color.Surface2">#F0F3F7</Color>
+    <Color x:Key="Color.Surface3">#EEF2F7</Color>
+    <Color x:Key="Color.Border.Subtle">#E4E7EC</Color>
+    <Color x:Key="Color.Border.Default">#D3D9E1</Color>
+    <Color x:Key="Color.Border.Strong">#A9B5C8</Color>
+    <Color x:Key="Color.Text.Primary">#1F2937</Color>
+    <Color x:Key="Color.Text.Secondary">#4B5563</Color>
+    <Color x:Key="Color.Text.Muted">#5B6572</Color>
+    <Color x:Key="Color.Text.Inverse">#FFFFFF</Color>
+    <Color x:Key="Color.Accent">#2F80ED</Color>
+    <Color x:Key="Color.Accent.Strong">#1D4ED8</Color>
+    <Color x:Key="Color.Hover.Fill">#EAF2FF</Color>
+    <Color x:Key="Color.Focus.Ring">#2F80ED</Color>
+    <Color x:Key="Color.Selection.Active.Fill">#D7E8FF</Color>
+    <Color x:Key="Color.Selection.Active.Border">#5B9BFF</Color>
+    <Color x:Key="Color.Selection.Active.Text">#10253F</Color>
+    <Color x:Key="Color.Selection.Inactive.Fill">#E7EDF7</Color>
+    <Color x:Key="Color.Selection.Inactive.Border">#AAB8CC</Color>
+    <Color x:Key="Color.Selection.Inactive.Text">#25364E</Color>
+    <Color x:Key="Color.Warning.Fill">#FDF6E3</Color>
+    <Color x:Key="Color.Warning.Border">#F59E0B</Color>
+    <Color x:Key="Color.Warning.Text">#92400E</Color>
+    <Color x:Key="Color.Danger.Fill">#FEECEC</Color>
+    <Color x:Key="Color.Danger.Border">#DC2626</Color>
+    <Color x:Key="Color.Danger.Text">#8B1D1D</Color>
+    <Color x:Key="Color.Scroll.Track">#E9EEF5</Color>
+    <Color x:Key="Color.Scroll.Thumb">#BCC8D9</Color>
+    <Color x:Key="Color.Scroll.ThumbHover">#94A6BE</Color>
+    <Color x:Key="Color.Scroll.Border">#D6DEEA</Color>
+    <Color x:Key="Color.Scroll.Corner">#EDF3F8</Color>
+    <Color x:Key="Color.Badge.Fill">#EEF2F7</Color>
+    <Color x:Key="Color.Badge.Border">#D8DEE7</Color>
+    <Color x:Key="Color.Badge.Text">#4B5563</Color>
+    <Color x:Key="Color.Grid.Filter.Background">#F6F9FC</Color>
+    <Color x:Key="Color.Grid.Filter.Border">#D8E1EE</Color>
+    <Color x:Key="Color.Grid.Header.Background">#DDECFB</Color>
+    <Color x:Key="Color.Grid.Header.Border">#5E8FC7</Color>
+    <Color x:Key="Color.Grid.Header.Separator">#9FBBDE</Color>
+    <Color x:Key="Color.Grid.Header.Text">#183B63</Color>
+
+    <SolidColorBrush x:Key="Brush.Surface0" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Surface1" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.Surface2" Color="{DynamicResource Color.Surface2}" />
+    <SolidColorBrush x:Key="Brush.Surface3" Color="{DynamicResource Color.Surface3}" />
+    <SolidColorBrush x:Key="Brush.Border.Subtle" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="Brush.Border.Default" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.Border.Strong" Color="{DynamicResource Color.Border.Strong}" />
+    <SolidColorBrush x:Key="Brush.Text.Primary" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Text.Secondary" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="Brush.Text.Muted" Color="{DynamicResource Color.Text.Muted}" />
+    <SolidColorBrush x:Key="Brush.Text.Inverse" Color="{DynamicResource Color.Text.Inverse}" />
+    <SolidColorBrush x:Key="Brush.Accent" Color="{DynamicResource Color.Accent}" />
+    <SolidColorBrush x:Key="Brush.Accent.Strong" Color="{DynamicResource Color.Accent.Strong}" />
+    <SolidColorBrush x:Key="Brush.Hover.Fill" Color="{DynamicResource Color.Hover.Fill}" />
+    <SolidColorBrush x:Key="Brush.Focus.Ring" Color="{DynamicResource Color.Focus.Ring}" />
+    <SolidColorBrush x:Key="Brush.Selection.Active.Fill" Color="{DynamicResource Color.Selection.Active.Fill}" />
+    <SolidColorBrush x:Key="Brush.Selection.Active.Border" Color="{DynamicResource Color.Selection.Active.Border}" />
+    <SolidColorBrush x:Key="Brush.Selection.Active.Text" Color="{DynamicResource Color.Selection.Active.Text}" />
+    <SolidColorBrush x:Key="Brush.Selection.Inactive.Fill" Color="{DynamicResource Color.Selection.Inactive.Fill}" />
+    <SolidColorBrush x:Key="Brush.Selection.Inactive.Border" Color="{DynamicResource Color.Selection.Inactive.Border}" />
+    <SolidColorBrush x:Key="Brush.Selection.Inactive.Text" Color="{DynamicResource Color.Selection.Inactive.Text}" />
+    <SolidColorBrush x:Key="Brush.Warning.Fill" Color="{DynamicResource Color.Warning.Fill}" />
+    <SolidColorBrush x:Key="Brush.Warning.Border" Color="{DynamicResource Color.Warning.Border}" />
+    <SolidColorBrush x:Key="Brush.Warning.Text" Color="{DynamicResource Color.Warning.Text}" />
+    <SolidColorBrush x:Key="Brush.Danger.Fill" Color="{DynamicResource Color.Danger.Fill}" />
+    <SolidColorBrush x:Key="Brush.Danger.Border" Color="{DynamicResource Color.Danger.Border}" />
+    <SolidColorBrush x:Key="Brush.Danger.Text" Color="{DynamicResource Color.Danger.Text}" />
+    <SolidColorBrush x:Key="Brush.Scroll.Track" Color="{DynamicResource Color.Scroll.Track}" />
+    <SolidColorBrush x:Key="Brush.Scroll.Thumb" Color="{DynamicResource Color.Scroll.Thumb}" />
+    <SolidColorBrush x:Key="Brush.Scroll.ThumbHover" Color="{DynamicResource Color.Scroll.ThumbHover}" />
+    <SolidColorBrush x:Key="Brush.Scroll.Border" Color="{DynamicResource Color.Scroll.Border}" />
+    <SolidColorBrush x:Key="Brush.Scroll.Corner" Color="{DynamicResource Color.Scroll.Corner}" />
+    <SolidColorBrush x:Key="Brush.Badge.Fill" Color="{DynamicResource Color.Badge.Fill}" />
+    <SolidColorBrush x:Key="Brush.Badge.Border" Color="{DynamicResource Color.Badge.Border}" />
+    <SolidColorBrush x:Key="Brush.Badge.Text" Color="{DynamicResource Color.Badge.Text}" />
+
+    <SolidColorBrush x:Key="Brush.Button.Primary.Background" Color="{DynamicResource Color.Accent}" />
+    <SolidColorBrush x:Key="Brush.Button.Primary.Border" Color="{DynamicResource Color.Accent}" />
+    <SolidColorBrush x:Key="Brush.Button.Primary.Foreground" Color="{DynamicResource Color.Text.Inverse}" />
+    <SolidColorBrush x:Key="Brush.Button.Primary.HoverBackground" Color="{DynamicResource Color.Accent.Strong}" />
+    <SolidColorBrush x:Key="Brush.Button.Primary.HoverBorder" Color="{DynamicResource Color.Accent.Strong}" />
+    <SolidColorBrush x:Key="Brush.Button.Secondary.Background" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Button.Secondary.Border" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.Button.Secondary.Foreground" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Button.Secondary.HoverBackground" Color="{DynamicResource Color.Hover.Fill}" />
+    <SolidColorBrush x:Key="Brush.Button.Secondary.HoverBorder" Color="{DynamicResource Color.Border.Strong}" />
+    <SolidColorBrush x:Key="Brush.Button.Danger.Background" Color="{DynamicResource Color.Danger.Fill}" />
+    <SolidColorBrush x:Key="Brush.Button.Danger.Border" Color="{DynamicResource Color.Danger.Border}" />
+    <SolidColorBrush x:Key="Brush.Button.Danger.Foreground" Color="{DynamicResource Color.Danger.Text}" />
+    <SolidColorBrush x:Key="Brush.Button.Danger.HoverBackground" Color="#FBD5D5" />
+    <SolidColorBrush x:Key="Brush.Button.Danger.HoverBorder" Color="#B91C1C" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.Background" Color="#00FFFFFF" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.Border" Color="#00FFFFFF" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.Foreground" Color="{DynamicResource Color.Accent}" />
+</ResourceDictionary>

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Platforms>AnyCPU</Platforms>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="UIAbstraction\**" />
+    <EmbeddedResource Remove="UIAbstraction\**" />
+    <None Remove="UIAbstraction\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Features\PhialeGis.Library.DslEditor\PhialeGis.Library.DslEditor.csproj" />
+    <ProjectReference Include="..\PhialeGis.Library.Abstractions\PhialeGis.Library.Abstractions.csproj" />
+    <ProjectReference Include="..\PhialeGis.Library.Actions\PhialeGis.Library.Actions.csproj" />
+    <ProjectReference Include="..\PhialeGis.Library.Geometry\PhialeGis.Library.Geometry.csproj" />
+    <ProjectReference Include="..\..\..\PhialeTech\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
+    <PackageReference Include="System.Reactive" Version="6.0.2" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Interactions\DslEditor\" />
+  </ItemGroup>
+</Project>

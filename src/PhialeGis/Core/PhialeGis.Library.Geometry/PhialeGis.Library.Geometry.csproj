@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<LangVersion>latest</LangVersion>	
+		<DefineConstants>$(DefineConstants);PH_FGB</DefineConstants> 
+	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="FlatGeobuf" Version="3.26.0" />
+	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NetTopologySuite" Version="*" />
+  </ItemGroup>
+</Project>

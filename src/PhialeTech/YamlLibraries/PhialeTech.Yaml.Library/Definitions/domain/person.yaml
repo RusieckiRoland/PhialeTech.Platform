@@ -1,0 +1,27 @@
+namespace: domain.person
+imports:
+  - medium
+  - medium.numeric
+
+definitions:
+  firstName:
+    extends: limited50Text
+    captionKey: person.firstName.caption
+    placeholderKey: person.firstName.placeholder
+    required: true
+
+  lastName:
+    extends: limited50Text
+    captionKey: person.lastName.caption
+    placeholderKey: person.lastName.placeholder
+    required: true
+
+  notes:
+    extends: notesText
+    captionKey: person.notes.caption
+    placeholderKey: person.notes.placeholder
+
+  age:
+    extends: nonNegativeInteger
+    captionKey: person.age.caption
+    placeholderKey: person.age.placeholder

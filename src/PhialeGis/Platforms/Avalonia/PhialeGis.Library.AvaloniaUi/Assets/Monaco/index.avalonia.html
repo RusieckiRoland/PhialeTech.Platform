@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body, #container {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+
+  <script src="./min/vs/loader.js"></script>
+  <script>
+    require.config({ paths: { 'vs': './min/vs' } });
+
+    window.MonacoEnvironment = {
+      getWorkerUrl: function () {
+        var base = new URL('./min/', window.location.href).toString();
+        var path = base + 'vs/base/worker/workerMain.js';
+        var code = 'self.MonacoEnvironment={baseUrl:\"' + base + '\"}; importScripts(\"' + path + '\");';
+        return URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+      }
+    };
+  </script>
+
+  <script src="./phiale-dsl-host.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+public sealed class GridOverviewViewModel
+{
+    public IReadOnlyList<GridColumnDefinition> GridColumns { get; }
+
+    public IReadOnlyList<DemoSalesRecordViewModel> GridRecords { get; }
+
+    public IReadOnlyList<GridGroupDescriptor> GridGroups { get; set; }
+}

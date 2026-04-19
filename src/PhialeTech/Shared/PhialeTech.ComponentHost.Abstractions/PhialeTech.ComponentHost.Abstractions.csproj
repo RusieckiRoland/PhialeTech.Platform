@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.ComponentHost.Abstractions</PackageId>
+    <AssemblyName>PhialeTech.ComponentHost.Abstractions</AssemblyName>
+    <RootNamespace>PhialeTech.ComponentHost.Abstractions</RootNamespace>
+    <Description>Host-facing abstractions for integrating PhialeTech components with domain applications such as GIS.</Description>
+  </PropertyGroup>
+
+</Project>

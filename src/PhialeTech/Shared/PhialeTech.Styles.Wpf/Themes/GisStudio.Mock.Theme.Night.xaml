@@ -1,0 +1,26 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <LinearGradientBrush x:Key="GisMock.WindowBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#0B1220" />
+        <GradientStop Offset="1" Color="#111B2D" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="GisMock.RailBackgroundBrush" Color="#0E1626" />
+    <SolidColorBrush x:Key="GisMock.TopBarBackgroundBrush" Color="#121C2F" />
+    <SolidColorBrush x:Key="GisMock.TopBarBorderBrush" Color="#253249" />
+    <SolidColorBrush x:Key="GisMock.CardBackgroundBrush" Color="#162133" />
+    <SolidColorBrush x:Key="GisMock.CardBorderBrush" Color="#27364F" />
+    <SolidColorBrush x:Key="GisMock.FloatingCardBackgroundBrush" Color="#101A2B" />
+    <SolidColorBrush x:Key="GisMock.MapBackdropBrush" Color="#112038" />
+    <SolidColorBrush x:Key="GisMock.MapInsetBrush" Color="#0D182A" />
+    <SolidColorBrush x:Key="GisMock.PlaceholderBackgroundBrush" Color="#122036" />
+    <SolidColorBrush x:Key="GisMock.PlaceholderBorderBrush" Color="#334968" />
+    <SolidColorBrush x:Key="GisMock.StrongBorderBrush" Color="#4A638A" />
+    <SolidColorBrush x:Key="GisMock.AccentSoftBrush" Color="#183A67" />
+    <SolidColorBrush x:Key="GisMock.AccentSoftBorderBrush" Color="#70A7FF" />
+    <SolidColorBrush x:Key="GisMock.AccentSoftTextBrush" Color="#E7F1FF" />
+    <SolidColorBrush x:Key="GisMock.BadgeBackgroundBrush" Color="#1A2940" />
+    <SolidColorBrush x:Key="GisMock.BadgeBorderBrush" Color="#334A68" />
+    <SolidColorBrush x:Key="GisMock.BadgeTextBrush" Color="#C9DBF6" />
+</ResourceDictionary>

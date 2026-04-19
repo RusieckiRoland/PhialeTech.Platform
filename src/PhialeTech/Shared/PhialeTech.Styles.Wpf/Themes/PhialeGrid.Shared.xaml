@@ -1,0 +1,92 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System;assembly=mscorlib">
+    <SolidColorBrush x:Key="PgSurfaceBrush" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="PgControlBorderBrush" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="PgPanelBackgroundBrush" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="PgPanelBorderBrush" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="PgPanelTextBrush" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="PgSecondaryMutedBrush" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="PgMutedTextBrush" Color="{DynamicResource Color.Text.Muted}" />
+    <SolidColorBrush x:Key="PgRowNumberTextBrush" Color="{DynamicResource Color.Text.Muted}" />
+    <SolidColorBrush x:Key="PgFilterLabelBrush" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="PgFilterCueBrush" Color="{DynamicResource Color.Text.Muted}" />
+    <SolidColorBrush x:Key="PgFilterRowBackgroundBrush" Color="{DynamicResource Color.Grid.Filter.Background}" />
+    <SolidColorBrush x:Key="PgFilterRowBorderBrush" Color="{DynamicResource Color.Grid.Filter.Border}" />
+    <SolidColorBrush x:Key="PgFilterInputBackgroundBrush" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="PgFilterInputBorderBrush" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="PgGridLineBrush" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="PgGridBackgroundBrush" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="PgGridBorderBrush" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="PgPrimaryTextBrush" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="PgSortGlyphBrush" Color="{DynamicResource Color.Accent}" />
+    <SolidColorBrush x:Key="PgSortOrderBrush" Color="{DynamicResource Color.Accent.Strong}" />
+    <SolidColorBrush x:Key="PgSortBadgeBackgroundBrush" Color="{DynamicResource Color.Badge.Fill}" />
+    <SolidColorBrush x:Key="PgSortBadgeBorderBrush" Color="{DynamicResource Color.Badge.Border}" />
+    <SolidColorBrush x:Key="PgSortBadgeTextBrush" Color="{DynamicResource Color.Badge.Text}" />
+    <SolidColorBrush x:Key="PgRowBackgroundBrush" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="PgRowAccentBackgroundBrush" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="PgMasterDetailHeaderBackgroundBrush" Color="{DynamicResource Color.Surface3}" />
+    <SolidColorBrush x:Key="PgMasterDetailDetailBackgroundBrush" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="PgLoadMoreBackgroundBrush" Color="{DynamicResource Color.Warning.Fill}" />
+    <SolidColorBrush x:Key="PgLoadMoreTextBrush" Color="{DynamicResource Color.Warning.Text}" />
+    <SolidColorBrush x:Key="PgDetailsBackgroundBrush" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="PgDetailsBorderBrush" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="PgDetailsBorderLightBrush" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="PgEmptyBackgroundBrush" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="PgEmptyBorderBrush" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="PgSummaryPanelBorderBrush" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="PgSummaryCardBorderBrush" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="PgStatusTextBrush" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="PgSummaryValueBrush" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="PgAccentBrush" Color="{DynamicResource Color.Accent}" />
+    <SolidColorBrush x:Key="PgHeaderBackgroundBrush" Color="{DynamicResource Color.Grid.Header.Background}" />
+    <SolidColorBrush x:Key="PgHeaderBorderBrush" Color="{DynamicResource Color.Grid.Header.Border}" />
+    <SolidColorBrush x:Key="PgHeaderSeparatorBrush" Color="{DynamicResource Color.Grid.Header.Separator}" />
+    <SolidColorBrush x:Key="PgHeaderTextBrush" Color="{DynamicResource Color.Grid.Header.Text}" />
+    <SolidColorBrush x:Key="PgHeaderSelectedBackgroundBrush" Color="{DynamicResource Color.Selection.Inactive.Fill}" />
+    <SolidColorBrush x:Key="PgAltRowBackgroundBrush" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="PgHoverBackgroundBrush" Color="{DynamicResource Color.Hover.Fill}" />
+    <SolidColorBrush x:Key="PgInputBackgroundBrush" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="PgInputBorderBrush" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="PgSelectionBackgroundBrush" Color="{DynamicResource Color.Selection.Active.Fill}" />
+    <SolidColorBrush x:Key="PgSelectionBorderBrush" Color="{DynamicResource Color.Selection.Active.Border}" />
+    <SolidColorBrush x:Key="PgSelectionTextBrush" Color="{DynamicResource Color.Selection.Active.Text}" />
+    <SolidColorBrush x:Key="PgSelectionInactiveBackgroundBrush" Color="{DynamicResource Color.Selection.Inactive.Fill}" />
+    <SolidColorBrush x:Key="PgSelectionInactiveBorderBrush" Color="{DynamicResource Color.Selection.Inactive.Border}" />
+    <SolidColorBrush x:Key="PgSelectionInactiveTextBrush" Color="{DynamicResource Color.Selection.Inactive.Text}" />
+    <SolidColorBrush x:Key="PgCurrentRowBackgroundBrush" Color="{DynamicResource Color.Selection.Active.Fill}" />
+    <SolidColorBrush x:Key="PgCurrentRowBorderBrush" Color="{DynamicResource Color.Selection.Active.Border}" />
+    <SolidColorBrush x:Key="PgRowIndicatorColumnBackgroundBrush" Color="{DynamicResource Color.Surface2}" />
+    <SolidColorBrush x:Key="PgRowIndicatorColumnCurrentBackgroundBrush" Color="{DynamicResource Color.Selection.Active.Fill}" />
+    <SolidColorBrush x:Key="PgFocusRingBrush" Color="{DynamicResource Color.Focus.Ring}" />
+    <SolidColorBrush x:Key="PgScrollTrackBrush" Color="{DynamicResource Color.Scroll.Track}" />
+    <SolidColorBrush x:Key="PgScrollThumbBrush" Color="{DynamicResource Color.Scroll.Thumb}" />
+    <SolidColorBrush x:Key="PgScrollThumbHoverBrush" Color="{DynamicResource Color.Scroll.ThumbHover}" />
+    <SolidColorBrush x:Key="PgScrollBorderBrush" Color="{DynamicResource Color.Scroll.Border}" />
+    <SolidColorBrush x:Key="PgScrollCornerBrush" Color="{DynamicResource Color.Scroll.Corner}" />
+
+    <Thickness x:Key="PgGridCellPadding">8,4</Thickness>
+    <Thickness x:Key="PgGridHeaderPadding">10,8</Thickness>
+    <Thickness x:Key="PgGridFilterTextPadding">8,6,24,6</Thickness>
+    <Thickness x:Key="PgGridColumnHeaderBorderThickness">0,0,0,2</Thickness>
+    <Thickness x:Key="PgGridRowHeaderBorderThickness">0,0,1,2</Thickness>
+    <Thickness x:Key="PgGridRowDetailsMargin">28,0,0,8</Thickness>
+    <system:Double x:Key="PgGridRowHeaderWidth">28</system:Double>
+    <system:Double x:Key="PgGridFilterClearButtonSize">18</system:Double>
+    <system:Double x:Key="PgGridHeaderMenuButtonSize">18</system:Double>
+
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{DynamicResource Color.Surface2}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="{DynamicResource Color.Scroll.Track}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlLightLightBrushKey}" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlDarkBrushKey}" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlDarkDarkBrushKey}" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}" Color="{DynamicResource Color.Text.Muted}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="{DynamicResource Color.Selection.Active.Fill}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="{DynamicResource Color.Selection.Inactive.Fill}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="{DynamicResource Color.Selection.Active.Text}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="{DynamicResource Color.Selection.Inactive.Text}" />
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="{DynamicResource Color.Text.Primary}" />
+</ResourceDictionary>

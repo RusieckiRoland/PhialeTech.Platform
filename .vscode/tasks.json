@@ -1,0 +1,121 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "prepare: webassets package",
+      "type": "shell",
+      "command": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "build",
+        "PhialeGis.WebAssets/PhialeGis.WebAssets.csproj",
+        "-c",
+        "Debug"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "build: tests",
+      "type": "shell",
+      "command": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "build",
+        "PhialeGis.Library.Tests/PhialeGis.Library.Tests.csproj",
+        "-c",
+        "Debug"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "test: all",
+      "type": "shell",
+      "command": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "test",
+        "PhialeGis.Library.Tests/PhialeGis.Library.Tests.csproj",
+        "-c",
+        "Debug"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "test"
+    },
+    {
+      "label": "build: avalonia sandbox",
+      "type": "shell",
+      "dependsOn": [
+        "prepare: webassets package"
+      ],
+      "command": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "build",
+        "Avalonia/PhialeGis.ComponentSandbox.Avalonia/PhialeGis.ComponentSandbox.Avalonia.csproj",
+        "-c",
+        "Debug"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "run: avalonia sandbox",
+      "type": "shell",
+      "dependsOn": [
+        "prepare: webassets package"
+      ],
+      "command": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "run",
+        "--project",
+        "Avalonia/PhialeGis.ComponentSandbox.Avalonia/PhialeGis.ComponentSandbox.Avalonia.csproj",
+        "-c",
+        "Debug"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "build: wpf sandbox",
+      "type": "shell",
+      "dependsOn": [
+        "prepare: webassets package"
+      ],
+      "command": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "build",
+        "Wpf/PhialeGis.ComponentSandbox/PhialeGis.ComponentSandbox.csproj",
+        "-c",
+        "Debug"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "build: winui3 sandbox (x64)",
+      "type": "shell",
+      "dependsOn": [
+        "prepare: webassets package"
+      ],
+      "command": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "build",
+        "WinUI3/PhialeGis.ComponentSandboxWinUi/PhialeGis.ComponentSandboxWinUi.csproj",
+        "-c",
+        "Debug",
+        "-p:Platform=x64"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "check: prerequisites",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/check-prereqs.ps1"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

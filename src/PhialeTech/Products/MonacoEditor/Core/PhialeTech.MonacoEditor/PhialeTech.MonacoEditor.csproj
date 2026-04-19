@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.MonacoEditor</PackageId>
+    <AssemblyName>PhialeTech.MonacoEditor</AssemblyName>
+    <RootNamespace>PhialeTech.MonacoEditor</RootNamespace>
+    <Description>Portable runtime for the PhialeTech MonacoEditor component.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Abstractions\PhialeTech.MonacoEditor.Abstractions\PhialeTech.MonacoEditor.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\Shared\PhialeTech.WebHost\PhialeTech.WebHost.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,76 @@
+<!--  MainWindow.axaml (Avalonia)  -->
+<Window
+    x:Class="PhialeGis.ComponentSandbox.Avalonia.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Controls="clr-namespace:PhialeGis.Library.AvaloniaUi.Controls;assembly=PhialeGis.Library.AvaloniaUi"
+    xmlns:local="clr-namespace:PhialeGis.ComponentSandbox.Avalonia"
+    Title="PhialeGis Sandbox (Avalonia)"
+    Width="800"
+    Height="450"
+    WindowStartupLocation="CenterScreen"
+    WindowState="Maximized">
+
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!--  Columns: 15% | 70% | 15%  -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.15*" />
+            <ColumnDefinition Width="0.7*" />
+            <ColumnDefinition Width="0.15*" />
+        </Grid.ColumnDefinitions>
+
+        <!--  Rows: 5% | 60% | 30% | 5%  -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.05*" />
+            <RowDefinition Height="0.60*" />
+            <RowDefinition Height="0.30*" />
+            <RowDefinition Height="0.05*" />
+        </Grid.RowDefinitions>
+
+        <!--  Right-side control panel  -->
+        <StackPanel
+            Grid.Row="1"
+            Grid.Column="2"
+            VerticalAlignment="Top"
+            Spacing="8">
+
+            <Button
+                Width="125"
+                Height="50"
+                Command="{Binding ChangeViewAction}"
+                Content="Show shape" />
+
+            <Button
+                Width="125"
+                Height="50"
+                Command="{Binding ImportLayer}"
+                Content="Import layer" />
+
+            <Button
+                Width="125"
+                Height="50"
+                Command="{Binding OpenSecondWindow}"
+                Content="Open second map" />
+        </StackPanel>
+
+        <!--  Map  -->
+        <Controls:PhialeDrawBoxAvalonia
+            x:Name="Map"
+            Grid.Row="1"
+            Grid.Column="1"
+            Margin="0,11,0,42"
+            Background="Transparent"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            HorizontalScrollBarVisible="True"
+            VerticalScrollBarVisible="True" />
+
+        <Controls:PhialeDslEditor
+            x:Name="DslEditor"
+            Grid.Row="2"
+            Grid.Column="1"
+            BorderBrush="Red"
+            BorderThickness="2"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            TargetDraw="{Binding ElementName=Map, Path=CompositionAdapter}" />
+    </Grid>
+</Window>

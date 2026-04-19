@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="UniversalEvents\**\*.cs" />
+    <EmbeddedResource Include="Localization\points.en.ini">
+      <WithCulture>false</WithCulture>
+      <LogicalName>PhialeGis.Library.Abstractions.Localization.points.en.ini</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Localization\points.pl.ini">
+      <WithCulture>false</WithCulture>
+      <LogicalName>PhialeGis.Library.Abstractions.Localization.points.pl.ini</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\PhialeTech\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+</Project>

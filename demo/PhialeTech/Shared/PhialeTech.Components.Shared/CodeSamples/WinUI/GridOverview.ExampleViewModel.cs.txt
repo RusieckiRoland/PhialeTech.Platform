@@ -1,0 +1,12 @@
+public sealed class GridOverviewViewModel
+{
+    public GridOverviewViewModel()
+    {
+        Grid = new PhialeGrid.WinUI.Controls.PhialeGrid
+        {
+            LanguageCode = "en",
+        };
+    }
+
+    public PhialeGrid.WinUI.Controls.PhialeGrid Grid { get; }
+}

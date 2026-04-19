@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.7" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Abstractions\PhialeTech.PdfViewer.Abstractions\PhialeTech.PdfViewer.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeTech.PdfViewer\PhialeTech.PdfViewer.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\Platforms\Avalonia\PhialeTech.WebHost.Avalonia\PhialeTech.WebHost.Avalonia.csproj" />
+  </ItemGroup>
+</Project>

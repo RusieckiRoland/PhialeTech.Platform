@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PhialeGis.ComponentSandboxWinUi (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "PhialeGis.ComponentSandboxWinUi (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

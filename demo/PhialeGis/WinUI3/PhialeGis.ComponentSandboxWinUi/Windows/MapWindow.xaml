@@ -1,0 +1,25 @@
+<Page
+    x:Class="PhialeGis.ComponentSandboxWinUi.Windows.MapWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:Custom="using:PhialeGis.Library.WinUi.Controls">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="240" />
+        </Grid.RowDefinitions>
+
+        <Custom:PhialeDrawBoxWinUI
+            x:Name="Map2"
+            Grid.Row="0"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            HorizontalScrollBarVisible="Visible"
+            VerticalScrollBarVisible="Visible" />
+
+        <!--<Custom:PhialeDslEditor
+            Grid.Row="1"
+            GisInteractionManager="{Binding GisInteractionManager}"
+            TargetDraw="{Binding ElementName=Map2, Path=CompositionAdapter}" />-->
+    </Grid>
+</Page>

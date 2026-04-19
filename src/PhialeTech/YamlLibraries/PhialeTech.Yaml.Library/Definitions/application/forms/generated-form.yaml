@@ -1,0 +1,43 @@
+namespace: application.forms
+imports:
+  - domain.person
+
+document:
+  id: yaml-generated-form
+  kind: Form
+  name: YAML generated form
+  interactionMode: Classic
+  densityMode: Normal
+  fieldChromeMode: Framed
+  actionAreas:
+    - id: footerPrimary
+      placement: Bottom
+      horizontalAlignment: Right
+      shared: true
+  fields:
+    - id: firstName
+      extends: firstName
+    - id: lastName
+      extends: lastName
+    - id: age
+      extends: age
+    - id: notes
+      extends: notes
+  layout:
+    type: Column
+    items:
+      - type: Row
+        items:
+          - fieldRef: firstName
+          - fieldRef: lastName
+          - fieldRef: age
+      - fieldRef: notes
+  actions:
+    - id: ok
+      semantic: Ok
+      captionKey: actions.ok.caption
+      area: footerPrimary
+    - id: cancel
+      semantic: Cancel
+      captionKey: actions.cancel.caption
+      area: footerPrimary

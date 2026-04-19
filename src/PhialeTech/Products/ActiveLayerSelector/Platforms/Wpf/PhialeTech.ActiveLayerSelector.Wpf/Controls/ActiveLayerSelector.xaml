@@ -1,0 +1,307 @@
+<UserControl x:Class="PhialeTech.ActiveLayerSelector.Wpf.Controls.ActiveLayerSelector"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:PhialeTech.ActiveLayerSelector.Wpf.Controls"
+             x:Name="Root"
+             MinWidth="390"
+             MaxWidth="680"
+             HorizontalAlignment="Left"
+             VerticalAlignment="Top"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True"
+             TextOptions.TextFormattingMode="Display"
+             TextOptions.TextRenderingMode="ClearType">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/ThemeTokens.Day.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/Controls.Core.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/ActiveLayerSelector.Shared.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid x:Name="LayoutRoot"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Top"
+          SnapsToDevicePixels="True"
+          UseLayoutRounding="True">
+        <Border x:Name="HeaderChrome"
+                Background="{DynamicResource AlsRootBackgroundBrush}"
+                BorderBrush="{DynamicResource AlsRootBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="10,8"
+                Cursor="Hand"
+                MouseLeftButtonUp="HandleHeaderChromeMouseLeftButtonUp"
+                SnapsToDevicePixels="True">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="30" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <local:ActiveLayerGeometryGlyph Grid.Column="0"
+                                               Width="22"
+                                               Height="22"
+                                               Margin="0,0,6,0"
+                                               VerticalAlignment="Center"
+                                               IsNightMode="{Binding ElementName=Root, Path=IsNightMode}"
+                                               GeometryType="{Binding ActiveItem.GeometryType}" />
+
+                <StackPanel Grid.Column="1"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding HeaderTitle}"
+                               x:Name="HeaderTitleText"
+                               FontFamily="Bahnschrift SemiBold"
+                               FontSize="13"
+                               Foreground="{DynamicResource AlsPrimaryTextBrush}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Margin="0,3,0,0"
+                               Text="{Binding HeaderPath}"
+                               Style="{StaticResource Text.Secondary}"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <ItemsControl x:Name="HeaderCapabilitiesItemsControl"
+                              Grid.Column="2"
+                              Margin="10,0,8,0"
+                              ItemsSource="{Binding HeaderCapabilities}"
+                              VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ToggleButton Style="{StaticResource HeaderActionToggleStyle}"
+                                          ToolTip="{Binding ToolTip}"
+                                          AutomationProperties.Name="{Binding ToolTip}"
+                                          IsChecked="{Binding IsOn, Mode=OneWay}"
+                                          Click="HandleCapabilityClick"
+                                          Tag="{Binding Kind}"
+                                          IsEnabled="{Binding IsEnabled}">
+                                <local:ActiveLayerSvgIcon Width="18"
+                                                          Height="18"
+                                                          Capability="{Binding Kind}"
+                                                          IsOn="{Binding IsOn}" />
+                            </ToggleButton>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Button x:Name="ExpandCollapseButton"
+                        Grid.Column="3"
+                        MinHeight="30"
+                        Margin="0,0,0,0"
+                        Padding="10,4"
+                        Style="{StaticResource HeaderExpandButtonStyle}"
+                        ToolTip="{Binding ChevronToolTip}"
+                        Click="HandleExpandCollapseClick">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding ShowLayersButtonText}"
+                                   FontSize="12"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Margin="8,0,0,0"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource AlsPrimaryTextBrush}"
+                                   Style="{StaticResource AlsHeaderChevronTextStyle}" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <Popup x:Name="ExpandedPopup"
+               IsOpen="{Binding IsExpanded, Mode=OneWay}"
+               Placement="Bottom"
+               PlacementTarget="{Binding ElementName=HeaderChrome}"
+               AllowsTransparency="True"
+               PopupAnimation="Fade"
+               Closed="HandleExpandedPopupClosed"
+               StaysOpen="False">
+            <Border Margin="0,8,0,0"
+                    Padding="14"
+                    MinWidth="{Binding ElementName=HeaderChrome, Path=ActualWidth}"
+                    MaxWidth="980"
+                    Background="{DynamicResource AlsRootBackgroundBrush}"
+                    BorderBrush="{DynamicResource AlsPopupBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    PreviewKeyDown="HandlePickerPreviewKeyDown"
+                    SnapsToDevicePixels="True">
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <TextBox x:Name="LayerSearchTextBox"
+                                 Background="{DynamicResource AlsSearchBackgroundBrush}"
+                                 BorderBrush="{DynamicResource AlsSearchBorderBrush}"
+                                 BorderThickness="1"
+                                 Padding="10,6"
+                                 Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="{Binding SearchPlaceholderText}" />
+                        <TextBlock Margin="12,0,12,0"
+                                   IsHitTestVisible="False"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource AlsMutedTextBrush}"
+                                   Text="{Binding SearchPlaceholderText}"
+                                   Style="{StaticResource AlsSearchPlaceholderTextStyle}" />
+                    </Grid>
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="96" />
+                            <ColumnDefinition Width="52" />
+                            <ColumnDefinition Width="52" />
+                            <ColumnDefinition Width="52" />
+                            <ColumnDefinition Width="52" />
+                            <ColumnDefinition Width="54" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding StatusHeaderText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AlsHeaderRowTextBrush}" />
+                        <TextBlock Grid.Column="1" Text="{Binding VisibleHeaderText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AlsHeaderRowTextBrush}" />
+                        <TextBlock Grid.Column="2" Text="{Binding SelectableHeaderText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AlsHeaderRowTextBrush}" />
+                        <TextBlock Grid.Column="3" Text="{Binding EditableHeaderText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AlsHeaderRowTextBrush}" />
+                        <TextBlock Grid.Column="4" Text="{Binding SnappableHeaderText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AlsHeaderRowTextBrush}" />
+                        <TextBlock Grid.Column="5" Text="{Binding TypeHeaderText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AlsHeaderRowTextBrush}" />
+                        <TextBlock Grid.Column="6" Text="{Binding LayerInfoHeaderText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AlsHeaderRowTextBrush}" />
+                    </Grid>
+
+                    <Border Padding="12"
+                            Background="{DynamicResource AlsPanelBackgroundBrush}"
+                            BorderBrush="{DynamicResource AlsPanelBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10">
+                        <Grid>
+                            <Border Visibility="{Binding HasItems, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <ScrollViewer MaxHeight="320"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <ItemsControl x:Name="VisibleRowsItemsControl"
+                                                      ItemsSource="{Binding VisibleItems}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border x:Name="LayerRowBorder"
+                                                            Margin="0,0,0,8"
+                                                            Padding="10,9"
+                                                            Background="{DynamicResource AlsRowBackgroundBrush}"
+                                                            BorderBrush="{DynamicResource AlsRowBorderBrush}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="10">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="96" />
+                                                                <ColumnDefinition Width="52" />
+                                                                <ColumnDefinition Width="52" />
+                                                                <ColumnDefinition Width="52" />
+                                                                <ColumnDefinition Width="52" />
+                                                                <ColumnDefinition Width="54" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <Button Grid.Column="0"
+                                                                    Tag="{Binding LayerId}"
+                                                                    Click="HandleSetActiveClick"
+                                                                    IsEnabled="{Binding CanSetActive}"
+                                                                    Style="{StaticResource AlsActiveStatusButtonStyle}">
+                                                                <TextBlock Text="{Binding StatusText}"
+                                                                           TextWrapping="Wrap"
+                                                                           TextAlignment="Center" />
+                                                            </Button>
+
+                                                            <ItemsControl Grid.Column="1"
+                                                                          Grid.ColumnSpan="4"
+                                                                          ItemsSource="{Binding Capabilities}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <UniformGrid Columns="4" />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <ToggleButton Style="{StaticResource HeaderActionToggleStyle}"
+                                                                                      HorizontalAlignment="Left"
+                                                                                      ToolTip="{Binding ToolTip}"
+                                                                                      AutomationProperties.Name="{Binding ToolTip}"
+                                                                                      IsChecked="{Binding IsOn, Mode=OneWay}"
+                                                                                      Click="HandleCapabilityClick"
+                                                                                      Tag="{Binding Kind}"
+                                                                                      IsEnabled="{Binding IsEnabled}">
+                                                                            <local:ActiveLayerSvgIcon Width="18"
+                                                                                                      Height="18"
+                                                                                                      Capability="{Binding Kind}"
+                                                                                                      IsOn="{Binding IsOn}" />
+                                                                        </ToggleButton>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+
+                                                            <local:ActiveLayerGeometryGlyph Grid.Column="5"
+                                                                                           Width="34"
+                                                                                           Height="34"
+                                                                                           VerticalAlignment="Center"
+                                                                                           IsNightMode="{Binding ElementName=Root, Path=IsNightMode}"
+                                                                                           GeometryType="{Binding GeometryType}" />
+
+                                                            <StackPanel Grid.Column="6">
+                                                                <TextBlock Text="{Binding Name}"
+                                                                           FontFamily="Bahnschrift SemiBold"
+                                                                           FontSize="14"
+                                                                           Foreground="{DynamicResource AlsPrimaryTextBrush}"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock Margin="0,3,0,0"
+                                                                           Text="{Binding PathText}"
+                                                                           Style="{StaticResource Text.Secondary}"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <Border Margin="0,6,0,0"
+                                                                        Padding="7,3"
+                                                                        Background="{DynamicResource AlsBadgeBackgroundBrush}"
+                                                                        BorderBrush="{DynamicResource AlsBadgeBorderBrush}"
+                                                                        BorderThickness="1"
+                                                                        CornerRadius="8"
+                                                                        HorizontalAlignment="Left">
+                                                                    <TextBlock Text="{Binding SourceBadgeText}"
+                                                                               FontSize="11"
+                                                                               Foreground="{DynamicResource AlsBadgeTextBrush}" />
+                                                                </Border>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Border>
+                                                    <DataTemplate.Triggers>
+                                                        <Trigger SourceName="LayerRowBorder" Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="LayerRowBorder" Property="Background" Value="{DynamicResource AlsRowHoverBackgroundBrush}" />
+                                                        </Trigger>
+                                                    </DataTemplate.Triggers>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <Button x:Name="ShowMoreButton"
+                                                Margin="0,6,0,0"
+                                                Padding="4,2"
+                                                HorizontalAlignment="Left"
+                                                Style="{StaticResource Button.Tertiary}"
+                                                Foreground="{DynamicResource AlsShowMoreBrush}"
+                                                FontFamily="Bahnschrift SemiBold"
+                                                FontSize="13"
+                                                Content="{Binding ShowMoreText}"
+                                                Click="HandleShowMoreClick"
+                                                Visibility="{Binding CanShowMore, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Border>
+
+                            <TextBlock Visibility="{Binding HasNoItems, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                       Text="{Binding EmptyStateText}"
+                                       Foreground="{DynamicResource AlsMutedTextBrush}" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>
+

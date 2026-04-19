@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.ReportDesigner.WinUI</PackageId>
+    <AssemblyName>PhialeTech.ReportDesigner.WinUI</AssemblyName>
+    <RootNamespace>PhialeTech.ReportDesigner.WinUI</RootNamespace>
+    <Description>WinUI control for the reusable PhialeTech ReportDesigner component.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Abstractions\PhialeTech.ReportDesigner.Abstractions\PhialeTech.ReportDesigner.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Core\PhialeTech.ReportDesigner\PhialeTech.ReportDesigner.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\Platforms\WinUI3\PhialeTech.WebHost.WinUI\PhialeTech.WebHost.WinUI.csproj" />
+  </ItemGroup>
+</Project>

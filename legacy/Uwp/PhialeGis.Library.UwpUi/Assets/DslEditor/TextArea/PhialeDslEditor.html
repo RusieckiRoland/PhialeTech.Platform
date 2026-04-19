@@ -1,0 +1,370 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phiale DSL Editor Host</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            background: #f5f5f5;
+            font-family: Segoe UI,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+        }
+
+        #wrap {
+            padding: 8px;
+            height: 100%;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .host {
+            position: relative;
+        }
+
+        .stack {
+            position: relative;
+        }
+
+        #hl {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            margin: 0;
+            padding: 8px;
+            box-sizing: border-box;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: Consolas,Menlo,Monaco,"Courier New",monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            border: 1px solid #222;
+            background: #fff;
+            border-radius: 2px;
+            pointer-events: none;
+        }
+
+        #code {
+            position: relative;
+            width: 100%;
+            height: 44px;
+            min-height: 44px;
+            box-sizing: border-box;
+            font-family: Consolas,Menlo,Monaco,"Courier New",monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            padding: 8px;
+            border: 1px solid transparent;
+            background: transparent;
+            border-radius: 2px;
+            resize: vertical;
+            outline: none;
+            color: transparent; /* text transparent – caret visible */
+            caret-color: #000;
+        }
+
+            #code::placeholder {
+                color: rgba(0,0,0,.35);
+            }
+
+        #compl {
+            position: absolute;
+            left: 8px;
+            right: 8px;
+            z-index: 3;
+            background: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15);
+            border-radius: 4px;
+            display: none;
+            max-height: 220px;
+            overflow: auto;
+            font-family: Consolas,Menlo,Monaco,"Courier New",monospace;
+            font-size: 13px;
+        }
+
+        .compl-item {
+            padding: 6px 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+            .compl-item.sel {
+                background: #e8f0fe;
+            }
+
+        /* coloring */
+        .tok.kw {
+            color: #0057d8;
+            font-weight: 600
+        }
+
+        .tok.op {
+            color: #222
+        }
+
+        .tok.num {
+            color: #b07000
+        }
+
+        .tok.str {
+            color: #1a7f37
+        }
+
+        .tok.com {
+            color: #6a737d;
+            font-style: italic
+        }
+
+        .tok.id {
+            color: #000
+        }
+
+        .tok.fn {
+            color: #6f42c1
+        }
+
+        .tok.type {
+            color: #0b73b7
+        }
+
+        .tok.var {
+            color: #b0005a
+        }
+
+        .tok.ns {
+            color: #795548
+        }
+
+        /* mini-diag */
+        #diag {
+            position: absolute;
+            top: -18px;
+            left: 0;
+            font: 11px/1 Segoe UI,Arial;
+            color: #555;
+            background: transparent;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrap">
+        <div class="host">
+            <div id="diag">L:0  T:0</div>
+            <div class="stack">
+                <pre id="hl"></pre>
+                <textarea id="code" spellcheck="false" placeholder="command…"></textarea>
+            </div>
+            <div id="compl" role="listbox" aria-label="completions"></div>
+        </div>
+    </div>
+
+    <script>
+        // ---- WebView2 messaging helper (maps old window.external.notify -> chrome.webview.postMessage)
+        function sendToHost(msg) {
+            try {
+                var m = (typeof msg === "string") ? msg : JSON.stringify(msg);
+                if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
+                    window.chrome.webview.postMessage(m);
+                }
+            } catch (_) { /* ignore */ }
+        }
+        function dbg(o) { sendToHost({ type: "dbg", payload: o }); }
+
+        var box = document.getElementById("code");
+        var hl = document.getElementById("hl");
+        var compl = document.getElementById("compl");
+        var diag = document.getElementById("diag");
+
+        var suppressInput = false, mode = "command", debounceMs = 50;
+
+        var complItems = [], complStart = 0, complEnd = 0, complSel = -1;
+
+        // semantic state
+        var semLegend = { tokenTypes: [], tokenModifiers: [] };
+        var semTokens = { data: [] };
+
+        function clamp(n, min, max) { return n < min ? min : (n > max ? max : n); }
+        function setCaret(pos) { try { var v = box.value || ""; var p = clamp(pos | 0, 0, v.length); box.selectionStart = p; box.selectionEnd = p; box.focus(); } catch (_) { } }
+        function replaceRange(start, end, text) {
+            try {
+                var v = box.value || "";
+                start = clamp(start | 0, 0, v.length); end = clamp(end | 0, start, v.length);
+                var next = v.substring(0, start) + (text || "") + v.substring(end);
+                suppressInput = true; box.value = next; suppressInput = false;
+                setCaret(start + ((text || "").length | 0));
+                sendToHost({ type: "text", value: next });
+                sendCaret();
+                renderHighlight();
+            } catch (_) { }
+        }
+        function insertAtCaret(t) { replaceRange(box.selectionStart | 0, box.selectionEnd | 0, t || ""); }
+
+        function caretLineCol(value, off) {
+            var v = value || ""; var line = (v.substring(0, off).match(/\n/g) || []).length;
+            var col = off - (v.lastIndexOf("\n", off - 1) + 1); return { line: line, col: col };
+        }
+        function sendCaret() {
+            try {
+                var off = box.selectionStart | 0;
+                var lc = caretLineCol(box.value || "", off);
+                sendToHost({ type: "caret", offset: off, line: lc.line, column: lc.col });
+            } catch (_) { }
+        }
+
+        function placePopupBelow() { try { compl.style.top = (box.offsetTop + box.offsetHeight + 6) + "px"; } catch (_) { compl.style.top = "76px"; } }
+        function renderCompletions() {
+            compl.innerHTML = "";
+            for (var i = 0; i < complItems.length; i++) {
+                var div = document.createElement("div");
+                div.className = "compl-item" + (i === complSel ? " sel" : "");
+                div.textContent = complItems[i].label || complItems[i].insert || "";
+                (function (ix) { div.addEventListener("mousedown", function (ev) { ev.preventDefault(); pickCompletion(ix); }); })(i);
+                compl.appendChild(div);
+            }
+            placePopupBelow();
+            compl.style.display = complItems.length ? "block" : "none";
+        }
+        function pickCompletion(ix) {
+            if (ix < 0 || ix >= complItems.length) return;
+            var it = complItems[ix] || {};
+            sendToHost({ type: "completePick", insert: it.insert || it.label || "", start: (complStart | 0), end: (complEnd | 0) });
+            hideCompletions();
+        }
+        function hideCompletions() { complItems = []; complSel = -1; compl.style.display = "none"; }
+
+        // API from C#
+        window.__ph_setText = function (t) { try { suppressInput = true; box.value = t || ""; } finally { suppressInput = false; renderHighlight(); } };
+        window.__ph_clearInput = function () { try { suppressInput = true; box.value = ""; } finally { suppressInput = false; renderHighlight(); } };
+        window.__ph_setReadOnly = function (ro) { box.readOnly = !!ro; };
+        window.__ph_focus = function () { try { box.focus(); } catch (_) { } };
+        window.__ph_setMode = function (m) {
+            mode = (m === "script") ? "script" : "command";
+            box.placeholder = (mode === "script") ? "script… (Ctrl+Enter to run)" : "command…";
+            box.style.height = (mode === "script") ? "160px" : "44px"; hl.style.height = box.style.height;
+        };
+        window.__ph_echo = function (_cmd) { };
+
+        window.__ph_setCaret = setCaret; window.__ph_replaceRange = replaceRange; window.__ph_insertAtCaret = insertAtCaret;
+        window.__ph_showCompletions = function (items, start, end) { complItems = Array.isArray(items) ? items.slice(0) : []; complStart = start | 0; complEnd = end | 0; complSel = complItems.length ? 0 : -1; renderCompletions(); };
+        window.__ph_hideCompletions = hideCompletions;
+
+        // semantics from C#
+        window.__ph_setSemanticLegend = function (legend) {
+            semLegend = legend || { tokenTypes: [], tokenModifiers: [] };
+            diag.textContent = "L:" + (semLegend.tokenTypes.length | 0) + "  T:" + (semTokens.data.length / 5 | 0);
+            dbg({ msg: "legend", types: semLegend.tokenTypes.length });
+            renderHighlight();
+        };
+        window.__ph_applySemanticTokens = function (tokens) {
+            semTokens = tokens || { data: [] };
+            diag.textContent = "L:" + (semLegend.tokenTypes.length | 0) + "  T:" + (semTokens.data.length / 5 | 0);
+            dbg({ msg: "tokens", count: (semTokens.data.length / 5 | 0) });
+            renderHighlight();
+        };
+
+        // input -> C#
+        var tmr = null;
+        box.addEventListener("input", function () {
+            if (suppressInput) return;
+            clearTimeout(tmr);
+            tmr = setTimeout(function () {
+                sendToHost({ type: "text", value: box.value || "" });
+                sendCaret();
+                renderHighlight();
+            }, debounceMs);
+        });
+        ["click", "keyup", "mouseup"].forEach(function (ev) { box.addEventListener(ev, sendCaret); });
+
+        box.addEventListener("keydown", function (ev) {
+            if (compl.style.display === "block") {
+                if (ev.key === "ArrowDown") { ev.preventDefault(); if (complItems.length) { complSel = Math.min(complItems.length - 1, (complSel < 0 ? 0 : complSel + 1)); renderCompletions(); } return; }
+                if (ev.key === "ArrowUp") { ev.preventDefault(); if (complItems.length) { complSel = Math.max(0, (complSel < 0 ? 0 : complSel - 1)); renderCompletions(); } return; }
+                if (ev.key === "Enter") { ev.preventDefault(); if (complSel >= 0) { pickCompletion(complSel); } return; }
+                if (ev.key === "Escape") { ev.preventDefault(); hideCompletions(); sendToHost({ type: "completeCancel" }); return; }
+            }
+            if (ev.key === "Enter") {
+                if (mode === "command") { ev.preventDefault(); sendToHost({ type: "enter", value: box.value || "" }); }
+                else if (ev.ctrlKey) { ev.preventDefault(); sendToHost({ type: "runScript", value: box.value || "" }); }
+                return;
+            }
+            if (mode === "command" && compl.style.display !== "block") {
+                if (ev.key === "ArrowUp") { ev.preventDefault(); sendToHost({ type: "historyUp" }); return; }
+                if (ev.key === "ArrowDown") { ev.preventDefault(); sendToHost({ type: "historyDown" }); return; }
+            }
+            // Ctrl+Space → request completions with current caret
+            if ((ev.ctrlKey || ev.metaKey) && (ev.code === "Space" || ev.key === " " || ev.keyCode === 32)) {
+                ev.preventDefault(); ev.stopPropagation();
+                var off = box.selectionStart | 0;
+                var v = box.value || "";
+                var line = (v.substring(0, off).match(/\n/g) || []).length;
+                var col = off - (v.lastIndexOf("\n", off - 1) + 1);
+                sendToHost({ type: "complete", offset: off, line: line, column: col });
+                return;
+            }
+        });
+
+        // highlight
+        function escapeHtml(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+        function cssClassForType(t) {
+            if (!t) return "id";
+            if (t === "keyword") return "kw";
+            if (t === "operator") return "op";
+            if (t === "number") return "num";
+            if (t === "string") return "str";
+            if (t === "comment") return "com";
+            if (t === "function") return "fn";
+            if (t === "type") return "type";
+            if (t === "variable") return "var";
+            if (t === "namespace") return "ns";
+            return "id";
+        }
+        function buildLineStarts(text) { var a = [0]; for (var i = 0; i < text.length; i++) { if (text.charCodeAt(i) === 10) a.push(i + 1); } return a; }
+        function absIndexOf(ls, line, col) { line = line | 0; col = col | 0; if (line < 0) line = 0; if (line >= ls.length) line = ls.length - 1; return (ls[line] || 0) + col; }
+        function renderHighlight() {
+            var text = box.value || "";
+            var data = (semTokens && Array.isArray(semTokens.data)) ? semTokens.data : [];
+            var types = (semLegend && Array.isArray(semLegend.tokenTypes)) ? semLegend.tokenTypes : [];
+
+            if (!data.length || !types.length) {
+                hl.innerHTML = escapeHtml(text);
+                syncHeights(); return;
+            }
+
+            var ls = buildLineStarts(text);
+            var parts = [], cursor = 0, line = 0, prevStart = 0;
+
+            for (var i = 0; i < data.length; i += 5) {
+                var dl = data[i] | 0, ds = data[i + 1] | 0, len = data[i + 2] | 0, tt = data[i + 3] | 0;
+                line += dl;
+                var startCol = (dl === 0) ? (prevStart + ds) : ds;
+                var start = absIndexOf(ls, line, startCol), end = start + Math.max(0, len);
+
+                if (start > cursor) parts.push(escapeHtml(text.substring(cursor, start)));
+
+                var tname = types[tt] || "identifier", cls = cssClassForType(tname);
+                parts.push('<span class="tok ' + cls + '">', escapeHtml(text.substring(start, end)), '</span>');
+
+                cursor = end; prevStart = startCol;
+            }
+            if (cursor < text.length) parts.push(escapeHtml(text.substring(cursor)));
+            hl.innerHTML = parts.join("");
+            syncHeights();
+        }
+        function syncHeights() { hl.style.height = box.clientHeight + "px"; }
+        window.addEventListener("resize", syncHeights);
+        setTimeout(syncHeights, 0);
+    </script>
+</body>
+</html>

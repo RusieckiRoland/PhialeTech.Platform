@@ -1,0 +1,1 @@
+﻿antlr4 -Dlanguage=CSharp -package PhialeGis.Library.Dsl -visitor -listener -o ../Generated PhialeDslLexer.g4 PhialeDslParser.g4

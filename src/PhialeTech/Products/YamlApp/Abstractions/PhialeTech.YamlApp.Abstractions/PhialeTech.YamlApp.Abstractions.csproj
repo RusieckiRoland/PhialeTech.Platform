@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.YamlApp.Abstractions</PackageId>
+    <AssemblyName>PhialeTech.YamlApp.Abstractions</AssemblyName>
+    <RootNamespace>PhialeTech.YamlApp.Abstractions</RootNamespace>
+    <Description>Stable public abstractions for the PhialeTech YamlApp product family.</Description>
+  </PropertyGroup>
+</Project>

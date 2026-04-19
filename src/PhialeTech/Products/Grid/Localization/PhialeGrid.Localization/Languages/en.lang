@@ -1,0 +1,76 @@
+# PhialeGrid default English UI text
+grouping.drop_here=Drag a column header here to group by that column
+grouping.empty=No grouping applied
+grouping.clear=Clear grouping
+grouping.expand=Expand group
+grouping.collapse=Collapse group
+grouping.expand_all=Expand all groups
+grouping.collapse_all=Collapse all groups
+
+filter.label=Filter
+filter.placeholder=Type to filter
+filter.contains=Contains
+filter.starts_with=Starts with
+filter.equals=Equals
+filter.clear=Clear filter
+filter.edit=Edit filter
+
+columns.chooser=Columns
+columns.show_all=Show all columns
+columns.hide_all=Hide all columns
+columns.freeze=Freeze column
+columns.unfreeze=Unfreeze column
+columns.hide=Hide column
+columns.move_left=Move column left
+columns.move_right=Move column right
+columns.widen=Make column wider
+columns.narrow=Make column narrower
+columns.auto_fit=Auto-fit column width
+
+sort.ascending=Sort ascending
+sort.descending=Sort descending
+sort.add_ascending=Add ascending sort
+sort.add_descending=Add descending sort
+sort.clear=Clear sort
+
+column_menu.open=Column actions
+grouping.by_column=Group by this column
+grouping.remove_column=Remove from grouping
+grouping.toggle_column_direction=Toggle group direction
+
+selection.copy=Copy
+selection.paste=Paste
+selection.status=Selected rows: {0}, cells: {1}
+selection.current=Current cell: {0}
+options.show_row_indicator=Show row indicator
+options.multi_select=Multi-select
+options.row_numbers=Row numbers
+options.show_row_numbers=Show row numbers
+options.row_numbering_mode=Row numbering
+options.row_numbering.global=Global numbering
+options.row_numbering.within_group=Number within group
+options.enable_cell_selection=Enable cell selection
+options.enable_range_selection=Enable range selection
+options.show_columns=Show columns
+options.section.row_state=Row state
+options.section.row_numbers=Row numbering
+options.section.cell_interaction=Cell interaction
+
+editing.commit=Commit
+editing.cancel=Cancel
+editing.status=Dirty rows: {0}, validation issues: {1}
+editing.pending=Unsaved edits detected. Commit or cancel them before leaving this scenario.
+editing.pending_with_validation=Unsaved edits detected. Fix validation issues before commit, or cancel to discard the changes.
+
+summary.count=Count
+summary.sum=Sum
+summary.average=Average
+summary.min=Min
+summary.max=Max
+
+paging.local_status=Visible rows: {0} / {1}
+
+search.placeholder=Search
+loading.text=Loading...
+hierarchy.load_more=Load next children page...
+empty.no_rows=No rows to display

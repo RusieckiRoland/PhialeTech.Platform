@@ -1,0 +1,23 @@
+# Active Layer Selector
+Selector.NoActiveLayer=No active layer
+Selector.NoLayers=No layers available
+Selector.Path=Path
+Selector.Source=Source
+Selector.Active=Active
+Selector.SetActive=Set Active
+Selector.ShowMore=Show more
+Selector.ShowLayersButton=Show layers ({0})
+Selector.SearchPlaceholder=Search layers...
+Selector.Expand=Expand layer list
+Selector.Collapse=Collapse layer list
+Selector.Column.Status=Status
+Selector.Column.Visible=Visible
+Selector.Column.Selectable=Selectable
+Selector.Column.Editable=Editable
+Selector.Column.Snappable=Snappable
+Selector.Column.Type=Type
+Selector.Column.LayerInfo=Layer Info
+Selector.Capability.Visible=Visible
+Selector.Capability.Selectable=Selectable
+Selector.Capability.Editable=Editable
+Selector.Capability.Snappable=Snappable

@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net48;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <UseWPF>true</UseWPF>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <Nullable>disable</Nullable>
+    <AssemblyName>PhialeTech.Components.Wpf</AssemblyName>
+    <RootNamespace>PhialeTech.Components.Wpf</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="PDFsharp-WPF" Version="6.2.2" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\ActiveLayerSelector\Platforms\Wpf\PhialeTech.ActiveLayerSelector.Wpf\PhialeTech.ActiveLayerSelector.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\Grid\Platforms\Wpf\PhialeGrid.Wpf\PhialeGrid.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\MonacoEditor\Platforms\Wpf\PhialeTech.MonacoEditor.Wpf\PhialeTech.MonacoEditor.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\PdfViewer\Platforms\Wpf\PhialeTech.PdfViewer.Wpf\PhialeTech.PdfViewer.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\ReportDesigner\Platforms\Wpf\PhialeTech.ReportDesigner.Wpf\PhialeTech.ReportDesigner.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\YamlApp\Platforms\Wpf\PhialeTech.YamlApp.Wpf\PhialeTech.YamlApp.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\YamlApp\Infrastructure\PhialeTech.YamlApp.Infrastructure\PhialeTech.YamlApp.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\YamlLibraries\PhialeTech.Yaml.Library\PhialeTech.Yaml.Library.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\Platforms\Wpf\PhialeTech.WebHost.Wpf\PhialeTech.WebHost.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.WebAssets\PhialeTech.WebAssets.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.WebAssets\PhialeGis.WebAssets.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.Styles.Wpf\PhialeTech.Styles.Wpf.csproj" />
+    <ProjectReference Include="..\..\Shared\PhialeTech.Components.Shared\PhialeTech.Components.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.Styles.Wpf\Themes.Linked\Demo\PhialeTech.Components.Wpf.MainWindow.xaml" Link="MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.Styles.Wpf\Themes.Linked\Demo\YamlTextBoxPureWpf.xaml" Link="Controls\YamlTextBoxPureWpf.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+</Project>

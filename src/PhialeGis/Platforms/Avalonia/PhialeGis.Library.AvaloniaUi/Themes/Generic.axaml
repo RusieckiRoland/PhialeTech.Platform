@@ -1,0 +1,105 @@
+<Styles
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:PhialeGis.Library.AvaloniaUi.Controls">
+
+    <!-- Default style dla PhialeDrawBoxAvalonia -->
+    <Style Selector="local|PhialeDrawBoxAvalonia">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Focusable" Value="True"/>
+        <Setter Property="IsHitTestVisible" Value="True"/>
+
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- tu rysuje się Twoje Skia-renderowanie -->
+
+                    <!-- Scrollbary -->
+                    <ScrollBar
+                        x:Name="ScrollBarVertical"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        IsVisible="{TemplateBinding VerticalScrollBarVisible}"
+                        Maximum="100"
+                        Minimum="0"
+                        Orientation="Vertical"
+                        ViewportSize="10" />
+
+                    <Border
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Padding="8,4"
+                        Background="#F5F7FA"
+                        BorderBrush="#D7DEE7"
+                        BorderThickness="0,1,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel
+                                Grid.Column="0"
+                                Orientation="Horizontal"
+                                Spacing="12"
+                                VerticalAlignment="Center">
+                                <TextBlock x:Name="PART_StatusPrimaryText" Foreground="#1E2A3A" />
+                                <TextBlock x:Name="PART_StatusCoordinateText" Foreground="#475467" />
+                                <TextBlock x:Name="PART_StatusSnapText" Foreground="#B54708" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                VerticalAlignment="Center">
+                                <Button x:Name="PART_TakeoverButton" IsVisible="False" MinWidth="44" Padding="10,4" />
+                                <Button x:Name="PART_UndoButton" IsVisible="False" MinWidth="44" Padding="10,4" />
+                                <Button x:Name="PART_FinishButton" IsVisible="False" MinWidth="44" Padding="10,4" />
+                                <Button x:Name="PART_CancelButton" IsVisible="False" MinWidth="44" Padding="10,4" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <ScrollBar
+                        x:Name="ScrollBarHorizontal"
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        IsVisible="{TemplateBinding HorizontalScrollBarVisible}"
+                        Maximum="100"
+                        Minimum="0"
+                        Orientation="Horizontal"
+                        ViewportSize="10" />
+                    
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="local|PhialeDslEditor">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Focusable" Value="True"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid Background="{TemplateBinding Background}">
+                    <Grid
+                        x:Name="WebHost"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+</Styles>

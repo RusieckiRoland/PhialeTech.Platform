@@ -1,0 +1,8 @@
+{
+  "name": "phialetech-reportdesigner-js-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
