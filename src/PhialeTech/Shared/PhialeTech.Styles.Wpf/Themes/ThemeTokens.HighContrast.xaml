@@ -1,6 +1,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <Color x:Key="Color.Surface0">{DynamicResource {x:Static SystemColors.WindowColorKey}}</Color>
     <Color x:Key="Color.Surface1">{DynamicResource {x:Static SystemColors.ControlColorKey}}</Color>
     <Color x:Key="Color.Surface2">{DynamicResource {x:Static SystemColors.ControlDarkColorKey}}</Color>
@@ -78,6 +79,27 @@
     <SolidColorBrush x:Key="Brush.Badge.Fill" Color="{DynamicResource Color.Badge.Fill}" />
     <SolidColorBrush x:Key="Brush.Badge.Border" Color="{DynamicResource Color.Badge.Border}" />
     <SolidColorBrush x:Key="Brush.Badge.Text" Color="{DynamicResource Color.Badge.Text}" />
+    <SolidColorBrush x:Key="Brush.Badge.Outline.Fill" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Badge.Outline.Border" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.Badge.Outline.Text" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Fill" Color="{DynamicResource Color.Accent}" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Border" Color="{DynamicResource Color.Accent.Strong}" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Text" Color="{DynamicResource Color.Text.Inverse}" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Outline.Fill" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Outline.Border" Color="{DynamicResource Color.Accent}" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Outline.Text" Color="{DynamicResource Color.Accent}" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Fill" Color="{DynamicResource Color.Warning.Fill}" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Border" Color="{DynamicResource Color.Warning.Border}" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Text" Color="{DynamicResource Color.Warning.Text}" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Outline.Fill" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Outline.Border" Color="{DynamicResource Color.Warning.Border}" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Outline.Text" Color="{DynamicResource Color.Warning.Text}" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Fill" Color="{DynamicResource Color.Danger.Fill}" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Border" Color="{DynamicResource Color.Danger.Border}" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Text" Color="{DynamicResource Color.Danger.Text}" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Outline.Fill" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Outline.Border" Color="{DynamicResource Color.Danger.Border}" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Outline.Text" Color="{DynamicResource Color.Danger.Text}" />
 
     <SolidColorBrush x:Key="Brush.Button.Primary.Background" Color="{DynamicResource Color.Accent}" />
     <SolidColorBrush x:Key="Brush.Button.Primary.Border" Color="{DynamicResource Color.Border.Strong}" />
@@ -94,7 +116,58 @@
     <SolidColorBrush x:Key="Brush.Button.Danger.Foreground" Color="{DynamicResource Color.Danger.Text}" />
     <SolidColorBrush x:Key="Brush.Button.Danger.HoverBackground" Color="{DynamicResource Color.Danger.Fill}" />
     <SolidColorBrush x:Key="Brush.Button.Danger.HoverBorder" Color="{DynamicResource Color.Focus.Ring}" />
-    <SolidColorBrush x:Key="Brush.Button.Tertiary.Background" Color="#00FFFFFF" />
-    <SolidColorBrush x:Key="Brush.Button.Tertiary.Border" Color="#00FFFFFF" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.Background" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.Border" Color="#00000000" />
     <SolidColorBrush x:Key="Brush.Button.Tertiary.Foreground" Color="{DynamicResource Color.Accent}" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.HoverBackground" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.HoverBorder" Color="{DynamicResource Color.Border.Strong}" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.Background" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.Border" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.Foreground" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.HoverBackground" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.HoverBorder" Color="{DynamicResource Color.Border.Strong}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.Background" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.Border" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.Foreground" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.HoverBackground" Color="{DynamicResource Color.Surface2}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.HoverBorder" Color="{DynamicResource Color.Border.Strong}" />
+    <SolidColorBrush x:Key="Brush.FormShell.HeaderBackground" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.FormShell.TopActionBackground" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.FormShell.ContentBackground" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.FormShell.BottomActionBackground" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.FormShell.FooterBackground" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.FormShell.RegionBorder" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.FormShell.Divider" Color="{DynamicResource Color.Border.Subtle}" />
+    <Thickness x:Key="Thickness.FormShell.HeaderPadding">24,18,24,14</Thickness>
+    <Thickness x:Key="Thickness.FormShell.TopActionPadding">24,12,24,16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.TopActionMergedPadding">24,0,24,16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.LayoutPadding">24,20,24,20</Thickness>
+    <Thickness x:Key="Thickness.FormShell.BottomActionPadding">24,12,24,12</Thickness>
+    <Thickness x:Key="Thickness.FormShell.BottomActionMergedPadding">24,12,24,8</Thickness>
+    <Thickness x:Key="Thickness.FormShell.FooterPadding">24,12,24,16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderMetaMargin">0,0,0,10</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderTitleMargin">0,8,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderSubtitleMargin">0,4,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderDescriptionMargin">0,6,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderContextMargin">0,0,8,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.FooterSupportMargin">0,4,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.FooterStatusMargin">16,0,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ActionAreaGap">0,8,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ActionButtonHorizontalGap">0,0,8,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ActionButtonVerticalGap">0,0,0,8</Thickness>
+    <Thickness x:Key="Thickness.FormShell.SideAreaLeftMargin">0,0,16,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.SideAreaRightMargin">16,0,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.LayoutItemGap">0,0,0,16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.LayoutItemGap.Compact">0,0,0,12</Thickness>
+    <Thickness x:Key="Thickness.FormShell.LayoutRowItemGap">0,0,16,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ErrorBorderThickness">1</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ErrorPadding">16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.RootBorderThickness">1</Thickness>
+    <CornerRadius x:Key="CornerRadius.FormShell.Root">18</CornerRadius>
+    <sys:Double x:Key="Size.FormShell.ActionButton.VerticalMinWidth">132</sys:Double>
+    <SolidColorBrush x:Key="Brush.ComponentHost.Overlay.Scrim" Color="#99000000" />
+    <SolidColorBrush x:Key="Brush.ComponentHost.Overlay.Highlight" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="Brush.ComponentHost.Sheet.Background" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.ComponentHost.Sheet.Border" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.ComponentHost.Sheet.Shadow" Color="#66000000" />
 </ResourceDictionary>

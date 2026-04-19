@@ -145,6 +145,54 @@ layout:
         }
 
         [Test]
+        public void Prepare_ShouldAllowFormWithoutLayout_WhenDocumentOnlyDefinesActions()
+        {
+            var configurationRoot = Path.Combine(Path.GetTempPath(), "YamlAppTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(configurationRoot);
+
+            try
+            {
+                File.WriteAllText(Path.Combine(configurationRoot, "YamlActionOnlyConfig.yaml"), @"
+id: ActionOnlyDocument
+kind: form
+actions:
+  - id: Save
+    kind: Ok
+    caption: common.ok
+  - id: Cancel
+    kind: Cancel
+    caption: common.cancel
+");
+
+                var preparationService = new DocumentRuntimePreparationService(
+                    new FilesystemYamlDocumentConfigurationSource(configurationRoot),
+                    new YamlDocumentDefinitionNormalizer(),
+                    new RuntimeDocumentStateFactory(),
+                    new RuntimeDocumentJsonMapper());
+
+                var result = preparationService.Prepare("YamlActionOnlyConfig");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(result.Success, Is.True, string.Join(Environment.NewLine, result.Diagnostics));
+                    Assert.That(result.Normalization.Success, Is.True, string.Join(Environment.NewLine, result.Normalization.Diagnostics));
+                    Assert.That(result.Runtime, Is.Not.Null);
+                    Assert.That(result.Runtime.Document, Is.Not.Null);
+                    Assert.That(result.Runtime.Document.Layout, Is.Null);
+                    Assert.That(result.Runtime.Fields, Is.Empty);
+                    Assert.That(result.Runtime.Actions.Select(a => a.Action.Id), Is.EqualTo(new[] { "Save", "Cancel" }));
+                });
+            }
+            finally
+            {
+                if (Directory.Exists(configurationRoot))
+                {
+                    Directory.Delete(configurationRoot, recursive: true);
+                }
+            }
+        }
+
+        [Test]
         public void RuntimeDocumentJsonMapper_ToConfirmedResult_ShouldReturnDocumentDialogResult_WithDocumentIdAndJson()
         {
             var configurationRoot = Path.Combine(Path.GetTempPath(), "YamlAppTests", Guid.NewGuid().ToString("N"));

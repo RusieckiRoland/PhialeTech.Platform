@@ -101,7 +101,6 @@ namespace PhialeGis.Library.WpfUi.Controls
             private readonly Dispatcher _dispatcher;
             private readonly TaskCompletionSource<bool> _loadedTcs =
                 new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
             private static Task<CoreWebView2Environment> _sharedEnvironmentTask;
             private WebView2 _webView;
             private bool _disposed;
@@ -228,7 +227,6 @@ namespace PhialeGis.Library.WpfUi.Controls
 
                 _disposed = true;
                 _loadedTcs.TrySetResult(false);
-
                 _ = RunOnUiAsync(() =>
                 {
                     if (_webView != null)

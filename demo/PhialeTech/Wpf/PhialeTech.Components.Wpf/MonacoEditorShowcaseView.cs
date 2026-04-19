@@ -2,6 +2,7 @@ using PhialeTech.Components.Shared.Services;
 using PhialeTech.MonacoEditor.Abstractions;
 using PhialeTech.MonacoEditor.Wpf.Controls;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -92,6 +93,7 @@ namespace PhialeTech.Components.Wpf
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch
             };
+            AttachDiagnostics();
 
             var buttonRow = new WrapPanel
             {
@@ -162,7 +164,11 @@ namespace PhialeTech.Components.Wpf
             HorizontalAlignment = HorizontalAlignment.Stretch;
             VerticalAlignment = VerticalAlignment.Stretch;
             Loaded += HandleLoaded;
+            PreviewTextInput += HandlePreviewTextInput;
+            GotKeyboardFocus += HandleGotKeyboardFocus;
+            LostKeyboardFocus += HandleLostKeyboardFocus;
             PreviewKeyDown += HandlePreviewKeyDown;
+            IsKeyboardFocusWithinChanged += HandleIsKeyboardFocusWithinChanged;
             UpdateLocalizedTexts();
             UpdateFocusMode();
         }
@@ -190,7 +196,11 @@ namespace PhialeTech.Components.Wpf
 
             _disposed = true;
             Loaded -= HandleLoaded;
+            PreviewTextInput -= HandlePreviewTextInput;
+            GotKeyboardFocus -= HandleGotKeyboardFocus;
+            LostKeyboardFocus -= HandleLostKeyboardFocus;
             PreviewKeyDown -= HandlePreviewKeyDown;
+            IsKeyboardFocusWithinChanged -= HandleIsKeyboardFocusWithinChanged;
             _expandButton.Click -= HandleExpandClick;
             _editor.Dispose();
         }
@@ -203,6 +213,7 @@ namespace PhialeTech.Components.Wpf
             }
 
             _opened = true;
+            Log("Loaded opened=true");
             _ = LoadYamlSampleAsync();
         }
 
@@ -210,14 +221,21 @@ namespace PhialeTech.Components.Wpf
         {
             try
             {
+                Log("LoadYamlSampleAsync start");
                 await _editor.InitializeAsync().ConfigureAwait(true);
+                Log("InitializeAsync completed");
                 await _editor.SetThemeAsync(_theme).ConfigureAwait(true);
+                Log("SetThemeAsync completed theme=" + _theme);
                 await _editor.SetLanguageAsync("yaml").ConfigureAwait(true);
+                Log("SetLanguageAsync completed language=yaml");
                 await _editor.SetValueAsync(DemoMonacoEditorSampleBuilder.CreateYamlSample()).ConfigureAwait(true);
+                Log("SetValueAsync completed");
                 _editor.FocusEditor();
+                Log("FocusEditor requested");
             }
             catch (Exception ex)
             {
+                Log("LoadYamlSampleAsync failed " + ex.Message);
                 _descriptionText.Text = MonacoEditorShowcaseTextCatalog.GetText(_languageCode, "LoadError") + " " + ex.Message;
             }
         }
@@ -226,14 +244,17 @@ namespace PhialeTech.Components.Wpf
         {
             try
             {
+                Log("LoadCSharpSampleAsync start");
                 await _editor.InitializeAsync().ConfigureAwait(true);
                 await _editor.SetThemeAsync(_theme).ConfigureAwait(true);
                 await _editor.SetLanguageAsync("csharp").ConfigureAwait(true);
                 await _editor.SetValueAsync(DemoMonacoEditorSampleBuilder.CreateCSharpSample()).ConfigureAwait(true);
                 _editor.FocusEditor();
+                Log("LoadCSharpSampleAsync complete and focus requested");
             }
             catch (Exception ex)
             {
+                Log("LoadCSharpSampleAsync failed " + ex.Message);
                 _descriptionText.Text = MonacoEditorShowcaseTextCatalog.GetText(_languageCode, "LoadError") + " " + ex.Message;
             }
         }
@@ -241,11 +262,13 @@ namespace PhialeTech.Components.Wpf
         private void HandleExpandClick(object sender, RoutedEventArgs e)
         {
             _isFocusMode = !_isFocusMode;
+            Log("Expand clicked focusMode=" + _isFocusMode);
             UpdateFocusMode();
         }
 
         private void HandlePreviewKeyDown(object sender, KeyEventArgs e)
         {
+            Log("PreviewKeyDown key=" + e.Key + " handled=" + e.Handled + " focusMode=" + _isFocusMode);
             if (!_isFocusMode || e.Key != Key.Escape)
             {
                 return;
@@ -254,6 +277,26 @@ namespace PhialeTech.Components.Wpf
             _isFocusMode = false;
             UpdateFocusMode();
             e.Handled = true;
+        }
+
+        private void HandlePreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            Log("PreviewTextInput text=" + MonacoInputTrace.SafeSnippet(e.Text) + " handled=" + e.Handled);
+        }
+
+        private void HandleGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            Log("GotKeyboardFocus original=" + DescribeElement(e.OriginalSource as DependencyObject));
+        }
+
+        private void HandleLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            Log("LostKeyboardFocus original=" + DescribeElement(e.OriginalSource as DependencyObject));
+        }
+
+        private void HandleIsKeyboardFocusWithinChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            Log("IsKeyboardFocusWithin=" + IsKeyboardFocusWithin);
         }
 
         private void UpdateLocalizedTexts()
@@ -277,6 +320,59 @@ namespace PhialeTech.Components.Wpf
             _surface.Margin = _isFocusMode ? new Thickness(0) : new Thickness(0, 12, 0, 0);
             UpdateLocalizedTexts();
             _focusModeChanged?.Invoke(this, new WebDemoFocusModeChangedEventArgs(_isFocusMode));
+        }
+
+        private void AttachDiagnostics()
+        {
+            _editor.ReadyStateChanged += (_, args) => Log("Editor ReadyStateChanged initialized=" + args.IsInitialized + " ready=" + args.IsReady);
+            _editor.ContentChanged += (_, args) => Log("Editor ContentChanged length=" + (args.Value ?? string.Empty).Length + " snippet=" + MonacoInputTrace.SafeSnippet(args.Value));
+            _editor.ErrorOccurred += (_, args) => Log("Editor ErrorOccurred message=" + args.Message + " detail=" + args.Detail);
+            _editor.Loaded += (_, __) => Log("Editor Loaded");
+            _editor.Unloaded += (_, __) => Log("Editor Unloaded");
+            _editor.PreviewMouseDown += (_, args) => Log("Editor PreviewMouseDown button=" + args.ChangedButton);
+            _editor.PreviewKeyDown += (_, args) => Log("Editor PreviewKeyDown key=" + args.Key + " handled=" + args.Handled);
+            _editor.PreviewKeyUp += (_, args) => Log("Editor PreviewKeyUp key=" + args.Key + " handled=" + args.Handled);
+            _editor.PreviewTextInput += (_, args) => Log("Editor PreviewTextInput text=" + MonacoInputTrace.SafeSnippet(args.Text) + " handled=" + args.Handled);
+            _editor.GotKeyboardFocus += (_, args) => Log("Editor GotKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+            _editor.LostKeyboardFocus += (_, args) => Log("Editor LostKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+            _editor.IsKeyboardFocusWithinChanged += (_, __) => Log("Editor IsKeyboardFocusWithin=" + _editor.IsKeyboardFocusWithin);
+
+            var hostField = typeof(PhialeMonacoEditor).GetField("_host", BindingFlags.Instance | BindingFlags.NonPublic);
+            var hostElement = hostField?.GetValue(_editor) as UIElement;
+            if (hostElement == null)
+            {
+                Log("Editor host reflection failed");
+                return;
+            }
+
+            Log("Editor host type=" + hostElement.GetType().FullName);
+            hostElement.PreviewMouseDown += (_, args) => Log("Host PreviewMouseDown button=" + args.ChangedButton);
+            hostElement.PreviewKeyDown += (_, args) => Log("Host PreviewKeyDown key=" + args.Key + " handled=" + args.Handled);
+            hostElement.PreviewKeyUp += (_, args) => Log("Host PreviewKeyUp key=" + args.Key + " handled=" + args.Handled);
+            hostElement.PreviewTextInput += (_, args) => Log("Host PreviewTextInput text=" + MonacoInputTrace.SafeSnippet(args.Text) + " handled=" + args.Handled);
+            hostElement.GotKeyboardFocus += (_, args) => Log("Host GotKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+            hostElement.LostKeyboardFocus += (_, args) => Log("Host LostKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+            hostElement.IsKeyboardFocusWithinChanged += (_, __) => Log("Host IsKeyboardFocusWithin=" + hostElement.IsKeyboardFocusWithin);
+        }
+
+        private void Log(string message)
+        {
+            MonacoInputTrace.Write("monaco.showcase", "MonacoEditorShowcaseView", message);
+        }
+
+        private static string DescribeElement(DependencyObject element)
+        {
+            if (element == null)
+            {
+                return "null";
+            }
+
+            if (element is FrameworkElement frameworkElement)
+            {
+                return frameworkElement.GetType().Name + "#" + (frameworkElement.Name ?? string.Empty);
+            }
+
+            return element.GetType().Name;
         }
 
         private static string NormalizeTheme(string theme)

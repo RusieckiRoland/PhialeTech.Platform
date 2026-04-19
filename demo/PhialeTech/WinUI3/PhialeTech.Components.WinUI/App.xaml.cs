@@ -19,7 +19,7 @@ namespace PhialeTech.Components.WinUI
 
             var window = new MainWindow(_applicationServices)
             {
-                Title = "PhialeTech Demo"
+                Title = "PhialeTech StoryBook"
             };
             window.Closed += HandleMainWindowClosed;
 

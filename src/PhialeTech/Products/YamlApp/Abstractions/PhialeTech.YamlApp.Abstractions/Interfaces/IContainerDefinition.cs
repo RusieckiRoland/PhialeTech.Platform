@@ -1,3 +1,5 @@
+using PhialeTech.YamlApp.Abstractions.Enums;
+
 namespace PhialeTech.YamlApp.Abstractions.Interfaces
 {
     public interface IContainerDefinition : ILayoutContainerDefinition
@@ -5,5 +7,7 @@ namespace PhialeTech.YamlApp.Abstractions.Interfaces
         string CaptionKey { get; }
 
         bool ShowBorder { get; }
+
+        ContainerVariant? Variant { get; }
     }
 }

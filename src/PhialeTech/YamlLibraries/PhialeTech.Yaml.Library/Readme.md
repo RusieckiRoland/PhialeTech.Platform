@@ -194,7 +194,12 @@ documents:
     interactionMode: Classic
     densityMode: Normal
     fieldChromeMode: Framed
-    actionStripMode: SharedFooter
+    header:
+      title: YAML generated form
+      subtitle: Example document
+      description: Example base structure with header, content, footer, and actions.
+    footer:
+      note: Fields marked with * are required.
     fields:
       - id: firstName
         extends: firstName
@@ -212,3 +217,90 @@ documents:
   - numbers
   - currencies
   - other input kinds
+
+## YAML UI primitives
+
+The current runtime also supports reusable layout primitives for professional form shells:
+
+- `Badge`
+- `Button`
+
+These primitives are still neutral in YAML and are rendered by the platform adapter.
+
+### Badge
+
+```yaml
+- type: Badge
+  text: Draft
+  iconKey: draft
+  tone: Accent
+  size: Compact
+  toolTip: Workflow status
+```
+
+Supported badge properties:
+
+- `text` / `textKey`
+- `icon` / `iconKey`
+- `toolTip` / `toolTipKey`
+- `tone`
+- `variant`
+- `size`
+- `visible`
+- `enabled`
+
+### Button
+
+```yaml
+- type: Button
+  text: Validate
+  iconKey: validate
+  commandId: validate
+  tone: Secondary
+  variant: Toolbar
+  size: Compact
+  toolTip: Validate the current document
+```
+
+Supported button properties:
+
+- `text` / `textKey`
+- `icon` / `iconKey`
+- `toolTip` / `toolTipKey`
+- `commandId`
+- `tone`
+- `variant`
+- `size`
+- `iconPlacement`
+- `visible`
+- `enabled`
+
+Buttons can also be icon-only when `iconKey` is present and `text` is omitted:
+
+```yaml
+- type: Button
+  iconKey: history
+  commandId: history
+  variant: Toolbar
+  size: Compact
+  toolTip: Open activity history
+```
+
+### Action buttons inside documents
+
+Document actions also support explicit icons, so document shells do not rely on renderer heuristics:
+
+```yaml
+actions:
+  - id: save
+    semantic: Ok
+    captionKey: actions.save.caption
+    iconKey: save
+    area: footerPrimary
+```
+
+This keeps the shell semantic and portable:
+
+- action semantics still live in `actions`
+- placement still lives in `actionAreas`
+- iconography stays declarative in YAML

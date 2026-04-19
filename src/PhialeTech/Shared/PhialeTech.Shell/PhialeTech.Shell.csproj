@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.Shell</PackageId>
+    <AssemblyName>PhialeTech.Shell</AssemblyName>
+    <RootNamespace>PhialeTech.Shell</RootNamespace>
+    <Description>Cross-platform state validation and transitions for the reusable PhialeTech application shell.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PhialeTech.Shell.Abstractions\PhialeTech.Shell.Abstractions.csproj" />
+    <ProjectReference Include="..\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+</Project>

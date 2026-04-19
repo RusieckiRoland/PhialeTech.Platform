@@ -5,6 +5,9 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/ActiveLayerSelector.Shared.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/Shell.Styles.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/YamlApp.Styles.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.YamlApp.Wpf;component/Themes/YamlApp.ControlStyles.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/Demo.Theme.Day.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

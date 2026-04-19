@@ -12,6 +12,10 @@ namespace PhialeTech.YamlApp.Definitions.Documents
 
         public DocumentKind? Kind { get; set; }
 
+        public DocumentRegionChromeMode? TopRegionChrome { get; set; }
+
+        public DocumentRegionChromeMode? BottomRegionChrome { get; set; }
+
         public double? Width { get; set; }
 
         public FieldWidthHint? WidthHint { get; set; }
@@ -34,7 +38,15 @@ namespace PhialeTech.YamlApp.Definitions.Documents
 
         public CaptionPlacement? CaptionPlacement { get; set; }
 
+        public YamlDocumentHeaderDefinition Header { get; set; }
+
+        public YamlDocumentFooterDefinition Footer { get; set; }
+
         public YamlLayoutDefinition Layout { get; set; }
+
+        IDocumentHeaderDefinition IDocumentDefinition.Header => Header;
+
+        IDocumentFooterDefinition IDocumentDefinition.Footer => Footer;
 
         ILayoutDefinition IDocumentDefinition.Layout => Layout;
     }

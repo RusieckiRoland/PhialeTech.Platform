@@ -15,7 +15,7 @@ namespace PhialeTech.YamlApp.Wpf.Controls.Actions
             DependencyProperty.Register(nameof(BorderBrush), typeof(Brush), typeof(YamlDocumentActionAreaSkiaChromePresenter), new FrameworkPropertyMetadata(Brushes.Transparent, FrameworkPropertyMetadataOptions.AffectsRender, OnInvalidatePropertyChanged));
 
         public static readonly DependencyProperty CornerRadiusProperty =
-            DependencyProperty.Register(nameof(CornerRadius), typeof(double), typeof(YamlDocumentActionAreaSkiaChromePresenter), new FrameworkPropertyMetadata(12d, FrameworkPropertyMetadataOptions.AffectsRender, OnInvalidatePropertyChanged));
+            DependencyProperty.Register(nameof(CornerRadius), typeof(CornerRadius), typeof(YamlDocumentActionAreaSkiaChromePresenter), new FrameworkPropertyMetadata(new CornerRadius(12d), FrameworkPropertyMetadataOptions.AffectsRender, OnInvalidatePropertyChanged));
 
         public YamlDocumentActionAreaSkiaChromePresenter()
         {
@@ -36,9 +36,9 @@ namespace PhialeTech.YamlApp.Wpf.Controls.Actions
             set => SetValue(BorderBrushProperty, value);
         }
 
-        public double CornerRadius
+        public CornerRadius CornerRadius
         {
-            get => (double)GetValue(CornerRadiusProperty);
+            get => (CornerRadius)GetValue(CornerRadiusProperty);
             set => SetValue(CornerRadiusProperty, value);
         }
 
@@ -58,20 +58,52 @@ namespace PhialeTech.YamlApp.Wpf.Controls.Actions
             }
 
             var bounds = new SKRect(0f, 0f, e.Info.Width, e.Info.Height);
-            var radius = Math.Max(1f, (float)Math.Round(CornerRadius * Math.Min(
+            var scale = Math.Min(
                 e.Info.Width / Math.Max(0.0001d, ActualWidth),
-                e.Info.Height / Math.Max(0.0001d, ActualHeight))));
+                e.Info.Height / Math.Max(0.0001d, ActualHeight));
+
+            var topLeft = ScaleRadius(CornerRadius.TopLeft, scale);
+            var topRight = ScaleRadius(CornerRadius.TopRight, scale);
+            var bottomRight = ScaleRadius(CornerRadius.BottomRight, scale);
+            var bottomLeft = ScaleRadius(CornerRadius.BottomLeft, scale);
 
             using (var fillPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill, Color = ToSkColor(BackgroundBrush) })
             using (var borderPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f, Color = ToSkColor(BorderBrush) })
             {
-                var roundRect = new SKRoundRect(bounds, radius, radius);
+                var roundRect = CreateRoundRect(bounds, topLeft, topRight, bottomRight, bottomLeft);
                 canvas.DrawRoundRect(roundRect, fillPaint);
 
                 var inset = borderPaint.StrokeWidth / 2f;
                 var borderRect = new SKRect(bounds.Left + inset, bounds.Top + inset, bounds.Right - inset, bounds.Bottom - inset);
-                canvas.DrawRoundRect(new SKRoundRect(borderRect, Math.Max(0f, radius - inset), Math.Max(0f, radius - inset)), borderPaint);
+                canvas.DrawRoundRect(
+                    CreateRoundRect(
+                        borderRect,
+                        Math.Max(0f, topLeft - inset),
+                        Math.Max(0f, topRight - inset),
+                        Math.Max(0f, bottomRight - inset),
+                        Math.Max(0f, bottomLeft - inset)),
+                    borderPaint);
             }
+        }
+
+        private static float ScaleRadius(double radius, double scale)
+        {
+            return Math.Max(0f, (float)Math.Round(radius * scale));
+        }
+
+        private static SKRoundRect CreateRoundRect(SKRect rect, float topLeft, float topRight, float bottomRight, float bottomLeft)
+        {
+            var roundRect = new SKRoundRect();
+            roundRect.SetRectRadii(
+                rect,
+                new[]
+                {
+                    new SKPoint(topLeft, topLeft),
+                    new SKPoint(topRight, topRight),
+                    new SKPoint(bottomRight, bottomRight),
+                    new SKPoint(bottomLeft, bottomLeft),
+                });
+            return roundRect;
         }
 
         private static SKColor ToSkColor(Brush brush)

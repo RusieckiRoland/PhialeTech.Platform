@@ -1,10 +1,10 @@
 using System.Windows;
-using System.Windows.Controls;
 using PhialeTech.YamlApp.Abstractions.Enums;
+using PhialeTech.YamlApp.Wpf.Controls.Buttons;
 
 namespace PhialeTech.YamlApp.Wpf.Controls.Actions
 {
-    public sealed class YamlDocumentActionButton : Button
+    public sealed class YamlDocumentActionButton : YamlButton
     {
         public static readonly DependencyProperty SemanticProperty =
             DependencyProperty.Register(

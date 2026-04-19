@@ -9,6 +9,8 @@ namespace PhialeTech.YamlApp.Core.Resolved
             string id,
             string name,
             DocumentKind? kind,
+            DocumentRegionChromeMode topRegionChrome,
+            DocumentRegionChromeMode bottomRegionChrome,
             double? width,
             FieldWidthHint? widthHint,
             bool visible,
@@ -19,6 +21,8 @@ namespace PhialeTech.YamlApp.Core.Resolved
             DensityMode? densityMode,
             FieldChromeMode fieldChromeMode,
             CaptionPlacement captionPlacement,
+            ResolvedDocumentHeaderDefinition header,
+            ResolvedDocumentFooterDefinition footer,
             ResolvedLayoutDefinition layout,
             IReadOnlyList<ResolvedActionAreaDefinition> actionAreas,
             IReadOnlyList<ResolvedFieldDefinition> fields,
@@ -28,6 +32,8 @@ namespace PhialeTech.YamlApp.Core.Resolved
                 id,
                 name,
                 kind,
+                topRegionChrome,
+                bottomRegionChrome,
                 width,
                 widthHint,
                 visible,
@@ -38,6 +44,8 @@ namespace PhialeTech.YamlApp.Core.Resolved
                 densityMode,
                 fieldChromeMode,
                 captionPlacement,
+                header,
+                footer,
                 layout)
         {
             ActionAreas = actionAreas;

@@ -9,6 +9,8 @@ using PhialeTech.YamlApp.Abstractions.Enums;
 using PhialeTech.YamlApp.Core.Rendering;
 using PhialeTech.YamlApp.Runtime.Model;
 using PhialeTech.YamlApp.Wpf.Controls.Actions;
+using PhialeTech.YamlApp.Wpf.Controls.Badges;
+using PhialeTech.YamlApp.Wpf.Controls.Buttons;
 
 namespace PhialeTech.YamlApp.Wpf.Document
 {
@@ -101,17 +103,16 @@ namespace PhialeTech.YamlApp.Wpf.Document
                     RuntimeDocumentState.Visible,
                     RuntimeDocumentState.Enabled);
 
-                var root = new DockPanel
+                var root = new Border
                 {
-                    LastChildFill = true,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                 };
+                ApplyBorderStyle(root, "YamlDocument.RootBorderStyle");
                 KeyboardNavigation.SetTabNavigation(root, KeyboardNavigationMode.Cycle);
 
                 var content = BuildContent();
-                root.Children.Add(content);
+                root.Child = content;
                 Content = root;
-                FocusFirstFocusableElement(content as FrameworkElement ?? root);
             }
             catch (Exception ex)
             {
@@ -124,7 +125,130 @@ namespace PhialeTech.YamlApp.Wpf.Document
             var plan = RuntimeDocumentState?.Document is Core.Resolved.ResolvedFormDocumentDefinition formDocument
                 ? _actionRenderPlanBuilder.Build(formDocument)
                 : null;
+            var headerContent = BuildHeaderContent();
+            var stickyTopAreas = EnumerateAreas(plan, ActionPlacement.Top, stickyOnly: true).ToList();
+            var footerContent = BuildFooterContent();
+            var stickyBottomAreas = EnumerateAreas(plan, ActionPlacement.Bottom, stickyOnly: true).ToList();
+            var topActionContent = BuildShellActionPanelContent(stickyTopAreas, ActionPlacement.Top);
+            var bottomActionContent = BuildShellActionPanelContent(stickyBottomAreas, ActionPlacement.Bottom);
+            var layoutContent = BuildLayoutRegionContent(plan);
 
+            var hasHeader = headerContent != null;
+            var hasTopActionPanel = topActionContent != null;
+            var hasBottomActionPanel = bottomActionContent != null;
+            var hasFooter = footerContent != null;
+
+            var isTopMerged = IsShellMergeEnabled(ActionPlacement.Top) && hasHeader && hasTopActionPanel;
+            var isBottomMerged = IsShellMergeEnabled(ActionPlacement.Bottom) && hasFooter && hasBottomActionPanel;
+
+            var shell = new Grid
+            {
+                Name = "ShellHost",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
+            KeyboardNavigation.SetTabNavigation(shell, KeyboardNavigationMode.Continue);
+            shell.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            shell.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            shell.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1d, GridUnitType.Star) });
+            shell.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            shell.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            AddShellRegion(
+                shell,
+                0,
+                "Header",
+                headerContent,
+                hasHeader,
+                "YamlDocument.HeaderShellRegionStyle",
+                dividerOnTop: false);
+
+            AddShellRegion(
+                shell,
+                1,
+                "TopActionPanel",
+                topActionContent,
+                hasTopActionPanel,
+                isTopMerged ? "YamlDocument.TopActionPanelMergedShellRegionStyle" : "YamlDocument.TopActionPanelShellRegionStyle",
+                dividerOnTop: hasHeader && !isTopMerged);
+
+            AddShellRegion(
+                shell,
+                2,
+                "Layout",
+                layoutContent,
+                visible: true,
+                "YamlDocument.LayoutShellRegionStyle",
+                dividerOnTop: hasHeader || hasTopActionPanel);
+
+            AddShellRegion(
+                shell,
+                3,
+                "BottomActionPanel",
+                bottomActionContent,
+                hasBottomActionPanel,
+                isBottomMerged ? "YamlDocument.BottomActionPanelMergedShellRegionStyle" : "YamlDocument.BottomActionPanelShellRegionStyle",
+                dividerOnTop: hasBottomActionPanel);
+
+            AddShellRegion(
+                shell,
+                4,
+                "Footer",
+                footerContent,
+                hasFooter,
+                "YamlDocument.FooterShellRegionStyle",
+                dividerOnTop: hasFooter && (!hasBottomActionPanel || !isBottomMerged));
+
+            return shell;
+        }
+
+        private FrameworkElement BuildShellActionPanelContent(IEnumerable<DocumentActionAreaRenderPlan> areaPlans, ActionPlacement placement)
+        {
+            var areas = (areaPlans ?? Enumerable.Empty<DocumentActionAreaRenderPlan>()).ToList();
+            if (areas.Count == 0)
+            {
+                return null;
+            }
+
+            if (areas.Count == 1)
+            {
+                return BuildAreaActionContent(areas[0], ResolveAreaOrientation(areas[0]));
+            }
+
+            var stack = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                HorizontalAlignment = placement == ActionPlacement.Bottom ? HorizontalAlignment.Right : HorizontalAlignment.Stretch,
+            };
+            KeyboardNavigation.SetTabNavigation(stack, KeyboardNavigationMode.Continue);
+
+            for (var i = 0; i < areas.Count; i++)
+            {
+                var areaContent = BuildAreaActionContent(areas[i], ResolveAreaOrientation(areas[i]));
+                if (areaContent != null)
+                {
+                    stack.Children.Add(i == 0 ? areaContent : WrapInBorder(areaContent, "YamlDocument.ActionAreaSpacerStyle"));
+                }
+            }
+
+            return stack;
+        }
+
+        private bool IsShellMergeEnabled(ActionPlacement placement)
+        {
+            if (RuntimeDocumentState?.Document == null)
+            {
+                return false;
+            }
+
+            var mode = placement == ActionPlacement.Top
+                ? RuntimeDocumentState.Document.TopRegionChrome
+                : RuntimeDocumentState.Document.BottomRegionChrome;
+
+            return mode == DocumentRegionChromeMode.Merged;
+        }
+
+        private UIElement BuildLayoutRegionContent(DocumentActionRenderPlan plan)
+        {
             var scrollViewer = new ScrollViewer
             {
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
@@ -135,16 +259,6 @@ namespace PhialeTech.YamlApp.Wpf.Document
             KeyboardNavigation.SetTabNavigation(scrollViewer, KeyboardNavigationMode.Continue);
             scrollViewer.SetResourceReference(FrameworkElement.StyleProperty, "YamlDocument.ScrollViewerStyle");
             scrollViewer.PreviewMouseWheel += OnContentScrollViewerPreviewMouseWheel;
-
-            var shell = new DockPanel
-            {
-                LastChildFill = true,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-            };
-            KeyboardNavigation.SetTabNavigation(shell, KeyboardNavigationMode.Continue);
-
-            AddDockedAreas(shell, plan, ActionPlacement.Top, stickyOnly: true);
-            AddDockedAreas(shell, plan, ActionPlacement.Bottom, stickyOnly: true);
 
             var center = new Grid
             {
@@ -172,24 +286,58 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 center.Children.Add(rightAreas);
             }
 
-            shell.Children.Add(center);
-            return shell;
+            return center;
+        }
+
+        private void AddShellRegion(Grid host, int row, string elementName, UIElement content, bool visible, string styleKey, bool dividerOnTop)
+        {
+            var region = BuildShellRegion(elementName, content, visible, styleKey, dividerOnTop);
+            Grid.SetRow(region, row);
+            host.Children.Add(region);
+        }
+
+        private Border BuildShellRegion(string elementName, UIElement content, bool visible, string styleKey, bool dividerOnTop)
+        {
+            var region = new Border
+            {
+                Name = elementName,
+                Visibility = visible ? Visibility.Visible : Visibility.Collapsed,
+                Child = content,
+            };
+            ApplyBorderStyle(region, dividerOnTop ? styleKey + ".WithDivider" : styleKey);
+            return region;
+        }
+
+        private void ApplyBorderStyle(Border border, string styleKey)
+        {
+            if (border == null)
+            {
+                return;
+            }
+
+            var resolvedStyle = TryFindResource(styleKey) as Style;
+            if (resolvedStyle != null)
+            {
+                border.Style = resolvedStyle;
+                return;
+            }
+
+            border.SetResourceReference(FrameworkElement.StyleProperty, styleKey);
+        }
+
+        private static bool HasStickyArea(DocumentActionRenderPlan plan, ActionPlacement placement)
+        {
+            return plan?.Areas?.Any(areaPlan =>
+                areaPlan.Area != null &&
+                areaPlan.Area.Sticky &&
+                areaPlan.Area.Placement == placement) == true;
         }
 
         private UIElement BuildScrollableContent(DocumentActionRenderPlan plan)
         {
-            var stack = new StackPanel
-            {
-                Orientation = Orientation.Vertical,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-            };
+            var stack = new StackPanel();
+            ApplyElementStyle(stack, "YamlDocument.LayoutFlowPanelStyle");
             KeyboardNavigation.SetTabNavigation(stack, KeyboardNavigationMode.Continue);
-
-            var title = BuildTitle();
-            if (title != null)
-            {
-                stack.Children.Add(title);
-            }
 
             AddInFlowAreas(stack, plan, ActionPlacement.Top);
             stack.Children.Add(_layoutRenderer.Render(RuntimeDocumentState));
@@ -206,23 +354,86 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return new YamlDocumentActionAreaHost
             {
                 AlignmentMode = areaPlan.Area == null ? ActionAlignment.Right : areaPlan.Area.HorizontalAlignment,
+                ChromeMode = areaPlan.Area == null ? ActionAreaChromeMode.Explicit : areaPlan.Area.ChromeMode,
                 IsSharedArea = areaPlan.Area != null && areaPlan.Area.Shared,
+                IsSticky = areaPlan.Area != null && areaPlan.Area.Sticky,
+                Placement = areaPlan.Area == null ? ActionPlacement.Top : areaPlan.Area.Placement,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 Content = actionContent,
+                Name = ResolveActionAreaHostName(areaPlan),
             };
+        }
+
+        private static string ResolveActionAreaHostName(DocumentActionAreaRenderPlan areaPlan)
+        {
+            if (areaPlan?.Area == null)
+            {
+                return "ActionAreaHost";
+            }
+
+            var suffix = string.IsNullOrWhiteSpace(areaPlan.Area.Id)
+                ? string.Empty
+                : "_" + SanitizeElementName(areaPlan.Area.Id);
+
+            switch (areaPlan.Area.Placement)
+            {
+                case ActionPlacement.Top:
+                    return "TopActionArea" + suffix;
+                case ActionPlacement.Bottom:
+                    return "BottomActionArea" + suffix;
+                case ActionPlacement.Left:
+                    return "LeftActionArea" + suffix;
+                case ActionPlacement.Right:
+                    return "RightActionArea" + suffix;
+                default:
+                    return "ActionAreaHost" + suffix;
+            }
+        }
+
+        private static string SanitizeElementName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return "Region";
+            }
+
+            var buffer = new char[value.Length];
+            var length = 0;
+            for (var i = 0; i < value.Length; i++)
+            {
+                var current = value[i];
+                if (char.IsLetterOrDigit(current) || current == '_')
+                {
+                    buffer[length++] = current;
+                }
+            }
+
+            if (length == 0)
+            {
+                return "Region";
+            }
+
+            if (!char.IsLetter(buffer[0]) && buffer[0] != '_')
+            {
+                return "Region_" + new string(buffer, 0, length);
+            }
+
+            return new string(buffer, 0, length);
         }
 
         private FrameworkElement BuildAreaActionContent(DocumentActionAreaRenderPlan areaPlan, Orientation orientation)
         {
             var actions = ResolveRuntimeActions(areaPlan.Actions).ToList();
             var hasExplicitSlots = actions.Any(action => action.Action != null && action.Action.Slot.HasValue);
+            var buttonVariant = ResolveActionButtonVariant(areaPlan, orientation);
 
             if (!hasExplicitSlots)
             {
                 return BuildActionStack(
                     actions,
                     orientation,
-                    areaPlan.Area == null ? ActionAlignment.Right : areaPlan.Area.HorizontalAlignment);
+                    areaPlan.Area == null ? ActionAlignment.Right : areaPlan.Area.HorizontalAlignment,
+                    buttonVariant);
             }
 
             var grid = new Grid
@@ -234,9 +445,9 @@ namespace PhialeTech.YamlApp.Wpf.Document
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1d, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1d, GridUnitType.Auto) });
 
-            var startPanel = BuildActionStack(actions.Where(action => ResolveSlot(action) == ActionSlot.Start), orientation, ActionAlignment.Left);
-            var centerPanel = BuildActionStack(actions.Where(action => ResolveSlot(action) == ActionSlot.Center), orientation, ActionAlignment.Center);
-            var endPanel = BuildActionStack(actions.Where(action => ResolveSlot(action) == ActionSlot.End), orientation, ActionAlignment.Right);
+            var startPanel = BuildActionStack(actions.Where(action => ResolveSlot(action) == ActionSlot.Start), orientation, ActionAlignment.Left, buttonVariant);
+            var centerPanel = BuildActionStack(actions.Where(action => ResolveSlot(action) == ActionSlot.Center), orientation, ActionAlignment.Center, buttonVariant);
+            var endPanel = BuildActionStack(actions.Where(action => ResolveSlot(action) == ActionSlot.End), orientation, ActionAlignment.Right, buttonVariant);
 
             if (startPanel.Children.Count > 0)
             {
@@ -259,7 +470,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return grid;
         }
 
-        private StackPanel BuildActionStack(IEnumerable<RuntimeActionState> actions, Orientation orientation, ActionAlignment alignment)
+        private StackPanel BuildActionStack(IEnumerable<RuntimeActionState> actions, Orientation orientation, ActionAlignment alignment, ButtonVariant buttonVariant)
         {
             var panel = new StackPanel
             {
@@ -273,11 +484,13 @@ namespace PhialeTech.YamlApp.Wpf.Document
             };
             KeyboardNavigation.SetTabNavigation(panel, KeyboardNavigationMode.Continue);
 
-            foreach (var action in actions ?? Enumerable.Empty<RuntimeActionState>())
+            var actionList = (actions ?? Enumerable.Empty<RuntimeActionState>()).ToList();
+            for (var index = 0; index < actionList.Count; index++)
             {
-                var button = BuildActionButton(action, orientation);
+                var button = BuildActionButton(actionList[index], orientation, buttonVariant);
                 if (button != null)
                 {
+                    ApplyElementStyle(button, ResolveActionButtonStyleKey(orientation, index < actionList.Count - 1));
                     panel.Children.Add(button);
                 }
             }
@@ -311,7 +524,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 .Where(action => action != null && action.Visible);
         }
 
-        private YamlDocumentActionButton BuildActionButton(RuntimeActionState actionState, Orientation areaOrientation)
+        private YamlDocumentActionButton BuildActionButton(RuntimeActionState actionState, Orientation areaOrientation, ButtonVariant buttonVariant)
         {
             if (actionState == null)
             {
@@ -319,26 +532,22 @@ namespace PhialeTech.YamlApp.Wpf.Document
             }
 
             var action = actionState.Action;
+            var isPrimaryAction = action != null && (action.IsPrimary || action.ActionKind == DocumentActionKind.Ok || action.ActionKind == DocumentActionKind.Finish || action.ActionKind == DocumentActionKind.Apply || action.ActionKind == DocumentActionKind.Next);
             var button = new YamlDocumentActionButton
             {
                 Content = ResolveActionCaption(actionState),
+                CommandId = actionState.Id ?? string.Empty,
+                IconKey = ResolveActionIconKey(actionState, buttonVariant),
                 Semantic = action == null ? null : action.Semantic,
-                IsPrimaryAction = action != null && (action.IsPrimary || action.ActionKind == DocumentActionKind.Ok || action.ActionKind == DocumentActionKind.Finish || action.ActionKind == DocumentActionKind.Apply),
+                IsPrimaryAction = isPrimaryAction,
+                Tone = ResolveActionTone(actionState, isPrimaryAction, buttonVariant),
+                Variant = buttonVariant,
+                Size = ResolveActionButtonSize(buttonVariant),
                 IsEnabled = actionState.Enabled,
-                Margin = areaOrientation == Orientation.Horizontal
-                    ? new Thickness(0, 0, 8, 0)
-                    : new Thickness(0, 0, 0, 8),
-                MinWidth = 108,
                 Tag = actionState,
             };
 
-            if (areaOrientation == Orientation.Vertical)
-            {
-                button.HorizontalAlignment = HorizontalAlignment.Stretch;
-                button.MinWidth = 132;
-            }
-
-            button.Click += OnActionButtonClick;
+            button.Invoked += OnActionButtonInvoked;
             return button;
         }
 
@@ -372,10 +581,8 @@ namespace PhialeTech.YamlApp.Wpf.Document
             {
                 Orientation = Orientation.Vertical,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                Margin = placement == ActionPlacement.Left
-                    ? new Thickness(0, 0, 16, 0)
-                    : new Thickness(16, 0, 0, 0),
             };
+            ApplyElementStyle(stack, placement == ActionPlacement.Left ? "YamlDocument.SideAreaStackStyle.Left" : "YamlDocument.SideAreaStackStyle.Right");
             KeyboardNavigation.SetTabNavigation(stack, KeyboardNavigationMode.Continue);
 
             foreach (var areaPlan in areas)
@@ -414,7 +621,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
             });
         }
 
-        private void OnActionButtonClick(object sender, RoutedEventArgs e)
+        private void OnActionButtonInvoked(object sender, YamlButtonInvokedEventArgs e)
         {
             if (!(sender is YamlDocumentActionButton button) || !(button.Tag is RuntimeActionState actionState) || RuntimeDocumentState == null)
             {
@@ -423,6 +630,131 @@ namespace PhialeTech.YamlApp.Wpf.Document
 
             RaiseEvent(new YamlDocumentActionInvokedEventArgs(ActionInvokedEvent, this, RuntimeDocumentState, actionState));
             e.Handled = true;
+        }
+
+        private static ButtonVariant ResolveActionButtonVariant(DocumentActionAreaRenderPlan areaPlan, Orientation orientation)
+        {
+            var placement = areaPlan?.Area == null ? ActionPlacement.Bottom : areaPlan.Area.Placement;
+            switch (placement)
+            {
+                case ActionPlacement.Top:
+                    return areaPlan?.Area != null && areaPlan.Area.ChromeMode == ActionAreaChromeMode.Explicit
+                        ? ButtonVariant.ActionStrip
+                        : ButtonVariant.Toolbar;
+                case ActionPlacement.Bottom:
+                    return ButtonVariant.ActionStrip;
+                default:
+                    return orientation == Orientation.Vertical ? ButtonVariant.Standard : ButtonVariant.Toolbar;
+            }
+        }
+
+        private static ButtonSize ResolveActionButtonSize(ButtonVariant buttonVariant)
+        {
+            switch (buttonVariant)
+            {
+                case ButtonVariant.Toolbar:
+                    return ButtonSize.Compact;
+                case ButtonVariant.ActionStrip:
+                    return ButtonSize.Regular;
+                default:
+                    return ButtonSize.Regular;
+            }
+        }
+
+        private static ButtonTone ResolveActionTone(RuntimeActionState actionState, bool isPrimaryAction, ButtonVariant buttonVariant)
+        {
+            if (isPrimaryAction)
+            {
+                return ButtonTone.Primary;
+            }
+
+            var semantic = actionState?.Action == null ? (ActionSemantic?)null : actionState.Action.Semantic;
+            if (semantic == ActionSemantic.Help && buttonVariant == ButtonVariant.Toolbar)
+            {
+                return ButtonTone.Tertiary;
+            }
+
+            return ButtonTone.Secondary;
+        }
+
+        private static string ResolveActionIconKey(RuntimeActionState actionState, ButtonVariant buttonVariant)
+        {
+            if (!string.IsNullOrWhiteSpace(actionState?.Action?.IconKey))
+            {
+                return actionState.Action.IconKey;
+            }
+
+            var action = actionState?.Action;
+            if (action?.ActionKind == DocumentActionKind.Ok)
+            {
+                return "ok";
+            }
+
+            if (action?.ActionKind == DocumentActionKind.Cancel)
+            {
+                return "cancel";
+            }
+
+            if (action?.ActionKind == DocumentActionKind.Apply)
+            {
+                return "apply";
+            }
+
+            if (action?.ActionKind == DocumentActionKind.Back)
+            {
+                return "back";
+            }
+
+            if (action?.ActionKind == DocumentActionKind.Next)
+            {
+                return "next";
+            }
+
+            if (action?.ActionKind == DocumentActionKind.Finish)
+            {
+                return "finish";
+            }
+
+            if (action?.Semantic == ActionSemantic.Help)
+            {
+                return "help";
+            }
+
+            var probe = string.Join(
+                " ",
+                new[]
+                {
+                    actionState?.Id,
+                    actionState?.Name,
+                    action?.CaptionKey,
+                }.Where(value => !string.IsNullOrWhiteSpace(value))).ToLowerInvariant();
+
+            if (probe.Contains("validate"))
+            {
+                return "validate";
+            }
+
+            if (probe.Contains("draft") || probe.Contains("save"))
+            {
+                return "save-draft";
+            }
+
+            if (probe.Contains("preview"))
+            {
+                return "preview";
+            }
+
+            if (probe.Contains("history"))
+            {
+                return "history";
+            }
+
+            if (probe.Contains("help"))
+            {
+                return "help";
+            }
+
+            return string.Empty;
         }
 
         private static string ResolveActionCaption(RuntimeActionState actionState)
@@ -493,21 +825,235 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return ActionSlot.End;
         }
 
-        private UIElement BuildTitle()
+        private UIElement BuildHeaderContent()
         {
-            if (!ShowTitle || RuntimeDocumentState == null || string.IsNullOrWhiteSpace(RuntimeDocumentState.Name))
+            if (RuntimeDocumentState == null)
             {
                 return null;
             }
 
-            var title = new TextBlock
+            var header = RuntimeDocumentState.Document == null ? null : RuntimeDocumentState.Document.Header;
+            var isHeaderVisible = header == null || header.Visible;
+            var titleText = header == null ? null : header.TitleKey;
+            if (string.IsNullOrWhiteSpace(titleText) && ShowTitle)
             {
-                Text = RuntimeDocumentState.Name,
-                Margin = new Thickness(0, 0, 0, 20),
-                TextWrapping = TextWrapping.Wrap,
+                titleText = RuntimeDocumentState.Name;
+            }
+
+            var subtitleText = header == null ? null : header.SubtitleKey;
+            var descriptionText = header == null ? null : header.DescriptionKey;
+            var statusText = header == null ? null : header.StatusKey;
+            var contextText = header == null ? null : header.ContextKey;
+            var iconText = header == null ? null : header.IconKey;
+
+            if (!isHeaderVisible ||
+                (string.IsNullOrWhiteSpace(titleText) &&
+                 string.IsNullOrWhiteSpace(subtitleText) &&
+                 string.IsNullOrWhiteSpace(descriptionText) &&
+                 string.IsNullOrWhiteSpace(statusText) &&
+                 string.IsNullOrWhiteSpace(contextText) &&
+                 string.IsNullOrWhiteSpace(iconText)))
+            {
+                return null;
+            }
+
+            var stack = new StackPanel();
+            ApplyElementStyle(stack, "YamlDocument.HeaderContentPanelStyle");
+
+            var leadRow = BuildHeaderLeadRow(contextText, statusText, iconText);
+            if (leadRow != null)
+            {
+                stack.Children.Add(leadRow);
+            }
+
+            if (!string.IsNullOrWhiteSpace(titleText))
+            {
+                var title = new TextBlock
+                {
+                    Text = titleText,
+                };
+                ApplyElementStyle(title, "YamlDocument.HeaderTitleTextStyle");
+                stack.Children.Add(title);
+            }
+
+            if (!string.IsNullOrWhiteSpace(subtitleText))
+            {
+                var subtitle = new TextBlock
+                {
+                    Text = subtitleText,
+                };
+                ApplyElementStyle(subtitle, "YamlDocument.HeaderSubtitleTextStyle");
+                stack.Children.Add(subtitle);
+            }
+
+            if (!string.IsNullOrWhiteSpace(descriptionText))
+            {
+                var description = new TextBlock
+                {
+                    Text = descriptionText,
+                };
+                ApplyElementStyle(description, "YamlDocument.HeaderDescriptionTextStyle");
+                stack.Children.Add(description);
+            }
+
+            return stack;
+        }
+
+        private UIElement BuildFooterContent()
+        {
+            if (RuntimeDocumentState == null)
+            {
+                return null;
+            }
+
+            var footer = RuntimeDocumentState.Document == null ? null : RuntimeDocumentState.Document.Footer;
+            if (footer == null || !footer.Visible)
+            {
+                return null;
+            }
+
+            var noteText = footer.NoteKey;
+            var statusText = footer.StatusKey;
+            var sourceText = footer.SourceKey;
+            if (string.IsNullOrWhiteSpace(noteText) &&
+                string.IsNullOrWhiteSpace(statusText) &&
+                string.IsNullOrWhiteSpace(sourceText))
+            {
+                return null;
+            }
+
+            var grid = new Grid();
+            ApplyElementStyle(grid, "YamlDocument.FooterContentGridStyle");
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1d, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var leftStack = new StackPanel();
+            ApplyElementStyle(leftStack, "YamlDocument.FooterPrimaryStackStyle");
+
+            if (!string.IsNullOrWhiteSpace(noteText))
+            {
+                var note = new TextBlock
+                {
+                    Text = noteText,
+                };
+                ApplyElementStyle(note, "YamlDocument.FooterNoteTextStyle");
+                leftStack.Children.Add(note);
+            }
+
+            if (!string.IsNullOrWhiteSpace(sourceText))
+            {
+                var source = new TextBlock
+                {
+                    Text = sourceText,
+                };
+                ApplyElementStyle(source, "YamlDocument.FooterSupportTextStyle");
+                leftStack.Children.Add(source);
+            }
+
+            if (leftStack.Children.Count > 0)
+            {
+                Grid.SetColumn(leftStack, 0);
+                grid.Children.Add(leftStack);
+            }
+
+            if (!string.IsNullOrWhiteSpace(statusText))
+            {
+                var status = new TextBlock
+                {
+                    Text = statusText,
+                };
+                ApplyElementStyle(status, "YamlDocument.FooterStatusTextStyle");
+                Grid.SetColumn(status, 1);
+                grid.Children.Add(status);
+            }
+
+            return grid.Children.Count == 0 ? null : grid;
+        }
+
+        private UIElement BuildHeaderLeadRow(string contextText, string statusText, string iconText)
+        {
+            var hasLeftContent = !string.IsNullOrWhiteSpace(contextText) || !string.IsNullOrWhiteSpace(statusText);
+            var hasRightContent = !string.IsNullOrWhiteSpace(iconText);
+            if (!hasLeftContent && !hasRightContent)
+            {
+                return null;
+            }
+
+            var grid = new Grid();
+            ApplyElementStyle(grid, "YamlDocument.HeaderLeadRowStyle");
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1d, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            if (hasLeftContent)
+            {
+                var metaPanel = new WrapPanel();
+                ApplyElementStyle(metaPanel, "YamlDocument.HeaderMetaPanelStyle");
+
+                if (!string.IsNullOrWhiteSpace(contextText))
+                {
+                    var context = new TextBlock
+                    {
+                        Text = contextText,
+                    };
+                    ApplyElementStyle(context, "YamlDocument.HeaderContextTextStyle");
+                    metaPanel.Children.Add(context);
+                }
+
+                var badge = BuildStatusBadge(statusText);
+                if (badge != null)
+                {
+                    metaPanel.Children.Add(badge);
+                }
+
+                Grid.SetColumn(metaPanel, 0);
+                grid.Children.Add(metaPanel);
+            }
+
+            if (hasRightContent)
+            {
+                var icon = new TextBlock
+                {
+                    Text = iconText,
+                };
+                ApplyElementStyle(icon, "YamlDocument.HeaderIconTextStyle");
+                Grid.SetColumn(icon, 1);
+                grid.Children.Add(icon);
+            }
+
+            return grid;
+        }
+
+        private UIElement BuildStatusBadge(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return null;
+            }
+
+            var badge = new YamlBadge
+            {
+                Text = text,
             };
-            title.SetResourceReference(FrameworkElement.StyleProperty, "YamlDocument.TitleTextStyle");
-            return title;
+            ApplyElementStyle(badge, "YamlDocument.StatusBadgeStyle");
+            return badge;
+        }
+
+        private UIElement BuildFooterSupportLine(string statusText, string sourceText)
+        {
+            var values = new[] { statusText, sourceText }
+                .Where(text => !string.IsNullOrWhiteSpace(text))
+                .ToList();
+            if (values.Count == 0)
+            {
+                return null;
+            }
+
+            var support = new TextBlock
+            {
+                Text = string.Join(" · ", values),
+            };
+            ApplyElementStyle(support, "YamlDocument.FooterSupportTextStyle");
+            return support;
         }
 
         private static void OnContentScrollViewerPreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -582,74 +1128,57 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 Text = exception == null
                     ? "YamlDocumentHost failed to render."
                     : "YamlDocumentHost failed to render." + Environment.NewLine + exception.Message,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0),
             };
-            text.SetResourceReference(TextBlock.ForegroundProperty, "Brush.Danger.Text");
+            ApplyElementStyle(text, "YamlDocument.ErrorTextStyle");
 
-            return new Border
+            var border = new Border
             {
-                BorderThickness = new Thickness(1),
-                Padding = new Thickness(16),
                 Child = text,
             };
+            ApplyBorderStyle(border, "YamlDocument.ErrorBorderStyle");
+            return border;
         }
 
-        private void FocusFirstFocusableElement(FrameworkElement root)
+        private void ApplyElementStyle(FrameworkElement element, string styleKey)
         {
-            if (root == null)
+            if (element == null || string.IsNullOrWhiteSpace(styleKey))
             {
                 return;
             }
 
-            Dispatcher.BeginInvoke(new Action(() =>
+            var resolvedStyle = TryFindResource(styleKey) as Style;
+            if (resolvedStyle != null)
             {
-                if (!IsVisible || !IsEnabled)
-                {
-                    return;
-                }
+                element.Style = resolvedStyle;
+                return;
+            }
 
-                root.UpdateLayout();
-
-                var firstFocusable = FindFirstFocusableDescendant(root);
-                if (firstFocusable != null)
-                {
-                    Keyboard.Focus(firstFocusable);
-                    return;
-                }
-
-                root.MoveFocus(new TraversalRequest(FocusNavigationDirection.First));
-            }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+            element.SetResourceReference(FrameworkElement.StyleProperty, styleKey);
         }
 
-        private static Control FindFirstFocusableDescendant(DependencyObject root)
+        private static string ResolveActionButtonStyleKey(Orientation orientation, bool hasFollowingSibling)
         {
-            if (root == null)
+            if (orientation == Orientation.Vertical)
             {
-                return null;
+                return hasFollowingSibling
+                    ? "YamlDocument.ActionButtonStyle.Vertical.Spaced"
+                    : "YamlDocument.ActionButtonStyle.Vertical.Last";
             }
 
-            var childrenCount = VisualTreeHelper.GetChildrenCount(root);
-            for (var index = 0; index < childrenCount; index++)
-            {
-                var child = VisualTreeHelper.GetChild(root, index);
-                if (child is Control control &&
-                    control.Focusable &&
-                    control.IsTabStop &&
-                    control.IsVisible &&
-                    control.IsEnabled)
-                {
-                    return control;
-                }
-
-                var nested = FindFirstFocusableDescendant(child);
-                if (nested != null)
-                {
-                    return nested;
-                }
-            }
-
-            return null;
+            return hasFollowingSibling
+                ? "YamlDocument.ActionButtonStyle.Horizontal.Spaced"
+                : "YamlDocument.ActionButtonStyle.Horizontal.Last";
         }
+
+        private Border WrapInBorder(UIElement child, string styleKey)
+        {
+            var border = new Border
+            {
+                Child = child,
+            };
+            ApplyBorderStyle(border, styleKey);
+            return border;
+        }
+
     }
 }

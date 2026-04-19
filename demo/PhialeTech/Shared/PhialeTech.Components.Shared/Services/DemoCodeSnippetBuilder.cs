@@ -78,6 +78,11 @@ namespace PhialeTech.Components.Shared.Services
                 return BuildMonacoEditorFiles(platformKey);
             }
 
+            if (string.Equals(exampleId, "web-component-scroll-host", StringComparison.OrdinalIgnoreCase))
+            {
+                return BuildWebComponentScrollHostFiles(platformKey);
+            }
+
             if (string.Equals(exampleId, "yaml-document", StringComparison.OrdinalIgnoreCase))
             {
                 return BuildYamlDocumentFiles(platformKey);
@@ -88,9 +93,9 @@ namespace PhialeTech.Components.Shared.Services
                 return BuildYamlActionsFiles(platformKey);
             }
 
-            if (string.Equals(exampleId, "yaml-generate-form", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(exampleId, "yaml-primitives", StringComparison.OrdinalIgnoreCase))
             {
-                return BuildYamlGenerateFormFiles(platformKey);
+                return BuildYamlPrimitivesFiles(platformKey);
             }
 
             if (string.Equals(exampleId, "my-license", StringComparison.OrdinalIgnoreCase))
@@ -303,6 +308,24 @@ namespace PhialeTech.Components.Shared.Services
             };
         }
 
+        private static IReadOnlyList<DemoCodeFileViewModel> BuildWebComponentScrollHostFiles(string platformKey)
+        {
+            if (!string.Equals(platformKey, "Wpf", StringComparison.OrdinalIgnoreCase))
+            {
+                return new[]
+                {
+                    new DemoCodeFileViewModel("README.txt", "// PhialeWebComponentScrollHost is currently demonstrated in the WPF host."),
+                };
+            }
+
+            return new[]
+            {
+                new DemoCodeFileViewModel("PhialeWebComponentScrollHost.cs", BuildWebComponentScrollHostFile()),
+                new DemoCodeFileViewModel("Demo.Controls.xaml", BuildWebComponentScrollHostStyleSnippet()),
+                new DemoCodeFileViewModel("README.txt", BuildWebComponentScrollHostReadme()),
+            };
+        }
+
         private static IReadOnlyList<DemoCodeFileViewModel> BuildYamlDocumentFiles(string platformKey)
         {
             var spec = PlatformSpec.Create(platformKey);
@@ -310,7 +333,7 @@ namespace PhialeTech.Components.Shared.Services
             {
                 new DemoCodeFileViewModel("Example" + spec.XamlExtension, BuildYamlDocumentMarkup(platformKey)),
                 new DemoCodeFileViewModel(spec.HostCodeFileName, BuildYamlDocumentHostFile(platformKey)),
-                new DemoCodeFileViewModel("document.yaml", BuildYamlDocumentYamlSample()),
+                new DemoCodeFileViewModel("document.yaml", BuildYamlDocumentInheritanceYamlSample()),
             };
         }
 
@@ -325,14 +348,21 @@ namespace PhialeTech.Components.Shared.Services
             };
         }
 
-        private static IReadOnlyList<DemoCodeFileViewModel> BuildYamlGenerateFormFiles(string platformKey)
+        private static IReadOnlyList<DemoCodeFileViewModel> BuildYamlPrimitivesFiles(string platformKey)
         {
-            var spec = PlatformSpec.Create(platformKey);
+            if (!string.Equals(platformKey, "Wpf", StringComparison.OrdinalIgnoreCase))
+            {
+                return new[]
+                {
+                    new DemoCodeFileViewModel("primitives.yaml", BuildYamlPrimitivesYamlSample()),
+                    new DemoCodeFileViewModel("README.txt", "// YAML UI Badge and Button primitives are currently demonstrated in the WPF host."),
+                };
+            }
+
             return new[]
             {
-                new DemoCodeFileViewModel("Example" + spec.XamlExtension, BuildYamlDocumentMarkup(platformKey)),
-                new DemoCodeFileViewModel(spec.HostCodeFileName, BuildYamlDocumentHostFile(platformKey)),
-                new DemoCodeFileViewModel("generate-form.yaml", BuildYamlGenerateFormYamlSample()),
+                new DemoCodeFileViewModel("Example.xaml", BuildYamlPrimitivesMarkup()),
+                new DemoCodeFileViewModel("primitives.yaml", BuildYamlPrimitivesYamlSample()),
             };
         }
 
@@ -399,6 +429,37 @@ namespace PhialeTech.Components.Shared.Services
             });
         }
 
+        private static string BuildYamlPrimitivesMarkup()
+        {
+            return string.Join(Environment.NewLine, new[]
+            {
+                "<UserControl",
+                "    x:Class=\"Demo.Snippets.YamlPrimitivesHost\"",
+                "    xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"",
+                "    xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\"",
+                "    xmlns:yamlBadge=\"clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Badges;assembly=PhialeTech.YamlApp.Wpf\"",
+                "    xmlns:yamlButton=\"clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Buttons;assembly=PhialeTech.YamlApp.Wpf\">",
+                "  <StackPanel>",
+                "    <WrapPanel>",
+                "      <yamlBadge:YamlBadge Margin=\"0,0,10,10\" Text=\"Draft\" IconKey=\"draft\" Tone=\"Accent\" Size=\"Compact\" ToolTip=\"Workflow status\" />",
+                "      <yamlBadge:YamlBadge Margin=\"0,0,10,10\" Text=\"Internal form\" IconKey=\"document\" ToolTip=\"Document context\" />",
+                "      <yamlBadge:YamlBadge Margin=\"0,0,10,10\" Text=\"Requires review\" IconKey=\"warning\" Tone=\"Warning\" />",
+                "      <yamlBadge:YamlBadge Margin=\"0,0,10,10\" Text=\"Validation error\" IconKey=\"danger\" Tone=\"Danger\" />",
+                "    </WrapPanel>",
+                "    <WrapPanel Margin=\"0,14,0,0\">",
+                "      <yamlButton:YamlButton Margin=\"0,0,8,8\" Content=\"Validate\" IconKey=\"validate\" Variant=\"Toolbar\" Size=\"Compact\" ToolTip=\"Validate the current document\" CommandId=\"demo.validate\" />",
+                "      <yamlButton:YamlButton Margin=\"0,0,8,8\" Content=\"Save draft\" IconKey=\"save-draft\" Variant=\"Toolbar\" Size=\"Compact\" ToolTip=\"Save a local draft\" CommandId=\"demo.saveDraft\" />",
+                "      <yamlButton:YamlButton Margin=\"0,0,8,8\" IconKey=\"history\" Variant=\"Toolbar\" Size=\"Compact\" ToolTip=\"Open activity history\" CommandId=\"demo.history\" />",
+                "    </WrapPanel>",
+                "    <WrapPanel Margin=\"0,10,0,0\">",
+                "      <yamlButton:YamlButton Margin=\"0,0,8,8\" Content=\"Cancel\" IconKey=\"cancel\" Variant=\"ActionStrip\" ToolTip=\"Cancel editing\" CommandId=\"demo.cancel\" />",
+                "      <yamlButton:YamlButton Margin=\"0,0,8,8\" Content=\"OK\" IconKey=\"ok\" Variant=\"ActionStrip\" Tone=\"Primary\" Size=\"Regular\" ToolTip=\"Confirm and close\" CommandId=\"demo.ok\" />",
+                "    </WrapPanel>",
+                "  </StackPanel>",
+                "</UserControl>",
+            });
+        }
+
         private static string BuildYamlDocumentHostFile(string platformKey)
         {
             if (!string.Equals(platformKey, "Wpf", StringComparison.OrdinalIgnoreCase))
@@ -440,23 +501,16 @@ namespace PhialeTech.Components.Shared.Services
         {
             return string.Join(Environment.NewLine, new[]
             {
-                "namespace: demo.actions",
-                "imports:",
-                "  - medium",
+                "namespace: application.forms.actionShells",
                 "",
                 "document:",
-                "  id: action-review",
+                "  id: workbench-side-tools-footer",
                 "  kind: Form",
-                "  name: YAML actions demo",
+                "  name: Workbench with side tools and footer actions",
                 "  interactionMode: Classic",
                 "  densityMode: Normal",
                 "  fieldChromeMode: Framed",
                 "  actionAreas:",
-                "    - id: headerActions",
-                "      placement: Top",
-                "      horizontalAlignment: Stretch",
-                "      shared: true",
-                "      sticky: true",
                 "    - id: leftTools",
                 "      placement: Left",
                 "      horizontalAlignment: Stretch",
@@ -470,114 +524,65 @@ namespace PhialeTech.Components.Shared.Services
                 "      placement: Right",
                 "      horizontalAlignment: Stretch",
                 "      shared: false",
-                "  fields:",
-                "    - id: reviewTitle",
-                "      extends: limited50Text",
-                "      caption: Review title",
-                "      placeholder: Action rendering driven by YAML",
-                "      widthHint: Medium",
-                "    - id: reviewNotes",
-                "      extends: notesText",
-                "      caption: Notes",
-                "      placeholder: Compare area grouping, ordering and primary actions",
-                "      widthHint: Fill",
                 "  actions:",
-                "    - id: help",
-                "      semantic: Help",
-                "      caption: Help",
-                "      area: headerActions",
+                "    - id: history",
+                "      semantic: Secondary",
+                "      captionKey: actions.history.caption",
+                "      area: leftTools",
                 "      slot: Start",
                 "      order: 10",
                 "    - id: docs",
                 "      semantic: Secondary",
-                "      caption: Documentation",
+                "      captionKey: actions.documentation.caption",
                 "      area: rightHelp",
                 "      slot: Start",
                 "      order: 10",
-                "    - id: history",
-                "      semantic: Secondary",
-                "      caption: History",
-                "      area: leftTools",
+                "    - id: help",
+                "      semantic: Help",
+                "      captionKey: actions.help.caption",
+                "      area: rightHelp",
                 "      slot: Start",
-                "      order: 10",
-                "    - id: validate",
-                "      semantic: Apply",
-                "      caption: Validate",
-                "      area: headerActions",
-                "      slot: End",
                 "      order: 20",
                 "    - id: save",
                 "      semantic: Ok",
-                "      caption: Save document",
+                "      captionKey: actions.save.caption",
                 "      area: footerPrimary",
                 "      isPrimary: true",
                 "      slot: End",
                 "      order: 10",
                 "    - id: cancel",
                 "      semantic: Cancel",
-                "      caption: Cancel",
+                "      captionKey: actions.cancel.caption",
                 "      area: footerPrimary",
                 "      slot: End",
                 "      order: 20",
-                "  layout:",
-                "    type: Column",
-                "    items:",
-                "      - type: Container",
-                "        caption: Action rendering examples",
-                "        showBorder: true",
-                "        items:",
-                "          - fieldRef: reviewTitle",
-                "          - fieldRef: reviewNotes",
             });
         }
 
-        private static string BuildYamlGenerateFormYamlSample()
+        private static string BuildYamlPrimitivesYamlSample()
         {
             return string.Join(Environment.NewLine, new[]
             {
-                "namespace: application.forms",
-                "imports:",
-                "  - domain.person",
+                "layout:",
+                "  type: Column",
+                "  items:",
+                "    - type: Badge",
+                "      text: Draft",
+                "      tone: Accent",
+                "      size: Compact",
                 "",
-                "documents:",
-                "  yaml-generated-form:",
-                "    kind: Form",
-                "    name: YAML generated form",
-                "    interactionMode: Classic",
-                "    densityMode: Normal",
-                "    fieldChromeMode: Framed",
-                "    actionAreas:",
-                "      - id: footerPrimary",
-                "        placement: Bottom",
-                "        horizontalAlignment: Right",
-                "        shared: true",
-                "    fields:",
-                "      - id: firstName",
-                "        extends: firstName",
-                "      - id: lastName",
-                "        extends: lastName",
-                "      - id: age",
-                "        extends: age",
-                "      - id: notes",
-                "        extends: notes",
-                "    layout:",
-                "      type: Column",
+                "    - type: Row",
                 "      items:",
-                "        - type: Row",
-                "          items:",
-                "            - fieldRef: firstName",
-                "            - fieldRef: lastName",
-                "            - fieldRef: age",
-                "        - fieldRef: notes",
-                "    actions:",
-                "      - id: ok",
-                "        semantic: Ok",
-                "        captionKey: actions.ok.caption",
-                "        area: footerPrimary",
-                "      - id: cancel",
-                "        semantic: Cancel",
-                "        captionKey: actions.cancel.caption",
-                "        area: footerPrimary",
+                "        - type: Button",
+                "          text: Validate",
+                "          commandId: validate",
+                "          variant: Toolbar",
+                "",
+                "        - type: Button",
+                "          text: OK",
+                "          commandId: confirm",
+                "          tone: Primary",
+                "          variant: ActionStrip",
             });
         }
 
@@ -590,6 +595,16 @@ namespace PhialeTech.Components.Shared.Services
                 "interactionMode: Touch",
                 "densityMode: Comfortable",
                 "fieldChromeMode: Framed",
+                "header:",
+                "  title: Operational intake",
+                "  subtitle: Customer onboarding",
+                "  description: Collect the primary identity and contact information before saving the document.",
+                "  status: Draft",
+                "  context: Internal form",
+                "footer:",
+                "  note: Changes are not saved automatically.",
+                "  status: Draft saved locally",
+                "  source: ops-intake",
                 "fields:",
                 "  customerName:",
                 "    type: string",
@@ -623,6 +638,58 @@ namespace PhialeTech.Components.Shared.Services
                 "  - id: cancel",
                 "    semantic: Cancel",
                 "    captionKey: Cancel",
+            });
+        }
+
+        private static string BuildYamlDocumentInheritanceYamlSample()
+        {
+            return string.Join(Environment.NewLine, new[]
+            {
+                "namespace: application.forms",
+                "imports:",
+                "  - domain.person",
+                "  - application.forms.actionShells",
+                "",
+                "document:",
+                "  id: review-request",
+                "  kind: Form",
+                "  extends: review-sticky-header-footer",
+                "  name: Review request document",
+                "  topRegionChrome: Merged",
+                "  bottomRegionChrome: Merged",
+                "  header:",
+                "    title: Review request",
+                "    subtitle: Customer verification",
+                "    description: Validate personal details and notes before completing the review workflow.",
+                "    status: Draft",
+                "    context: Internal form",
+                "  footer:",
+                "    note: Fields marked with * are required.",
+                "    status: Draft saved locally",
+                "    source: Demo YAML runtime",
+                "  fields:",
+                "    - id: firstName",
+                "      extends: firstName",
+                "    - id: lastName",
+                "      extends: lastName",
+                "    - id: notes",
+                "      extends: notes",
+                "  layout:",
+                "    type: Column",
+                "    items:",
+                "      - type: Container",
+                "        caption: Reviewer",
+                "        showBorder: true",
+                "        items:",
+                "          - type: Row",
+                "            items:",
+                "              - fieldRef: firstName",
+                "              - fieldRef: lastName",
+                "      - type: Container",
+                "        caption: Review notes",
+                "        showBorder: true",
+                "        items:",
+                "          - fieldRef: notes",
             });
         }
 
@@ -1540,6 +1607,63 @@ namespace PhialeTech.Components.Shared.Services
             });
         }
 
+        private static string BuildWebComponentScrollHostFile()
+        {
+            return string.Join(Environment.NewLine, new[]
+            {
+                "using System.Windows;",
+                "using System.Windows.Controls;",
+                "using PhialeTech.WebHost.Wpf.Controls;",
+                string.Empty,
+                "namespace Demo",
+                "{",
+                "    public sealed class ScrollHostPreview : UserControl",
+                "    {",
+                "        public ScrollHostPreview()",
+                "        {",
+                "            Content = new PhialeWebComponentScrollHost",
+                "            {",
+                "                HostedContent = new Border",
+                "                {",
+                "                    MinHeight = 900,",
+                "                    Child = new TextBlock",
+                "                    {",
+                "                        Text = \"WebView2CompositionControl stays clipped inside a non-focusable scroll host.\",",
+                "                        TextWrapping = TextWrapping.Wrap",
+                "                    }",
+                "                }",
+                "            };",
+                "        }",
+                "    }",
+                "}",
+            });
+        }
+
+        private static string BuildWebComponentScrollHostStyleSnippet()
+        {
+            return string.Join(Environment.NewLine, new[]
+            {
+                "<Style TargetType=\"{x:Type webHost:PhialeWebComponentScrollHost}\">",
+                "  <Setter Property=\"Background\" Value=\"{DynamicResource DemoPanelBackgroundBrush}\" />",
+                "  <Setter Property=\"BorderBrush\" Value=\"{DynamicResource DemoPanelBorderBrush}\" />",
+                "  <Setter Property=\"BorderThickness\" Value=\"1\" />",
+                "  <Setter Property=\"CornerRadius\" Value=\"14\" />",
+                "</Style>",
+            });
+        }
+
+        private static string BuildWebComponentScrollHostReadme()
+        {
+            return string.Join(Environment.NewLine, new[]
+            {
+                "PhialeWebComponentScrollHost",
+                string.Empty,
+                "- Hosts browser-backed content inside a clipped viewport.",
+                "- Keeps the scroll container out of keyboard focus.",
+                "- Lets WebView2CompositionControl scroll without relying on WPF ScrollViewer.",
+            });
+        }
+
         private static string BuildWebHostHtmlFile()
         {
             return string.Join(Environment.NewLine, new[]
@@ -1723,6 +1847,81 @@ namespace PhialeTech.Components.Shared.Services
             builder.AppendLine("          </DataTemplate>");
             builder.AppendLine("        </ItemsControl.ItemTemplate>");
             builder.AppendLine("      </ItemsControl>");
+            builder.AppendLine("      <TextBlock Margin=\"0,14,0,8\"");
+            builder.AppendLine("                 FontFamily=\"Bahnschrift SemiBold\"");
+            builder.AppendLine("                 FontSize=\"14\"");
+            builder.AppendLine("                 Text=\"FormShell colors\" />");
+            builder.AppendLine("      <ItemsControl ItemsSource=\"{Binding FormShellTokens}\">");
+            builder.AppendLine("        <ItemsControl.ItemTemplate>");
+            builder.AppendLine("          <DataTemplate>");
+            builder.AppendLine("            <Grid Margin=\"0,0,0,8\">");
+            builder.AppendLine("              <Grid.ColumnDefinitions>");
+            builder.AppendLine("                <ColumnDefinition Width=\"240\" />");
+            builder.AppendLine("                <ColumnDefinition Width=\"*\" />");
+            builder.AppendLine("                <ColumnDefinition Width=\"120\" />");
+            builder.AppendLine("                <ColumnDefinition Width=\"120\" />");
+            builder.AppendLine("              </Grid.ColumnDefinitions>");
+            builder.AppendLine("              <TextBlock FontFamily=\"Bahnschrift SemiBold\"");
+            builder.AppendLine("                         FontSize=\"12\"");
+            builder.AppendLine("                         Text=\"{Binding TokenName}\" />");
+            builder.AppendLine("              <TextBlock Grid.Column=\"1\"");
+            builder.AppendLine("                         Margin=\"12,0,0,0\"");
+            builder.AppendLine("                         FontSize=\"12\"");
+            builder.AppendLine("                         TextWrapping=\"Wrap\"");
+            builder.AppendLine("                         Text=\"{Binding Usage}\" />");
+            builder.AppendLine("              <Border Grid.Column=\"2\"");
+            builder.AppendLine("                      Width=\"88\"");
+            builder.AppendLine("                      Height=\"24\"");
+            builder.AppendLine("                      Margin=\"12,0,0,0\"");
+            builder.AppendLine("                      Background=\"{Binding DayHex}\"");
+            builder.AppendLine("                      CornerRadius=\"6\">");
+            builder.AppendLine("                <TextBlock HorizontalAlignment=\"Center\"");
+            builder.AppendLine("                           VerticalAlignment=\"Center\"");
+            builder.AppendLine("                           FontSize=\"10\"");
+            builder.AppendLine("                           Text=\"{Binding DayHex}\" />");
+            builder.AppendLine("              </Border>");
+            builder.AppendLine("              <Border Grid.Column=\"3\"");
+            builder.AppendLine("                      Width=\"88\"");
+            builder.AppendLine("                      Height=\"24\"");
+            builder.AppendLine("                      Margin=\"12,0,0,0\"");
+            builder.AppendLine("                      Background=\"{Binding NightHex}\"");
+            builder.AppendLine("                      CornerRadius=\"6\">");
+            builder.AppendLine("                <TextBlock HorizontalAlignment=\"Center\"");
+            builder.AppendLine("                           VerticalAlignment=\"Center\"");
+            builder.AppendLine("                           FontSize=\"10\"");
+            builder.AppendLine("                           Text=\"{Binding NightHex}\" />");
+            builder.AppendLine("              </Border>");
+            builder.AppendLine("            </Grid>");
+            builder.AppendLine("          </DataTemplate>");
+            builder.AppendLine("        </ItemsControl.ItemTemplate>");
+            builder.AppendLine("      </ItemsControl>");
+            builder.AppendLine("      <TextBlock Margin=\"0,14,0,8\"");
+            builder.AppendLine("                 FontFamily=\"Bahnschrift SemiBold\"");
+            builder.AppendLine("                 FontSize=\"14\"");
+            builder.AppendLine("                 Text=\"FormShell spacing\" />");
+            builder.AppendLine("      <ItemsControl ItemsSource=\"{Binding FormShellSpacingTokens}\">");
+            builder.AppendLine("        <ItemsControl.ItemTemplate>");
+            builder.AppendLine("          <DataTemplate>");
+            builder.AppendLine("            <Grid Margin=\"0,0,0,8\">");
+            builder.AppendLine("              <Grid.ColumnDefinitions>");
+            builder.AppendLine("                <ColumnDefinition Width=\"240\" />");
+            builder.AppendLine("                <ColumnDefinition Width=\"160\" />");
+            builder.AppendLine("                <ColumnDefinition Width=\"*\" />");
+            builder.AppendLine("              </Grid.ColumnDefinitions>");
+            builder.AppendLine("              <TextBlock FontFamily=\"Bahnschrift SemiBold\"");
+            builder.AppendLine("                         FontSize=\"12\"");
+            builder.AppendLine("                         Text=\"{Binding TokenName}\" />");
+            builder.AppendLine("              <TextBlock Grid.Column=\"1\"");
+            builder.AppendLine("                         Margin=\"12,0,0,0\"");
+            builder.AppendLine("                         Text=\"{Binding Value}\" />");
+            builder.AppendLine("              <TextBlock Grid.Column=\"2\"");
+            builder.AppendLine("                         Margin=\"12,0,0,0\"");
+            builder.AppendLine("                         TextWrapping=\"Wrap\"");
+            builder.AppendLine("                         Text=\"{Binding Usage}\" />");
+            builder.AppendLine("            </Grid>");
+            builder.AppendLine("          </DataTemplate>");
+            builder.AppendLine("        </ItemsControl.ItemTemplate>");
+            builder.AppendLine("      </ItemsControl>");
             builder.AppendLine("      <TextBlock Margin=\"0,18,0,10\"");
             builder.AppendLine("                 FontFamily=\"Bahnschrift SemiBold\"");
             builder.AppendLine("                 FontSize=\"18\"");
@@ -1802,6 +2001,28 @@ namespace PhialeTech.Components.Shared.Services
                 "        new ColorToken(\"DemoPanelBackgroundBrush\", \"Primary card and panel surface.\", \"#FFFFFF\", \"#171C25\"),",
                 "        new ColorToken(\"DemoHintBackgroundBrush\", \"Hints and gentle callouts.\", \"#F6FAF9\", \"#1A2431\"),",
                 "        new ColorToken(\"DemoCodeBackgroundBrush\", \"Code surface.\", \"#131A22\", \"#0F141C\"),",
+                "    };",
+                string.Empty,
+                "    public IReadOnlyList<ColorToken> FormShellTokens { get; } = new[]",
+                "    {",
+                "        new ColorToken(\"Brush.FormShell.HeaderBackground\", \"Header shell region behind metadata and title.\", \"#F0F3F7\", \"#242B36\"),",
+                "        new ColorToken(\"Brush.FormShell.TopActionBackground\", \"Top action bar background for document tools.\", \"#F8FAFC\", \"#1E232D\"),",
+                "        new ColorToken(\"Brush.FormShell.ContentBackground\", \"Primary layout surface for editable content.\", \"#FFFFFF\", \"#171C25\"),",
+                "        new ColorToken(\"Brush.FormShell.BottomActionBackground\", \"Bottom action bar background for commit actions.\", \"#F8FAFC\", \"#1E232D\"),",
+                "        new ColorToken(\"Brush.FormShell.FooterBackground\", \"Footer status and support region.\", \"#F0F3F7\", \"#242B36\"),",
+                "        new ColorToken(\"Brush.FormShell.RegionBorder\", \"Outer shell outline and region borders.\", \"#D3D9E1\", \"#3E4657\"),",
+                "        new ColorToken(\"Brush.FormShell.Divider\", \"Subtle dividers between shell regions.\", \"#E4E7EC\", \"#343C4B\"),",
+                "    };",
+                string.Empty,
+                "    public IReadOnlyList<MeasureToken> FormShellSpacingTokens { get; } = new[]",
+                "    {",
+                "        new MeasureToken(\"Thickness.FormShell.HeaderPadding\", \"24,18,24,14\", \"Inset for the Header region: metadata, title and description.\"),",
+                "        new MeasureToken(\"Thickness.FormShell.TopActionPadding\", \"24,12,24,16\", \"Inset for the top action panel and document tools.\"),",
+                "        new MeasureToken(\"Thickness.FormShell.TopActionMergedPadding\", \"24,0,24,16\", \"Inset for top actions when the panel is merged into the header.\"),",
+                "        new MeasureToken(\"Thickness.FormShell.LayoutPadding\", \"24,20,24,20\", \"Primary breathing room for the Layout region and editable fields.\"),",
+                "        new MeasureToken(\"Thickness.FormShell.BottomActionPadding\", \"24,12,24,12\", \"Inset for the bottom commit action panel.\"),",
+                "        new MeasureToken(\"Thickness.FormShell.BottomActionMergedPadding\", \"24,12,24,8\", \"Inset for bottom actions when the panel is merged into the footer.\"),",
+                "        new MeasureToken(\"Thickness.FormShell.FooterPadding\", \"24,12,24,16\", \"Inset for the footer: notes, status and bottom chrome.\"),",
                 "    };",
                 string.Empty,
                 "    public IReadOnlyList<MeasureToken> MeasureTokens { get; } = new[]",

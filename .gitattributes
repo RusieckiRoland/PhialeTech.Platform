@@ -61,3 +61,22 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+###############################################################################
+# GitHub Linguist overrides
+# Exclude bundled third-party JS assets from language stats
+###############################################################################
+
+# Vendored libraries / bundled editor assets
+src/PhialeGis/Core/PhialeGis.WebAssets/Assets/Monaco/** linguist-vendored
+src/PhialeGis/Platforms/WinUI3/PhialeGis.Library.WinUi/Assets/Monaco/** linguist-vendored
+src/PhialeTech/Shared/PhialeTech.WebAssets/Assets/PdfViewer/wasm/** linguist-vendored
+src/PhialeTech/Shared/PhialeTech.WebAssets/Assets/ReportDesigner/vendor/** linguist-vendored
+
+# Generated/minified bundles
+*.min.js linguist-generated
+*.bundle.js linguist-generated
+*.min.css linguist-generated
+
+# Optional: sourcemaps
+*.map linguist-generated

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.Shell.Abstractions</PackageId>
+    <AssemblyName>PhialeTech.Shell.Abstractions</AssemblyName>
+    <RootNamespace>PhialeTech.Shell.Abstractions</RootNamespace>
+    <Description>Cross-platform application shell contracts for reusable PhialeTech desktop hosts.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+</Project>

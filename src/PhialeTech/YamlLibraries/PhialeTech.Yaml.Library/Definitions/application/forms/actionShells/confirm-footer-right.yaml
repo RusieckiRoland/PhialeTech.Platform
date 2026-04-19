@@ -1,0 +1,30 @@
+namespace: application.forms.actionShells
+
+document:
+  id: confirm-footer-right
+  kind: Form
+  name: Confirm dialog with footer actions
+  interactionMode: Classic
+  densityMode: Normal
+  fieldChromeMode: Framed
+  actionAreas:
+    - id: footerPrimary
+      placement: Bottom
+      horizontalAlignment: Right
+      chromeMode: Blended
+      shared: true
+      sticky: true
+  actions:
+    - id: ok
+      semantic: Ok
+      captionKey: actions.ok.caption
+      iconKey: ok
+      area: footerPrimary
+      isPrimary: true
+      order: 10
+    - id: cancel
+      semantic: Cancel
+      captionKey: actions.cancel.caption
+      iconKey: cancel
+      area: footerPrimary
+      order: 20

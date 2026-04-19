@@ -5,7 +5,6 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace PhialeTech.MonacoEditor.Wpf.Controls
 {
@@ -15,8 +14,7 @@ namespace PhialeTech.MonacoEditor.Wpf.Controls
         private readonly MonacoEditorWorkspace _workspace;
         private readonly IWebComponentHost _host;
         private readonly MonacoEditorRuntime _runtime;
-        private readonly Border _hostBorder;
-        private readonly Grid _clipHost;
+        private readonly Grid _hostRoot;
         private bool _disposed;
 
         public PhialeMonacoEditor()
@@ -45,30 +43,18 @@ namespace PhialeTech.MonacoEditor.Wpf.Controls
 
             _runtime = new MonacoEditorRuntime(_host, _workspace, _options);
 
-            _clipHost = new Grid
+            _hostRoot = new Grid
             {
-                ClipToBounds = true,
                 SnapsToDevicePixels = true,
-                Background = new SolidColorBrush(Color.FromRgb(248, 250, 252)),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
             };
-            _clipHost.Children.Add(hostElement);
+            _hostRoot.Children.Add(hostElement);
 
-            _hostBorder = new Border
-            {
-                CornerRadius = new CornerRadius(12),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225)),
-                BorderThickness = new Thickness(1),
-                Padding = new Thickness(6),
-                Background = new SolidColorBrush(Color.FromRgb(248, 250, 252)),
-                ClipToBounds = true,
-                Child = _clipHost
-            };
-
-            Content = _hostBorder;
+            Content = _hostRoot;
             HorizontalAlignment = HorizontalAlignment.Stretch;
             VerticalAlignment = VerticalAlignment.Stretch;
             Loaded += HandleLoaded;
-            ApplyThemeVisuals(_options.InitialTheme);
         }
 
         public MonacoEditorOptions Options => _options;
@@ -111,7 +97,6 @@ namespace PhialeTech.MonacoEditor.Wpf.Controls
 
         public async Task SetThemeAsync(string theme)
         {
-            ApplyThemeVisuals(theme);
             await _runtime.SetThemeAsync(theme).ConfigureAwait(true);
         }
 
@@ -130,14 +115,6 @@ namespace PhialeTech.MonacoEditor.Wpf.Controls
         private void HandleLoaded(object sender, RoutedEventArgs e)
         {
             _ = _runtime.InitializeAsync();
-        }
-
-        private void ApplyThemeVisuals(string theme)
-        {
-            bool useDark = string.Equals(theme, "dark", StringComparison.OrdinalIgnoreCase);
-            _hostBorder.BorderBrush = new SolidColorBrush(useDark ? Color.FromRgb(51, 65, 85) : Color.FromRgb(203, 213, 225));
-            _hostBorder.Background = new SolidColorBrush(useDark ? Color.FromRgb(15, 23, 42) : Color.FromRgb(241, 245, 249));
-            _clipHost.Background = new SolidColorBrush(useDark ? Color.FromRgb(15, 23, 42) : Color.FromRgb(241, 245, 249));
         }
     }
 }

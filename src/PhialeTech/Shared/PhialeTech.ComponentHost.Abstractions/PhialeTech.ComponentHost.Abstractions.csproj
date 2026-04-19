@@ -11,4 +11,8 @@
     <Description>Host-facing abstractions for integrating PhialeTech components with domain applications such as GIS.</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

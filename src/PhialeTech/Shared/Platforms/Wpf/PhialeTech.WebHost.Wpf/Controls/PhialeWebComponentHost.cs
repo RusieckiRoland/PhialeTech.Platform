@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace PhialeTech.WebHost.Wpf.Controls
@@ -30,12 +31,17 @@ namespace PhialeTech.WebHost.Wpf.Controls
         public PhialeWebComponentHost(WebComponentHostOptions options)
         {
             _root = new Grid();
+            _root.UseLayoutRounding = true;
+            _root.SnapsToDevicePixels = true;
             Content = _root;
-            Focusable = true;
+            Focusable = false;
+            UseLayoutRounding = true;
+            SnapsToDevicePixels = true;
 
             _bridge = new WpfWebComponentPlatformBridge(_root, Dispatcher);
             _bridge.WarmUp();
             _runtime = new WebComponentHostRuntime(_bridge, options ?? new WebComponentHostOptions());
+            PhialeWebHostDiagnostics.Write("PhialeWebComponentHost", "constructed");
 
             Loaded += OnLoaded;
         }
@@ -91,6 +97,7 @@ namespace PhialeTech.WebHost.Wpf.Controls
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            PhialeWebHostDiagnostics.Write("PhialeWebComponentHost", "loaded");
             _bridge.NotifyLoaded();
             _ = _runtime.InitializeAsync();
         }
@@ -102,9 +109,8 @@ namespace PhialeTech.WebHost.Wpf.Controls
             private readonly Dispatcher _dispatcher;
             private readonly TaskCompletionSource<bool> _loadedTcs =
                 new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
             private static Task<CoreWebView2Environment> _sharedEnvironmentTask;
-            private WebView2 _webView;
+            private WebView2CompositionControl _webView;
             private bool _disposed;
 
             public WpfWebComponentPlatformBridge(Grid host, Dispatcher dispatcher)
@@ -121,6 +127,7 @@ namespace PhialeTech.WebHost.Wpf.Controls
 
             public void WarmUp()
             {
+                PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "warmup requested");
                 _ = GetSharedEnvironmentAsync();
             }
 
@@ -131,6 +138,7 @@ namespace PhialeTech.WebHost.Wpf.Controls
 
             public void NotifyLoaded()
             {
+                PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "host loaded");
                 _loadedTcs.TrySetResult(true);
             }
 
@@ -147,17 +155,21 @@ namespace PhialeTech.WebHost.Wpf.Controls
                     if (IsInitialized || _disposed)
                         return;
 
-                    _webView = new WebView2();
+                    _webView = CreateWebView();
+                    HookDiagnostics(_webView);
                     _host.Children.Clear();
                     _host.Children.Add(_webView);
+                    PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "webview attached type=" + _webView.GetType().Name);
 
                     await _webView.EnsureCoreWebView2Async(environment).ConfigureAwait(true);
+                    PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "EnsureCoreWebView2Async completed");
                     _webView.CoreWebView2.Settings.IsScriptEnabled = true;
                     DisableBrowserZoom(_webView.CoreWebView2.Settings);
                     _webView.WebMessageReceived += OnWebMessageReceived;
                     _webView.NavigationCompleted += OnNavigationCompleted;
 
                     IsInitialized = true;
+                    PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "initialized");
                 }).ConfigureAwait(false);
             }
 
@@ -174,6 +186,7 @@ namespace PhialeTech.WebHost.Wpf.Controls
                 await RunOnUiAsync(() =>
                 {
                     EnsureWebView();
+                    PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "LoadEntryPage host=" + hostName + " entry=" + entry);
                     _webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                         hostName,
                         absoluteRoot,
@@ -189,6 +202,7 @@ namespace PhialeTech.WebHost.Wpf.Controls
                 return RunOnUiAsync(() =>
                 {
                     EnsureWebView();
+                    PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "navigate " + uri);
                     _webView.Source = uri;
                 });
             }
@@ -199,6 +213,7 @@ namespace PhialeTech.WebHost.Wpf.Controls
                 return RunOnUiAsync(() =>
                 {
                     EnsureWebView();
+                    PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "LoadHtml length=" + (content ?? string.Empty).Length);
                     _webView.NavigateToString(content);
                 });
             }
@@ -208,6 +223,7 @@ namespace PhialeTech.WebHost.Wpf.Controls
                 return RunOnUiAsync(async () =>
                 {
                     EnsureWebView();
+                    PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "ExecuteScript snippet=" + SafeSnippet(script));
                     return await _webView.CoreWebView2.ExecuteScriptAsync(script ?? string.Empty).ConfigureAwait(true);
                 });
             }
@@ -219,7 +235,14 @@ namespace PhialeTech.WebHost.Wpf.Controls
 
                 _ = RunOnUiAsync(() =>
                 {
-                    _webView?.Focus();
+                    if (_webView != null)
+                    {
+                        PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "focus requested");
+                        _webView.Focus();
+                        PhialeWebHostDiagnostics.Write(
+                            "WpfWebComponentPlatformBridge",
+                            "focus applied IsKeyboardFocused=" + _webView.IsKeyboardFocused + " IsKeyboardFocusWithin=" + _webView.IsKeyboardFocusWithin);
+                    }
                 });
             }
 
@@ -230,11 +253,11 @@ namespace PhialeTech.WebHost.Wpf.Controls
 
                 _disposed = true;
                 _loadedTcs.TrySetResult(false);
-
                 _ = RunOnUiAsync(() =>
                 {
                     if (_webView != null)
                     {
+                        PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "disposing webview");
                         _webView.WebMessageReceived -= OnWebMessageReceived;
                         _webView.NavigationCompleted -= OnNavigationCompleted;
                         if (_webView is IDisposable disposable)
@@ -255,6 +278,7 @@ namespace PhialeTech.WebHost.Wpf.Controls
                     if (string.IsNullOrWhiteSpace(payload))
                         return;
 
+                    PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "message " + SafeSnippet(payload));
                     MessageReceived?.Invoke(this, payload);
                 }
                 catch
@@ -265,6 +289,9 @@ namespace PhialeTech.WebHost.Wpf.Controls
 
             private void OnNavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
             {
+                PhialeWebHostDiagnostics.Write(
+                    "WpfWebComponentPlatformBridge",
+                    "navigation completed success=" + e.IsSuccess + " error=" + (e.IsSuccess ? string.Empty : e.WebErrorStatus.ToString()));
                 NavigationCompleted?.Invoke(
                     this,
                     new WebComponentPlatformNavigationEventArgs(
@@ -284,6 +311,67 @@ namespace PhialeTech.WebHost.Wpf.Controls
                 return (entryPageRelativePath ?? string.Empty)
                     .Replace('\\', '/')
                     .TrimStart('/');
+            }
+
+            private WebView2CompositionControl CreateWebView()
+            {
+                return new WebView2CompositionControl
+                {
+                    UseLayoutRounding = true,
+                    SnapsToDevicePixels = true,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Stretch
+                };
+            }
+
+            private void HookDiagnostics(WebView2CompositionControl webView)
+            {
+                if (webView == null)
+                {
+                    return;
+                }
+
+                webView.Loaded += (_, __) => PhialeWebHostDiagnostics.Write("WebView2CompositionControl", "loaded");
+                webView.Unloaded += (_, __) => PhialeWebHostDiagnostics.Write("WebView2CompositionControl", "unloaded");
+                webView.PreviewMouseDown += (_, args) => PhialeWebHostDiagnostics.Write("WebView2CompositionControl", "PreviewMouseDown button=" + args.ChangedButton);
+                webView.PreviewKeyDown += (_, args) => PhialeWebHostDiagnostics.Write("WebView2CompositionControl", "PreviewKeyDown key=" + args.Key + " handled=" + args.Handled);
+                webView.PreviewKeyUp += (_, args) => PhialeWebHostDiagnostics.Write("WebView2CompositionControl", "PreviewKeyUp key=" + args.Key + " handled=" + args.Handled);
+                webView.PreviewTextInput += (_, args) => PhialeWebHostDiagnostics.Write("WebView2CompositionControl", "PreviewTextInput text=" + SafeSnippet(args.Text) + " handled=" + args.Handled);
+                webView.GotKeyboardFocus += (_, args) => PhialeWebHostDiagnostics.Write("WebView2CompositionControl", "GotKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+                webView.LostKeyboardFocus += (_, args) => PhialeWebHostDiagnostics.Write("WebView2CompositionControl", "LostKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+                webView.IsKeyboardFocusWithinChanged += (_, __) => PhialeWebHostDiagnostics.Write("WebView2CompositionControl", "IsKeyboardFocusWithin=" + webView.IsKeyboardFocusWithin);
+            }
+
+            private static string DescribeElement(DependencyObject element)
+            {
+                if (element == null)
+                {
+                    return "null";
+                }
+
+                if (element is FrameworkElement frameworkElement)
+                {
+                    return frameworkElement.GetType().Name + "#" + (frameworkElement.Name ?? string.Empty);
+                }
+
+                return element.GetType().Name;
+            }
+
+            private static string SafeSnippet(string text)
+            {
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    return string.Empty;
+                }
+
+                var normalized = text
+                    .Replace('\r', ' ')
+                    .Replace('\n', ' ')
+                    .Trim();
+
+                return normalized.Length <= 180
+                    ? normalized
+                    : normalized.Substring(0, 180) + "...";
             }
 
             private void EnsureWebView()

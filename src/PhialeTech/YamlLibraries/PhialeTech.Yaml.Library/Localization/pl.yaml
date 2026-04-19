@@ -8,3 +8,8 @@ person.notes.caption: Notatki
 person.notes.placeholder: Wpisz dodatkowe informacje
 actions.ok.caption: OK
 actions.cancel.caption: Anuluj
+actions.save.caption: Zapisz
+actions.validate.caption: Zweryfikuj
+actions.help.caption: Pomoc
+actions.history.caption: Historia
+actions.documentation.caption: Dokumentacja

@@ -1,4 +1,4 @@
-<Window x:Class="PhialeTech.Components.Wpf.MainWindow"
+<shell:PhialeWindow x:Class="PhialeTech.Components.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -11,8 +11,14 @@
         xmlns:yamlDocument="clr-namespace:PhialeTech.YamlApp.Wpf.Document;assembly=PhialeTech.YamlApp.Wpf"
         xmlns:yaml="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.TextBox;assembly=PhialeTech.YamlApp.Wpf"
         xmlns:yamlInteger="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.IntegerBox;assembly=PhialeTech.YamlApp.Wpf"
+        xmlns:yamlBadge="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Badges;assembly=PhialeTech.YamlApp.Wpf"
+        xmlns:yamlButton="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Buttons;assembly=PhialeTech.YamlApp.Wpf"
+        xmlns:componentHost="clr-namespace:PhialeTech.ComponentHost.Wpf.Controls;assembly=PhialeTech.ComponentHost.Wpf"
+        xmlns:shell="clr-namespace:PhialeTech.Shell.Wpf.Controls;assembly=PhialeTech.Shell.Wpf"
+        xmlns:webHost="clr-namespace:PhialeTech.WebHost.Wpf.Controls;assembly=PhialeTech.WebHost.Wpf"
         mc:Ignorable="d"
         Title="{Binding AppTitle}"
+        ShellState="{Binding RelativeSource={RelativeSource Self}, Path=ShellState}"
         Width="1560"
         Height="920"
         MinWidth="1280"
@@ -25,6 +31,8 @@
                 <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/Demo.Theme.Day.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/Demo.Controls.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/Demo.Wpf.Shared.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/YamlApp.Styles.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/PhialeTech.YamlApp.Wpf;component/Themes/YamlApp.ControlStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
@@ -424,11 +432,13 @@
                         <TextBlock Text="{Binding AppTitle}"
                                    FontFamily="Bahnschrift SemiBold"
                                    FontSize="28"
-                                   Foreground="{DynamicResource DemoPrimaryTextBrush}" />
+                                   Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                   TextWrapping="Wrap" />
                         <TextBlock Margin="0,4,0,0"
                                    Text="{Binding AppSubtitle}"
                                    FontSize="13"
-                                   Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+                                   Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                   TextWrapping="Wrap" />
                     </StackPanel>
                 </Grid>
 
@@ -537,50 +547,63 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Column="1" Margin="30,26,30,26">
-            <Grid Visibility="{Binding IsOverviewVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <TextBlock Text="{Binding WorkspaceOverviewTitle}"
-                                   FontFamily="Bahnschrift SemiBold"
-                                   FontSize="30"
-                                   Foreground="{DynamicResource DemoPrimaryTextBrush}" />
-                        <TextBlock Margin="0,8,0,26"
-                                   Text="{Binding WorkspaceOverviewSubtitle}"
-                                   FontSize="15"
-                                   Foreground="{DynamicResource DemoSecondaryTextBrush}"
-                                   TextWrapping="Wrap" />
-
-                        <TextBlock Visibility="{Binding HasOverviewResults, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+        <shell:PhialeAppShell Grid.Column="1"
+                              Margin="30,26,30,26"
+                              ShellState="{Binding RelativeSource={RelativeSource AncestorType={x:Type shell:PhialeWindow}}, Path=ShellState}">
+            <Grid>
+                <Grid Visibility="{Binding IsOverviewVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <Grid Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type ScrollContentPresenter}}, Path=ActualWidth}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Margin="0,0,0,16"
+                                   Visibility="{Binding HasOverviewResults, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
                                    Text="{Binding EmptySearchText}" />
 
-                        <ItemsControl ItemsSource="{Binding VisibleSections}">
+                        <ItemsControl Grid.Row="1"
+                                      ItemsSource="{Binding VisibleSections}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Margin="0,0,0,28">
+                                    <Grid Margin="0,0,0,28">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
                                         <TextBlock Style="{StaticResource SectionHeadlineStyle}" Text="{Binding Title}" />
-                                        <ItemsControl ItemsSource="{Binding Examples}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <WrapPanel ItemWidth="330" ItemHeight="168" />
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
+                                        <ItemsControl Grid.Row="1"
+                                                      ItemsSource="{Binding Rows}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Button Width="330"
-                                                            Height="168"
-                                                            Margin="0,0,16,16"
-                                                            Style="{StaticResource OverviewCardButtonStyle}"
-                                                            Command="{Binding DataContext.SelectExampleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding Id}" />
+                                                    <ItemsControl ItemsSource="{Binding Examples}"
+                                                                  Margin="0,0,0,16">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Horizontal" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Button Width="330"
+                                                                        Height="168"
+                                                                        Margin="0,0,16,0"
+                                                                        Style="{StaticResource OverviewCardButtonStyle}"
+                                                                        Command="{Binding DataContext.SelectExampleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                        CommandParameter="{Binding Id}" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-                                    </StackPanel>
+                                    </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </StackPanel>
+                    </Grid>
                 </ScrollViewer>
             </Grid>
 
@@ -794,6 +817,156 @@
                                                                        Style="{StaticResource FoundationsSubsectionTitleStyle}" />
                                                             <ItemsControl ItemsSource="{Binding FoundationsSurfaceTokens}"
                                                                           ItemTemplate="{StaticResource FoundationsColorTokenTemplate}" />
+
+                                                            <TextBlock Margin="0,8,0,0"
+                                                                       Text="{Binding FoundationsFormShellColorsTitle}"
+                                                                       Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                            <TextBlock Margin="0,0,0,8"
+                                                                       Text="{Binding FoundationsFormShellColorsDescription}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                            <ItemsControl ItemsSource="{Binding FoundationsFormShellTokens}"
+                                                                          ItemTemplate="{StaticResource FoundationsColorTokenTemplate}" />
+
+                                                            <TextBlock Margin="0,10,0,0"
+                                                                       Text="{Binding FoundationsFormShellSpacingTitle}"
+                                                                       Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                            <TextBlock Margin="0,0,0,8"
+                                                                       Text="{Binding FoundationsFormShellSpacingDescription}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                            <ItemsControl ItemsSource="{Binding FoundationsFormShellSpacingTokens}"
+                                                                          ItemTemplate="{StaticResource FoundationsMeasureTokenTemplate}" />
+
+                                                            <Border Margin="0,10,0,0"
+                                                                    Background="{DynamicResource Brush.FormShell.ContentBackground}"
+                                                                    BorderBrush="{DynamicResource Brush.FormShell.RegionBorder}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="10">
+                                                                    <Grid ClipToBounds="True">
+                                                                        <Grid.RowDefinitions>
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="*" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                        </Grid.RowDefinitions>
+
+                                                                    <Border Grid.Row="0"
+                                                                            Padding="{DynamicResource Thickness.FormShell.HeaderPadding}"
+                                                                            Background="{DynamicResource Brush.FormShell.HeaderBackground}">
+                                                                        <StackPanel>
+                                                                            <TextBlock Text="HeaderBackground"
+                                                                                       FontSize="12"
+                                                                                       FontWeight="SemiBold"
+                                                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}" />
+                                                                            <TextBlock Margin="0,4,0,0"
+                                                                                       Text="Metadata, title and top shell chrome."
+                                                                                       FontSize="11"
+                                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                                       TextWrapping="Wrap" />
+                                                                        </StackPanel>
+                                                                    </Border>
+
+                                                                    <Border Grid.Row="1"
+                                                                            Height="1"
+                                                                            Background="{DynamicResource Brush.FormShell.Divider}" />
+
+                                                                    <Border Grid.Row="2"
+                                                                            Padding="{DynamicResource Thickness.FormShell.TopActionPadding}"
+                                                                            Background="{DynamicResource Brush.FormShell.TopActionBackground}">
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*" />
+                                                                                <ColumnDefinition Width="Auto" />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <TextBlock Text="TopActionBackground"
+                                                                                       FontSize="12"
+                                                                                       FontWeight="SemiBold"
+                                                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}" />
+                                                                            <TextBlock Grid.Column="1"
+                                                                                       Text="Action tools"
+                                                                                       FontSize="11"
+                                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+                                                                        </Grid>
+                                                                    </Border>
+
+                                                                    <Border Grid.Row="3"
+                                                                            Height="1"
+                                                                            Background="{DynamicResource Brush.FormShell.Divider}" />
+
+                                                                    <Border Grid.Row="4"
+                                                                            Padding="{DynamicResource Thickness.FormShell.LayoutPadding}"
+                                                                            Background="{DynamicResource Brush.FormShell.ContentBackground}">
+                                                                        <StackPanel>
+                                                                            <TextBlock Text="ContentBackground"
+                                                                                       FontSize="12"
+                                                                                       FontWeight="SemiBold"
+                                                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}" />
+                                                                            <Border Margin="0,8,0,0"
+                                                                                    Padding="8"
+                                                                                    Background="{DynamicResource DemoInputBackgroundBrush}"
+                                                                                    BorderBrush="{DynamicResource Brush.FormShell.RegionBorder}"
+                                                                                    BorderThickness="1"
+                                                                                    CornerRadius="8">
+                                                                                <TextBlock Text="RegionBorder around nested layout containers"
+                                                                                           FontSize="11"
+                                                                                           Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                                           TextWrapping="Wrap" />
+                                                                            </Border>
+                                                                        </StackPanel>
+                                                                    </Border>
+
+                                                                    <Border Grid.Row="5"
+                                                                            Height="1"
+                                                                            Background="{DynamicResource Brush.FormShell.Divider}" />
+
+                                                                    <Border Grid.Row="6"
+                                                                            Padding="{DynamicResource Thickness.FormShell.BottomActionPadding}"
+                                                                            Background="{DynamicResource Brush.FormShell.BottomActionBackground}">
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*" />
+                                                                                <ColumnDefinition Width="Auto" />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <TextBlock Text="BottomActionBackground"
+                                                                                       FontSize="12"
+                                                                                       FontWeight="SemiBold"
+                                                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}" />
+                                                                            <TextBlock Grid.Column="1"
+                                                                                       Text="Commit strip"
+                                                                                       FontSize="11"
+                                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+                                                                        </Grid>
+                                                                    </Border>
+
+                                                                    <Border Grid.Row="7"
+                                                                            Padding="{DynamicResource Thickness.FormShell.FooterPadding}"
+                                                                            Background="{DynamicResource Brush.FormShell.FooterBackground}"
+                                                                            BorderBrush="{DynamicResource Brush.FormShell.Divider}"
+                                                                            BorderThickness="0,1,0,0">
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*" />
+                                                                                <ColumnDefinition Width="Auto" />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <TextBlock Text="FooterBackground"
+                                                                                       FontSize="12"
+                                                                                       FontWeight="SemiBold"
+                                                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}" />
+                                                                            <TextBlock Grid.Column="1"
+                                                                                       Text="Divider above footer"
+                                                                                       FontSize="11"
+                                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </Border>
 
                                                             <TextBlock Margin="0,8,0,0"
                                                                        Text="{Binding FoundationsAccentColorsTitle}"
@@ -1937,9 +2110,8 @@
                                                                   InitialVisibleItemCount="5"
                                                                   HorizontalAlignment="Left"
                                                                   VerticalAlignment="Top" />
-                                    <ScrollViewer Visibility="{Binding ShowYamlUiSurface, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                  VerticalScrollBarVisibility="Auto"
-                                                  HorizontalScrollBarVisibility="Disabled">
+                                    <webHost:PhialeWebComponentScrollHost Visibility="{Binding ShowYamlUiSurface, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <webHost:PhialeWebComponentScrollHost.HostedContent>
                                         <StackPanel Margin="0,0,8,0">
                                             <Border Style="{StaticResource FoundationsSectionBorderStyle}"
                                                     Visibility="{Binding IsYamlInputsExample, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -1961,7 +2133,37 @@
                                             </Border>
 
                                             <Border Margin="0,16,0,0"
-                                                    Style="{StaticResource FoundationsSectionBorderStyle}">
+                                                    Style="{StaticResource FoundationsSectionBorderStyle}"
+                                                    Visibility="{Binding IsYamlPrimitivesExample, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel>
+                                                        <TextBlock Text="Primitives"
+                                                                   Style="{StaticResource SectionHeadlineStyle}" />
+                                                        <TextBlock Margin="0,6,0,0"
+                                                                   Text="Shows reusable Badge and Button primitives from YAML UI. Both controls use Skia chrome and talk to Core through UniversalInput bridges."
+                                                                   FontSize="13"
+                                                                   Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                   TextWrapping="Wrap" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+
+                                            <Border Margin="0,16,0,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource FoundationsSectionBorderStyle}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsYamlActionsExample}" Value="True">
+                                                                <Setter Property="Padding" Value="0" />
+                                                                <Setter Property="Background" Value="Transparent" />
+                                                                <Setter Property="BorderThickness" Value="0" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
                                                 <Grid>
                                                      <StackPanel Visibility="{Binding IsYamlInputsExample, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                         <StackPanel.Resources>
@@ -2053,49 +2255,45 @@
                                                                                     MaxValue="9999" />
                                                     </StackPanel>
 
-                                                    <StackPanel Visibility="{Binding IsYamlDocumentExample, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <TextBlock Text="Document"
-                                                                   Visibility="{Binding IsYamlDocumentExample, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                   Style="{StaticResource SectionHeadlineStyle}" />
-                                                        <TextBlock Margin="0,6,0,0"
-                                                                   Text="Shows the first WPF document renderer with container, row and footer-action composition on top of the shared runtime document model."
-                                                                   Visibility="{Binding IsYamlDocumentExample, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                   FontSize="13"
-                                                                   Foreground="{DynamicResource DemoSecondaryTextBrush}"
-                                                                   TextWrapping="Wrap" />
-
-                                                        <yamlDocument:YamlDocumentHost Margin="0,18,0,0"
-                                                                                       ActionInvoked="HandleYamlDocumentActionInvoked"
-                                                                                       RuntimeDocumentState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlDocumentRuntimeState}" />
-
-                                                        <Border Margin="0,16,0,0"
-                                                                Padding="14"
+                                                    <StackPanel Visibility="{Binding IsYamlActionsExample, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <Border Padding="14"
                                                                 Background="{DynamicResource DemoTokenBackgroundBrush}"
                                                                 BorderBrush="{DynamicResource DemoTokenBorderBrush}"
                                                                 BorderThickness="1"
                                                                 CornerRadius="10">
                                                             <StackPanel>
-                                                                <TextBlock Text="Last action result"
+                                                                <TextBlock Text="Action shell template"
                                                                            Style="{StaticResource FoundationsSubsectionTitleStyle}" />
-                                                                <TextBox Margin="0,8,0,0"
-                                                                         MinHeight="120"
-                                                                         Padding="0"
-                                                                         BorderThickness="0"
-                                                                         Background="Transparent"
-                                                                         Foreground="{DynamicResource DemoPrimaryTextBrush}"
-                                                                         FontFamily="Consolas"
-                                                                         FontSize="12"
-                                                                         Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlDocumentLastResultText}"
-                                                                         IsReadOnly="True"
-                                                                         AcceptsReturn="True"
-                                                                         TextWrapping="Wrap" />
+                                                                <TextBlock Margin="0,6,0,0"
+                                                                           Text="Select a reusable form shell from the YAML library to load its source into Monaco or preview it as a generated form."
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                           TextWrapping="Wrap" />
+                                                                <ComboBox x:Name="YamlActionTemplateComboBox"
+                                                                          Margin="0,10,0,0"
+                                                                          MinWidth="320"
+                                                                          DisplayMemberPath="DisplayName"
+                                                                          SelectionChanged="HandleYamlActionTemplateSelectionChanged" />
+                                                                <WrapPanel Margin="0,16,0,0">
+                                                                    <Button HorizontalAlignment="Left"
+                                                                            Click="HandleGenerateYamlFormClick"
+                                                                            Style="{StaticResource GridCommandStripPrimaryButtonStyle}"
+                                                                            Content="Generate form" />
+                                                                    <Button Margin="0,0,0,0"
+                                                                            HorizontalAlignment="Left"
+                                                                            Click="HandleShowGeneratedYamlAsDialogClick"
+                                                                            Style="{StaticResource GridCommandStripButtonStyle}"
+                                                                            Content="Show as dialog" />
+                                                                    <Button HorizontalAlignment="Left"
+                                                                            Click="HandleShowGeneratedYamlAsSoftDialogClick"
+                                                                            Style="{StaticResource GridCommandStripButtonStyle}"
+                                                                            Content="Show as soft dialog" />
+                                                                </WrapPanel>
                                                             </StackPanel>
                                                         </Border>
-                                                    </StackPanel>
-
-                                                    <StackPanel Visibility="{Binding IsYamlActionsExample, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                         <StackPanel Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=IsYamlGeneratedFormVisible, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                                                             <Border MinHeight="520"
+                                                                    Margin="0,16,0,0"
                                                                     Background="{DynamicResource DemoPanelBackgroundBrush}"
                                                                     BorderBrush="{DynamicResource DemoPanelBorderBrush}"
                                                                     BorderThickness="1"
@@ -2105,11 +2303,6 @@
                                                                                 HorizontalContentAlignment="Stretch"
                                                                                 VerticalContentAlignment="Stretch" />
                                                             </Border>
-                                                            <Button Margin="0,16,0,0"
-                                                                    HorizontalAlignment="Left"
-                                                                    Click="HandleGenerateYamlFormClick"
-                                                                    Style="{StaticResource GridCommandStripPrimaryButtonStyle}"
-                                                                    Content="Generate form" />
                                                             <Border Margin="0,16,0,0"
                                                                     Padding="12"
                                                                     Background="{DynamicResource DemoTokenBackgroundBrush}"
@@ -2154,17 +2347,75 @@
                                                         </StackPanel>
 
                                                         <StackPanel Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=IsYamlGeneratedFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                            <yamlDocument:YamlDocumentHost Margin="0,0,0,0"
+                                                            <yamlDocument:YamlDocumentHost Margin="0,16,0,0"
                                                                                            HorizontalAlignment="Stretch"
                                                                                            ShowTitle="False"
                                                                                            ActionInvoked="HandleYamlDocumentActionInvoked"
                                                                                            RuntimeDocumentState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlDocumentRuntimeState}" />
+                                                            <Border Margin="0,16,0,0"
+                                                                    Padding="14"
+                                                                    Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                                    BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="10">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="Wynik dokumentu"
+                                                                               Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                                    <TextBox Margin="0,8,0,0"
+                                                                             MinHeight="72"
+                                                                             Padding="0"
+                                                                             BorderThickness="0"
+                                                                             Background="Transparent"
+                                                                             Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                                             FontFamily="Consolas"
+                                                                             FontSize="12"
+                                                                             Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlDocumentLastResultText}"
+                                                                             IsReadOnly="True"
+                                                                             AcceptsReturn="True"
+                                                                             TextWrapping="Wrap" />
+                                                                </StackPanel>
+                                                            </Border>
                                                         </StackPanel>
                                                     </StackPanel>
 
-                                                    <StackPanel Visibility="{Binding IsYamlGenerateFormExample, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <StackPanel Visibility="{Binding IsYamlDocumentExample, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <Border Padding="14"
+                                                                Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                                BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="10">
+                                                            <StackPanel>
+                                                                <TextBlock Text="Form inheritance"
+                                                                           Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                                <TextBlock Margin="0,6,0,0"
+                                                                           Text="Pick a base form shell with actions at the top or bottom. The generated YAML inherits from that shell and defines its own bordered body."
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                           TextWrapping="Wrap" />
+                                                                <ComboBox x:Name="YamlDocumentInheritanceComboBox"
+                                                                          Margin="0,10,0,0"
+                                                                          MinWidth="320"
+                                                                          DisplayMemberPath="DisplayName"
+                                                                          SelectionChanged="HandleYamlDocumentInheritanceSelectionChanged" />
+                                                                <WrapPanel Margin="0,16,0,0">
+                                                                    <Button HorizontalAlignment="Left"
+                                                                            Click="HandleGenerateYamlFormClick"
+                                                                            Style="{StaticResource GridCommandStripPrimaryButtonStyle}"
+                                                                            Content="Generate form" />
+                                                                    <Button HorizontalAlignment="Left"
+                                                                            Click="HandleShowGeneratedYamlAsDialogClick"
+                                                                            Style="{StaticResource GridCommandStripButtonStyle}"
+                                                                            Content="Show as dialog" />
+                                                                    <Button HorizontalAlignment="Left"
+                                                                            Click="HandleShowGeneratedYamlAsSoftDialogClick"
+                                                                            Style="{StaticResource GridCommandStripButtonStyle}"
+                                                                            Content="Show as soft dialog" />
+                                                                </WrapPanel>
+                                                            </StackPanel>
+                                                        </Border>
                                                         <StackPanel Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=IsYamlGeneratedFormVisible, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                                                             <Border MinHeight="520"
+                                                                    Margin="0,16,0,0"
                                                                     Background="{DynamicResource DemoPanelBackgroundBrush}"
                                                                     BorderBrush="{DynamicResource DemoPanelBorderBrush}"
                                                                     BorderThickness="1"
@@ -2174,11 +2425,6 @@
                                                                                 HorizontalContentAlignment="Stretch"
                                                                                 VerticalContentAlignment="Stretch" />
                                                             </Border>
-                                                            <Button Margin="0,16,0,0"
-                                                                    HorizontalAlignment="Left"
-                                                                    Click="HandleGenerateYamlFormClick"
-                                                                    Style="{StaticResource GridCommandStripPrimaryButtonStyle}"
-                                                                    Content="Generate form" />
                                                             <Border Margin="0,16,0,0"
                                                                     Padding="12"
                                                                     Background="{DynamicResource DemoTokenBackgroundBrush}"
@@ -2223,11 +2469,34 @@
                                                         </StackPanel>
 
                                                         <StackPanel Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=IsYamlGeneratedFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                            <yamlDocument:YamlDocumentHost Margin="0,0,0,0"
+                                                            <yamlDocument:YamlDocumentHost Margin="0,16,0,0"
                                                                                            HorizontalAlignment="Stretch"
                                                                                            ShowTitle="False"
                                                                                            ActionInvoked="HandleYamlDocumentActionInvoked"
                                                                                            RuntimeDocumentState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlDocumentRuntimeState}" />
+                                                            <Border Margin="0,16,0,0"
+                                                                    Padding="14"
+                                                                    Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                                    BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="10">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="Wynik dokumentu"
+                                                                               Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                                    <TextBox Margin="0,8,0,0"
+                                                                             MinHeight="72"
+                                                                             Padding="0"
+                                                                             BorderThickness="0"
+                                                                             Background="Transparent"
+                                                                             Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                                             FontFamily="Consolas"
+                                                                             FontSize="12"
+                                                                             Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlDocumentLastResultText}"
+                                                                             IsReadOnly="True"
+                                                                             AcceptsReturn="True"
+                                                                             TextWrapping="Wrap" />
+                                                                </StackPanel>
+                                                            </Border>
                                                         </StackPanel>
 
                                                     </StackPanel>
@@ -2389,7 +2658,7 @@
                                                                                 FieldChromeMode="InlineHint"
                                                                                 MinValue="-9999"
                                                                                 MaxValue="9999" />
-                                                    <yamlInteger:YamlIntegerBox Width="320"
+                                                        <yamlInteger:YamlIntegerBox Width="320"
                                                                                 Margin="0,18,0,0"
                                                                                 Caption="Balance"
                                                                                 Text="-24"
@@ -2398,8 +2667,441 @@
                                                                                 MaxValue="9999" />
                                                 </StackPanel>
                                             </Border>
+
+                                            <Border Margin="0,16,0,0"
+                                                    Style="{StaticResource FoundationsSectionBorderStyle}"
+                                                    Visibility="{Binding IsYamlPrimitivesExample, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <StackPanel Visibility="{Binding IsYamlPrimitivesExample, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="Badge and button primitives"
+                                                               Style="{StaticResource SectionHeadlineStyle}" />
+                                                    <TextBlock Margin="0,0,0,14"
+                                                               Text="Reusable YAML UI building blocks with Skia chrome. Core computes interaction state and WPF forwards focus and pointer input through UniversalInput bridges."
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                               TextWrapping="Wrap" />
+
+                                                    <Grid Margin="0,4,0,0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="20" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <Border Padding="14"
+                                                                Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                                BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="10">
+                                                            <StackPanel>
+                                                                <TextBlock Text="Badge roles"
+                                                                           Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                                <TextBlock Margin="0,0,0,10"
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                           Text="Status, context and workflow markers driven by the same shared YAML UI primitive."
+                                                                           TextWrapping="Wrap" />
+                                                                <WrapPanel>
+                                                                    <yamlBadge:YamlBadge Margin="0,0,10,10"
+                                                                                         Text="Draft"
+                                                                                         IconKey="draft"
+                                                                                         Tone="Accent"
+                                                                                         Size="Compact" />
+                                                                    <yamlBadge:YamlBadge Margin="0,0,10,10"
+                                                                                         Text="Internal form"
+                                                                                         IconKey="document"
+                                                                                         Tone="Neutral"
+                                                                                         Size="Regular" />
+                                                                    <yamlBadge:YamlBadge Margin="0,0,10,10"
+                                                                                         Text="Requires review"
+                                                                                         IconKey="warning"
+                                                                                         Tone="Warning"
+                                                                                         Size="Regular" />
+                                                                    <yamlBadge:YamlBadge Margin="0,0,10,10"
+                                                                                         Text="Validation error"
+                                                                                         IconKey="danger"
+                                                                                         Tone="Danger"
+                                                                                         Size="Regular" />
+                                                                    <yamlBadge:YamlBadge Margin="0,0,10,10"
+                                                                                         Text="Outline"
+                                                                                         IconKey="info"
+                                                                                         Tone="Accent"
+                                                                                         Variant="Outline"
+                                                                                         Size="Compact" />
+                                                                </WrapPanel>
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <Border Grid.Column="2"
+                                                                Padding="14"
+                                                                Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                                BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="10">
+                                                            <StackPanel>
+                                                                <TextBlock Text="Button roles"
+                                                                           Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                                <TextBlock Margin="0,0,0,10"
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                           Text="One command primitive scaled into primary, secondary, danger, quiet and utility surfaces."
+                                                                           TextWrapping="Wrap" />
+                                                                <WrapPanel>
+                                                                    <yamlButton:YamlButton Margin="0,0,12,12"
+                                                                                           Content="Secondary"
+                                                                                           IconKey="document"
+                                                                                           ToolTip="Secondary document action"
+                                                                                           CommandId="demo.secondary"
+                                                                                           Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                    <yamlButton:YamlButton Margin="0,0,12,12"
+                                                                                           Content="Primary"
+                                                                                           IconKey="ok"
+                                                                                           Tone="Primary"
+                                                                                           ToolTip="Primary confirmation action"
+                                                                                           CommandId="demo.primary"
+                                                                                           Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                    <yamlButton:YamlButton Margin="0,0,12,12"
+                                                                                           Content="Danger"
+                                                                                           IconKey="danger"
+                                                                                           Tone="Danger"
+                                                                                           ToolTip="Dangerous action"
+                                                                                           CommandId="demo.danger"
+                                                                                           Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                    <yamlButton:YamlButton Margin="0,0,12,12"
+                                                                                           Content="Quiet"
+                                                                                           IconKey="preview"
+                                                                                           Tone="Tertiary"
+                                                                                           Size="Compact"
+                                                                                           ToolTip="Low-emphasis action"
+                                                                                           CommandId="demo.tertiary"
+                                                                                           Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                </WrapPanel>
+                                                                <WrapPanel Margin="0,4,0,0">
+                                                                    <yamlButton:YamlButton Margin="0,0,12,12"
+                                                                                           Content="Compact"
+                                                                                           IconKey="save-draft"
+                                                                                           Variant="Toolbar"
+                                                                                           Size="Compact"
+                                                                                           ToolTip="Compact toolbar command"
+                                                                                           CommandId="demo.compact"
+                                                                                           Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                    <yamlButton:YamlButton Margin="0,0,12,12"
+                                                                                           Content="Large"
+                                                                                           IconKey="apply"
+                                                                                           Tone="Primary"
+                                                                                           Size="Large"
+                                                                                           ToolTip="Large emphasis action"
+                                                                                           CommandId="demo.large"
+                                                                                           Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                    <yamlButton:YamlButton Margin="0,0,12,12"
+                                                                                           IconKey="history"
+                                                                                           Variant="Toolbar"
+                                                                                           Size="Compact"
+                                                                                           ToolTip="Icon-only utility action"
+                                                                                           CommandId="demo.iconOnly"
+                                                                                           Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                </WrapPanel>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Grid>
+
+                                                    <Border Margin="0,18,0,0"
+                                                            Padding="14"
+                                                            Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                            BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="10">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Form shell composition"
+                                                                       Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                            <TextBlock Margin="0,0,0,10"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                       Text="The same primitives should hold up inside a professional document shell: metadata, top tools and bottom commit actions."
+                                                                       TextWrapping="Wrap" />
+
+                                                            <Border Background="{DynamicResource DemoPanelBackgroundBrush}"
+                                                                    BorderBrush="{DynamicResource DemoPanelBorderBrush}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="14">
+                                                                <Grid>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto" />
+                                                                        <RowDefinition Height="Auto" />
+                                                                        <RowDefinition Height="Auto" />
+                                                                        <RowDefinition Height="Auto" />
+                                                                    </Grid.RowDefinitions>
+
+                                                                    <StackPanel Margin="16,14,16,14">
+                                                                        <WrapPanel VerticalAlignment="Center">
+                                                                            <TextBlock Margin="0,0,8,0"
+                                                                                       VerticalAlignment="Center"
+                                                                                       Foreground="{DynamicResource Brush.Text.Secondary}"
+                                                                                       FontFamily="{DynamicResource Text.FormMeta.FontFamily}"
+                                                                                       FontSize="{DynamicResource Text.FormMeta.FontSize}"
+                                                                                       Text="Internal form" />
+                                                                            <yamlBadge:YamlBadge Margin="0,0,8,0"
+                                                                                                 Text="Draft"
+                                                                                                 Tone="Accent"
+                                                                                                 Size="Compact" />
+                                                                            <yamlBadge:YamlBadge Text="Requires review"
+                                                                                                 Tone="Warning"
+                                                                                                 Size="Compact" />
+                                                                        </WrapPanel>
+                                                                        <TextBlock Margin="0,8,0,0"
+                                                                                   Text="Review request"
+                                                                                   Foreground="{DynamicResource Brush.Text.Primary}"
+                                                                                   FontFamily="{DynamicResource Text.ControlTitle.FontFamily}"
+                                                                                   FontSize="{DynamicResource Text.ControlTitle.FontSize}"
+                                                                                   FontWeight="SemiBold" />
+                                                                        <TextBlock Margin="0,4,0,0"
+                                                                                   Text="Customer verification"
+                                                                                   Foreground="{DynamicResource Brush.Text.Primary}"
+                                                                                   FontFamily="{DynamicResource Text.ControlLabel.FontFamily}"
+                                                                                   FontSize="{DynamicResource Text.ControlLabel.FontSize}"
+                                                                                   FontWeight="SemiBold" />
+                                                                        <TextBlock Margin="0,6,0,0"
+                                                                                   Text="Validate personal details and notes before completing the review workflow."
+                                                                                   TextWrapping="Wrap"
+                                                                                   Foreground="{DynamicResource Brush.Text.Secondary}"
+                                                                                   FontFamily="{DynamicResource Text.Support.FontFamily}"
+                                                                                   FontSize="{DynamicResource Text.Support.FontSize}" />
+                                                                    </StackPanel>
+
+                                                                    <Border Grid.Row="1"
+                                                                            BorderBrush="{DynamicResource DemoPanelBorderBrush}"
+                                                                            BorderThickness="0,1,0,0">
+                                                                        <Grid Margin="16,12,16,12">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*" />
+                                                                                <ColumnDefinition Width="Auto" />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <WrapPanel>
+                                                                                <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                                       Content="Validate"
+                                                                                                       IconKey="validate"
+                                                                                                       Variant="Toolbar"
+                                                                                                       Size="Compact"
+                                                                                                       ToolTip="Validate the form before saving"
+                                                                                                       CommandId="demo.validate"
+                                                                                                       Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                                <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                                       Content="Save draft"
+                                                                                                       IconKey="save-draft"
+                                                                                                       Variant="Toolbar"
+                                                                                                       Size="Compact"
+                                                                                                       ToolTip="Save a local draft"
+                                                                                                       CommandId="demo.saveDraft"
+                                                                                                       Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                                <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                                       Content="Preview"
+                                                                                                       IconKey="preview"
+                                                                                                       Variant="Toolbar"
+                                                                                                       Tone="Tertiary"
+                                                                                                       Size="Compact"
+                                                                                                       ToolTip="Preview the resulting document"
+                                                                                                       CommandId="demo.preview"
+                                                                                                       Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                            </WrapPanel>
+                                                                            <yamlButton:YamlButton Grid.Column="1"
+                                                                                                   IconKey="help"
+                                                                                                   Variant="Toolbar"
+                                                                                                   Tone="Tertiary"
+                                                                                                   Size="Compact"
+                                                                                                   ToolTip="Open help for this document"
+                                                                                                   CommandId="demo.help"
+                                                                                                   Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                        </Grid>
+                                                                    </Border>
+
+                                                                    <StackPanel Grid.Row="2"
+                                                                                Margin="16,14,16,16">
+                                                                        <TextBlock Text="Toolbar and action strip"
+                                                                                   Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                                        <TextBlock Margin="0,0,0,12"
+                                                                                   FontSize="12"
+                                                                                   Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                                   Text="Toolbar buttons stay lightweight above content while commit actions stay grounded at the bottom."
+                                                                                   TextWrapping="Wrap" />
+                                                                        <WrapPanel>
+                                                                            <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                                   Content="Back"
+                                                                                                   IconKey="back"
+                                                                                                   Variant="ActionStrip"
+                                                                                                   ToolTip="Return to the previous step"
+                                                                                                   CommandId="demo.back"
+                                                                                                   Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                            <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                                   Content="Cancel"
+                                                                                                   IconKey="cancel"
+                                                                                                   Variant="ActionStrip"
+                                                                                                   ToolTip="Cancel and discard the current step"
+                                                                                                   CommandId="demo.cancel"
+                                                                                                   Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                            <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                                   Content="Apply"
+                                                                                                   IconKey="apply"
+                                                                                                   Variant="ActionStrip"
+                                                                                                   ToolTip="Apply changes without closing"
+                                                                                                   CommandId="demo.apply"
+                                                                                                   Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                            <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                                   Content="OK"
+                                                                                                   IconKey="ok"
+                                                                                                   Variant="ActionStrip"
+                                                                                                   Tone="Primary"
+                                                                                                   ToolTip="Confirm and close"
+                                                                                                   CommandId="demo.ok"
+                                                                                                   Invoked="HandleYamlPrimitiveButtonInvoked" />
+                                                                        </WrapPanel>
+                                                                    </StackPanel>
+
+                                                                    <Border Grid.Row="3"
+                                                                            BorderBrush="{DynamicResource DemoPanelBorderBrush}"
+                                                                            BorderThickness="0,1,0,0">
+                                                                        <Grid Margin="16,12,16,12">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*" />
+                                                                                <ColumnDefinition Width="Auto" />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <StackPanel>
+                                                                                <TextBlock Text="Required fields*"
+                                                                                           Foreground="{DynamicResource Brush.Text.Primary}"
+                                                                                           FontFamily="{DynamicResource Text.Support.FontFamily}"
+                                                                                           FontSize="{DynamicResource Text.Support.FontSize}"
+                                                                                           FontWeight="SemiBold" />
+                                                                                <TextBlock Text="Draft saved locally"
+                                                                                           Foreground="{DynamicResource Brush.Text.Secondary}"
+                                                                                           FontFamily="{DynamicResource Text.FormMeta.FontFamily}"
+                                                                                           FontSize="{DynamicResource Text.FormMeta.FontSize}" />
+                                                                            </StackPanel>
+                                                                            <TextBlock Grid.Column="1"
+                                                                                       VerticalAlignment="Center"
+                                                                                       Text="Last saved: 10:42:31"
+                                                                                       Foreground="{DynamicResource Brush.Text.Secondary}"
+                                                                                       FontFamily="{DynamicResource Text.FormMeta.FontFamily}"
+                                                                                       FontSize="{DynamicResource Text.FormMeta.FontSize}" />
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </Border>
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <Border Margin="0,18,0,0"
+                                                            Padding="14"
+                                                            Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                            BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="10">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Hosted modal presentation"
+                                                                       Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                            <TextBlock Margin="0,0,0,10"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                       Text="The same host can present plain WPF views or generated YamlApp forms as compact modals or right-side overlay sheets."
+                                                                       TextWrapping="Wrap" />
+                                                            <WrapPanel>
+                                                                <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                       Content="View compact modal"
+                                                                                       IconKey="document"
+                                                                                       Variant="ActionStrip"
+                                                                                       CommandId="demo.modal.view.compact"
+                                                                                       ToolTip="Open a hosted WPF view inside a compact modal"
+                                                                                       Invoked="HandleHostedModalButtonInvoked" />
+                                                                <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                       Content="View overlay sheet"
+                                                                                       IconKey="history"
+                                                                                       Variant="ActionStrip"
+                                                                                       CommandId="demo.modal.view.sheet"
+                                                                                       ToolTip="Open a hosted WPF view inside an overlay sheet"
+                                                                                       Invoked="HandleHostedModalButtonInvoked" />
+                                                                <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                       Content="Yaml compact modal"
+                                                                                       IconKey="draft"
+                                                                                       Variant="ActionStrip"
+                                                                                       CommandId="demo.modal.yaml.compact"
+                                                                                       ToolTip="Open a generated YamlApp form inside a compact modal"
+                                                                                       Invoked="HandleHostedModalButtonInvoked" />
+                                                                <yamlButton:YamlButton Margin="0,0,8,8"
+                                                                                       Content="Yaml overlay sheet"
+                                                                                       IconKey="preview"
+                                                                                       Tone="Primary"
+                                                                                       Variant="ActionStrip"
+                                                                                       CommandId="demo.modal.yaml.sheet"
+                                                                                       ToolTip="Open a generated YamlApp form inside an overlay sheet"
+                                                                                       Invoked="HandleHostedModalButtonInvoked" />
+                                                            </WrapPanel>
+                                                            <Border Margin="0,8,0,0"
+                                                                    Padding="12"
+                                                                    Background="{DynamicResource DemoPanelBackgroundBrush}"
+                                                                    BorderBrush="{DynamicResource DemoPanelBorderBrush}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="10">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="Last hosted modal result"
+                                                                               Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                                    <TextBlock Margin="0,6,0,0"
+                                                                               Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                                               Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=HostedModalLastResultText}"
+                                                                               TextWrapping="Wrap" />
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <Grid Margin="0,18,0,0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="0.95*" />
+                                                            <ColumnDefinition Width="20" />
+                                                            <ColumnDefinition Width="1.25*" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <Border Padding="12"
+                                                                Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                                BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="10">
+                                                            <StackPanel>
+                                                                <TextBlock Text="Last command"
+                                                                           Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                                <TextBlock Margin="0,6,0,0"
+                                                                           Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                                           Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlPrimitiveLastCommandText}"
+                                                                           TextWrapping="Wrap" />
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <Border Grid.Column="2"
+                                                                Padding="12"
+                                                                Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                                BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="10">
+                                                            <StackPanel>
+                                                                <TextBlock Text="YAML sample"
+                                                                           Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                                <TextBox Margin="0,8,0,0"
+                                                                         Padding="0"
+                                                                         BorderThickness="0"
+                                                                         Background="Transparent"
+                                                                         Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                                         FontFamily="Consolas"
+                                                                         FontSize="12"
+                                                                         IsReadOnly="True"
+                                                                         AcceptsReturn="True"
+                                                                         TextWrapping="NoWrap"
+                                                                         HorizontalScrollBarVisibility="Auto"
+                                                                         VerticalScrollBarVisibility="Disabled"
+                                                                         Text="layout:&#10;  type: Column&#10;  items:&#10;    - type: Badge&#10;      text: Draft&#10;      iconKey: draft&#10;      tone: Accent&#10;      size: Compact&#10;      toolTip: Workflow status&#10;&#10;    - type: Row&#10;      items:&#10;        - type: Button&#10;          text: Validate&#10;          iconKey: validate&#10;          commandId: validate&#10;          variant: Toolbar&#10;          size: Compact&#10;          toolTip: Validate the current document&#10;&#10;        - type: Button&#10;          iconKey: history&#10;          commandId: history&#10;          variant: Toolbar&#10;          size: Compact&#10;          toolTip: Open activity history&#10;&#10;    - type: Row&#10;      items:&#10;        - type: Button&#10;          text: Cancel&#10;          iconKey: cancel&#10;          commandId: cancel&#10;          variant: ActionStrip&#10;          toolTip: Cancel editing&#10;&#10;        - type: Button&#10;          text: OK&#10;          iconKey: ok&#10;          commandId: confirm&#10;          tone: Primary&#10;          variant: ActionStrip&#10;          size: Regular&#10;          toolTip: Confirm and close" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Border>
                                         </StackPanel>
-                                    </ScrollViewer>
+                                        </webHost:PhialeWebComponentScrollHost.HostedContent>
+                                    </webHost:PhialeWebComponentScrollHost>
 <ScrollViewer Visibility="{Binding ShowLicenseSurface, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                   VerticalScrollBarVisibility="Auto"
                                                   HorizontalScrollBarVisibility="Disabled">
@@ -2438,11 +3140,48 @@
                                             Style="{StaticResource DemoSurfaceBorderStyle}"
                                             ClipToBounds="True"
                                             Padding="18">
-                                        <ContentControl x:Name="WebHostSamplePresenter"
-                                                        Focusable="False"
-                                                        ClipToBounds="True"
-                                                        HorizontalContentAlignment="Stretch"
-                                                        VerticalContentAlignment="Stretch" />
+                                        <Grid>
+                                            <ContentControl x:Name="WebHostSamplePresenter"
+                                                            Focusable="False"
+                                                            ClipToBounds="True"
+                                                            HorizontalContentAlignment="Stretch"
+                                                            VerticalContentAlignment="Stretch" />
+                                            <Border Visibility="{Binding IsWebComponentScrollHostExample, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                    Style="{StaticResource FoundationsSectionBorderStyle}">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding WebComponentsScrollHostTitle}"
+                                                               Style="{StaticResource SectionHeadlineStyle}" />
+                                                    <TextBlock Margin="0,6,0,0"
+                                                               Text="{Binding WebComponentsScrollHostDescription}"
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <Border Margin="0,18,0,0"
+                                                            Padding="14"
+                                                            Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                                            BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="10">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding WebComponentsScrollHostPointOne}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                            <TextBlock Margin="0,10,0,0"
+                                                                       Text="{Binding WebComponentsScrollHostPointTwo}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                            <TextBlock Margin="0,10,0,0"
+                                                                       Text="{Binding WebComponentsScrollHostPointThree}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
                                     </Border>
                                 </Grid>
                             </Border>
@@ -2486,9 +3225,54 @@
                             </Border>
                         </Grid>
                     </TabItem>
+
+                    <TabItem Header="{Binding ExplanationTabText}"
+                             Visibility="{Binding ShowWebComponentsExplanationTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,20,0,0">
+                            <Border Style="{StaticResource FoundationsSectionBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding WebComponentsScrollHostTitle}"
+                                               Style="{StaticResource SectionHeadlineStyle}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding WebComponentsScrollHostDescription}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                               TextWrapping="Wrap" />
+
+                                    <Border Margin="0,18,0,0"
+                                            Padding="14"
+                                            Background="{DynamicResource DemoTokenBackgroundBrush}"
+                                            BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="10">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding WebComponentsScrollHostPointOne}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Margin="0,10,0,0"
+                                                       Text="{Binding WebComponentsScrollHostPointTwo}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Margin="0,10,0,0"
+                                                       Text="{Binding WebComponentsScrollHostPointThree}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </TabItem>
                 </TabControl>
             </Grid>
-        </Grid>
+            </Grid>
+        </shell:PhialeAppShell>
+        <componentHost:PhialeModalLayerHost Grid.ColumnSpan="2"
+                                            Panel.ZIndex="5000"
+                                            Service="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=HostedSurfaceService}" />
     </Grid>
-</Window>
+</shell:PhialeWindow>
 

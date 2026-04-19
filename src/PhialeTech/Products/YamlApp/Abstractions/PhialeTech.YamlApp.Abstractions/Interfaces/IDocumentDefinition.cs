@@ -8,6 +8,10 @@ namespace PhialeTech.YamlApp.Abstractions.Interfaces
         string Id { get; }
         string Name { get; }
         DocumentKind? Kind { get; }
+        DocumentRegionChromeMode? TopRegionChrome { get; }
+        DocumentRegionChromeMode? BottomRegionChrome { get; }
+        IDocumentHeaderDefinition Header { get; }
+        IDocumentFooterDefinition Footer { get; }
         ILayoutDefinition Layout { get; }
     }
 }

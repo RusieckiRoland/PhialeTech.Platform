@@ -1,0 +1,60 @@
+namespace: application.forms.actionShells
+
+document:
+  id: workbench-side-tools-footer
+  kind: Form
+  name: Workbench with side tools and footer actions
+  interactionMode: Classic
+  densityMode: Normal
+  fieldChromeMode: Framed
+  actionAreas:
+    - id: leftTools
+      placement: Left
+      horizontalAlignment: Stretch
+      shared: false
+    - id: rightHelp
+      placement: Right
+      horizontalAlignment: Stretch
+      shared: false
+    - id: footerPrimary
+      placement: Bottom
+      horizontalAlignment: Right
+      shared: true
+      sticky: true
+  actions:
+    - id: history
+      semantic: Secondary
+      captionKey: actions.history.caption
+      iconKey: history
+      area: leftTools
+      slot: Start
+      order: 10
+    - id: documentation
+      semantic: Secondary
+      captionKey: actions.documentation.caption
+      iconKey: document
+      area: rightHelp
+      slot: Start
+      order: 10
+    - id: help
+      semantic: Help
+      captionKey: actions.help.caption
+      iconKey: help
+      area: rightHelp
+      slot: Start
+      order: 20
+    - id: save
+      semantic: Ok
+      captionKey: actions.save.caption
+      iconKey: save
+      area: footerPrimary
+      isPrimary: true
+      slot: End
+      order: 10
+    - id: cancel
+      semantic: Cancel
+      captionKey: actions.cancel.caption
+      iconKey: cancel
+      area: footerPrimary
+      slot: End
+      order: 20

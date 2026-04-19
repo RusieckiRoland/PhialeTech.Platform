@@ -13,6 +13,7 @@ namespace PhialeTech.Components.Shared.Localization
         public const string ShellBackToOverview = "Shell.BackToOverview";
         public const string ShellDemoTab = "Shell.DemoTab";
         public const string ShellCodeTab = "Shell.CodeTab";
+        public const string ShellExplanationTab = "Shell.ExplanationTab";
         public const string ShellFileLabel = "Shell.FileLabel";
         public const string ShellLanguageLabel = "Shell.LanguageLabel";
         public const string ShellThemeLabel = "Shell.ThemeLabel";
@@ -30,6 +31,11 @@ namespace PhialeTech.Components.Shared.Localization
         public const string ShellComponentArchitectureDescription = "Shell.ComponentArchitecture.Description";
         public const string ShellComponentWebComponents = "Shell.ComponentWebComponents";
         public const string ShellComponentWebComponentsDescription = "Shell.ComponentWebComponents.Description";
+        public const string WebComponentsScrollHostTitle = "WebComponents.ScrollHost.Title";
+        public const string WebComponentsScrollHostDescription = "WebComponents.ScrollHost.Description";
+        public const string WebComponentsScrollHostPointOne = "WebComponents.ScrollHost.PointOne";
+        public const string WebComponentsScrollHostPointTwo = "WebComponents.ScrollHost.PointTwo";
+        public const string WebComponentsScrollHostPointThree = "WebComponents.ScrollHost.PointThree";
         public const string ShellComponentYamlUi = "Shell.ComponentYamlUi";
         public const string ShellComponentYamlUiDescription = "Shell.ComponentYamlUi.Description";
         public const string ShellComponentLicense = "Shell.ComponentLicense";
@@ -146,6 +152,8 @@ namespace PhialeTech.Components.Shared.Localization
         public const string ExampleReportDesignerDescription = "Example.ReportDesigner.Description";
         public const string ExampleMonacoEditorTitle = "Example.MonacoEditor.Title";
         public const string ExampleMonacoEditorDescription = "Example.MonacoEditor.Description";
+        public const string ExampleWebComponentScrollHostTitle = "Example.WebComponentScrollHost.Title";
+        public const string ExampleWebComponentScrollHostDescription = "Example.WebComponentScrollHost.Description";
         public const string ExampleMyLicenseTitle = "Example.MyLicense.Title";
         public const string ExampleMyLicenseDescription = "Example.MyLicense.Description";
         public const string ExampleThirdPartyLicensesTitle = "Example.ThirdPartyLicenses.Title";
@@ -198,6 +206,8 @@ namespace PhialeTech.Components.Shared.Localization
         public const string ExampleActiveLayerSelectorDescription = "Example.ActiveLayerSelector.Description";
         public const string ExampleYamlInputsTitle = "Example.YamlInputs.Title";
         public const string ExampleYamlInputsDescription = "Example.YamlInputs.Description";
+        public const string ExampleYamlPrimitivesTitle = "Example.YamlPrimitives.Title";
+        public const string ExampleYamlPrimitivesDescription = "Example.YamlPrimitives.Description";
         public const string ExampleYamlDocumentTitle = "Example.YamlDocument.Title";
         public const string ExampleYamlDocumentDescription = "Example.YamlDocument.Description";
         public const string ExampleYamlActionsTitle = "Example.YamlActions.Title";

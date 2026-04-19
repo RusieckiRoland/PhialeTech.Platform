@@ -64,11 +64,11 @@ namespace PhialeTech.Components.Shared.Services
                 totalArea,
                 totalLength,
                 latestInspection,
-                "PhialeTech Demo",
+                "PhialeTech Store book",
                 "Overview",
                 true,
                 false,
-                "PhialeTech Demo",
+                "PhialeTech Store book",
                 1000,
                 "hierarchy");
         }

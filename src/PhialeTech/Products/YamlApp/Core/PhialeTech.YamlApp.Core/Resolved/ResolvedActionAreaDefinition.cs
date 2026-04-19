@@ -9,6 +9,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
             IActionAreaDefinition definition,
             ActionPlacement placement,
             ActionAlignment horizontalAlignment,
+            ActionAreaChromeMode chromeMode,
             bool shared,
             bool sticky,
             bool visible)
@@ -16,6 +17,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
             Definition = definition;
             Placement = placement;
             HorizontalAlignment = horizontalAlignment;
+            ChromeMode = chromeMode;
             Shared = shared;
             Sticky = sticky;
             Visible = visible;
@@ -32,6 +34,8 @@ namespace PhialeTech.YamlApp.Core.Resolved
         public ActionPlacement Placement { get; }
 
         public ActionAlignment HorizontalAlignment { get; }
+
+        public ActionAreaChromeMode ChromeMode { get; }
 
         public bool Shared { get; }
 

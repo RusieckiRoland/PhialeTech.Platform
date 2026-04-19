@@ -104,7 +104,6 @@ namespace PhialeTech.MonacoEditor
             if (_disposed)
                 return;
 
-            _host.FocusHost();
             if (_host.IsInitialized)
                 _ = _host.PostMessageAsync(new { type = "monaco.focus" });
         }

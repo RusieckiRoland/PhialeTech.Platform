@@ -1,6 +1,6 @@
-# PhialeGis.Library
+# PhialeTech.Platform
 
-`PhialeGis.Library` is a proprietary product repository created and maintained by Roland Rusiecki.
+`PhialeTech.Platform` is a proprietary product repository created and maintained by Roland Rusiecki.
 
 This repository is used to develop the `PhialeGis` GIS application for .NET, centered around a domain-specific language for GIS commands, workflows, and user interaction patterns. It also serves as the foundation for an evolving design system and the `PhialeTech` component palette, intended both for GIS applications and for other professional desktop software.
 

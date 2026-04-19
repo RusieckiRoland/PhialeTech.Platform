@@ -1,7 +1,8 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:styles="clr-namespace:PhialeTech.Styles.Wpf">
+    xmlns:styles="clr-namespace:PhialeTech.Styles.Wpf"
+    xmlns:webHost="clr-namespace:PhialeTech.WebHost.Wpf.Controls;assembly=PhialeTech.WebHost.Wpf">
     <styles:DemoComboBoxSelectionTextConverter x:Key="DemoComboBoxSelectionTextConverter" />
 
     <Style x:Key="DemoFocusVisualStyle" TargetType="{x:Type Control}">
@@ -273,4 +274,11 @@
     </Style>
 
     <Style TargetType="{x:Type ScrollViewer}" BasedOn="{StaticResource DemoScrollViewerStyle}" />
+
+    <Style TargetType="{x:Type webHost:PhialeWebComponentScrollHost}">
+        <Setter Property="Background" Value="{DynamicResource DemoPanelBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DemoPanelBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+    </Style>
 </ResourceDictionary>

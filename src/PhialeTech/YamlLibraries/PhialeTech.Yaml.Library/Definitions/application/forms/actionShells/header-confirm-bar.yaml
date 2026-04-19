@@ -1,0 +1,30 @@
+namespace: application.forms.actionShells
+
+document:
+  id: header-confirm-bar
+  kind: Form
+  name: Header confirmation bar
+  interactionMode: Classic
+  densityMode: Normal
+  fieldChromeMode: Framed
+  actionAreas:
+    - id: headerPrimary
+      placement: Top
+      horizontalAlignment: Right
+      chromeMode: Explicit
+      shared: true
+      sticky: true
+  actions:
+    - id: ok
+      semantic: Ok
+      captionKey: actions.ok.caption
+      iconKey: ok
+      area: headerPrimary
+      isPrimary: true
+      order: 10
+    - id: cancel
+      semantic: Cancel
+      captionKey: actions.cancel.caption
+      iconKey: cancel
+      area: headerPrimary
+      order: 20

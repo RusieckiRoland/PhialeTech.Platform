@@ -4,10 +4,14 @@
     xmlns:abstractions="clr-namespace:PhialeTech.YamlApp.Abstractions.Enums;assembly=PhialeTech.YamlApp.Abstractions"
     xmlns:document="clr-namespace:PhialeTech.YamlApp.Wpf.Document"
     xmlns:actions="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Actions"
+    xmlns:badges="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Badges"
+    xmlns:buttons="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Buttons"
     xmlns:local="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.TextBox"
     xmlns:localInteger="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.IntegerBox">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/Controls.Core.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/YamlApp.Styles.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PhialeTech.YamlApp.Wpf;component/Themes/YamlApp.ControlStyles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <local:FieldWidthTokenDefinition x:Key="FieldWidth.Short"
@@ -31,106 +35,189 @@
                                      Stretch="True" />
 
     <Style TargetType="{x:Type document:YamlDocumentHost}" BasedOn="{StaticResource {x:Type ContentControl}}">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface0}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.ContentBackground}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
     </Style>
 
-    <Style x:Key="YamlDocument.TitleTextStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-        <Setter Property="FontSize" Value="22" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
-
-    <Style x:Key="YamlDocument.ContainerCaptionTextStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
-
-    <Style x:Key="YamlDocument.ContainerBorderStyle" TargetType="{x:Type Border}">
-        <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="16" />
-    </Style>
-
-    <Style x:Key="YamlDocument.ScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
-        <Setter Property="Focusable" Value="False" />
-        <Setter Property="Padding" Value="0" />
-    </Style>
-
-    <Style TargetType="{x:Type actions:YamlDocumentActionAreaHost}">
-        <Setter Property="Margin" Value="0,12,0,0" />
-        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    <Style TargetType="{x:Type badges:YamlBadge}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Badge.Text}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Badge.Fill}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Badge.Border}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type actions:YamlDocumentActionAreaHost}">
-                    <Grid MinHeight="62"
+                <ControlTemplate TargetType="{x:Type badges:YamlBadge}">
+                    <Grid MinHeight="{TemplateBinding ChromeMinHeight}"
                           SnapsToDevicePixels="True"
                           UseLayoutRounding="True">
-                        <actions:YamlDocumentActionAreaSkiaChromePresenter BackgroundBrush="{DynamicResource Brush.Surface1}"
-                                                                           BorderBrush="{DynamicResource Brush.Border.Default}"
-                                                                           CornerRadius="14" />
-                        <ContentPresenter Margin="12"
-                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style TargetType="{x:Type actions:YamlDocumentActionButton}">
-        <Setter Property="Foreground" Value="{DynamicResource Brush.Button.Secondary.Foreground}" />
-        <Setter Property="Background" Value="{DynamicResource Brush.Button.Secondary.Background}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Button.Secondary.Border}" />
-        <Setter Property="Padding" Value="16,9" />
-        <Setter Property="Margin" Value="0" />
-        <Setter Property="MinWidth" Value="104" />
-        <Setter Property="MinHeight" Value="38" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type actions:YamlDocumentActionButton}">
-                    <Grid SnapsToDevicePixels="True"
-                          UseLayoutRounding="True">
-                        <actions:YamlDocumentActionButtonSkiaChromePresenter x:Name="ActionChrome"
-                                                                             BackgroundBrush="{TemplateBinding Background}"
-                                                                             BorderBrush="{TemplateBinding BorderBrush}"
-                                                                             HoverBackgroundBrush="{DynamicResource Brush.Button.Secondary.HoverBackground}"
-                                                                             HoverBorderBrush="{DynamicResource Brush.Button.Secondary.HoverBorder}"
-                                                                             FocusBrush="{DynamicResource Brush.Focus.Ring}"
-                                                                             CornerRadius="8"
-                                                                             IsHovered="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}"
-                                                                             IsPressed="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
-                                                                             HasKeyboardFocus="{Binding IsKeyboardFocused, RelativeSource={RelativeSource TemplatedParent}}"
-                                                                             IsEnabledState="{Binding IsEnabled, RelativeSource={RelativeSource TemplatedParent}}" />
-                        <ContentPresenter Margin="{TemplateBinding Padding}"
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"
-                                          RecognizesAccessKey="True"
-                                          TextElement.Foreground="{TemplateBinding Foreground}" />
+                        <badges:YamlBadgeSkiaChromePresenter x:Name="PART_ChromePresenter"
+                                                             BackgroundBrush="{TemplateBinding Background}"
+                                                             BorderBrush="{TemplateBinding BorderBrush}"
+                                                             CornerRadius="{TemplateBinding ChromeCornerRadius}" />
+                        <DockPanel Margin="{TemplateBinding ChromePadding}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   LastChildFill="False">
+                            <TextBlock x:Name="BadgeLeadingIcon"
+                                       Margin="{TemplateBinding ChromeIconMargin}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontSize="{TemplateBinding ChromeIconSize}"
+                                       Style="{StaticResource YamlBadge.IconStyle}"
+                                       Text="{TemplateBinding IconGlyph}" />
+                            <TextBlock x:Name="BadgeText"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontSize="{TemplateBinding ChromeFontSize}"
+                                       Style="{StaticResource YamlBadge.TextStyle}"
+                                       Text="{TemplateBinding Text}" />
+                        </DockPanel>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsPrimaryAction" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource Brush.Button.Primary.Background}" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Button.Primary.Border}" />
-                            <Setter Property="Foreground" Value="{DynamicResource Brush.Button.Primary.Foreground}" />
-                            <Setter TargetName="ActionChrome" Property="HoverBackgroundBrush" Value="{DynamicResource Brush.Button.Primary.HoverBackground}" />
-                            <Setter TargetName="ActionChrome" Property="HoverBorderBrush" Value="{DynamicResource Brush.Button.Primary.HoverBorder}" />
+                        <Trigger Property="IconPlacement" Value="{x:Static abstractions:IconPlacement.Trailing}">
+                            <Setter TargetName="BadgeLeadingIcon" Property="DockPanel.Dock" Value="Right" />
+                        </Trigger>
+                        <Trigger Property="Tone" Value="{x:Static abstractions:BadgeTone.Accent}">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Badge.Accent.Fill}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Badge.Accent.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Badge.Accent.Text}" />
+                        </Trigger>
+                        <Trigger Property="Tone" Value="{x:Static abstractions:BadgeTone.Warning}">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Badge.Warning.Fill}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Badge.Warning.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Badge.Warning.Text}" />
+                        </Trigger>
+                        <Trigger Property="Tone" Value="{x:Static abstractions:BadgeTone.Danger}">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Badge.Danger.Fill}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Badge.Danger.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Badge.Danger.Text}" />
+                        </Trigger>
+                        <Trigger Property="Variant" Value="{x:Static abstractions:BadgeVariant.Outline}">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Badge.Outline.Fill}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Badge.Outline.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Badge.Outline.Text}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Variant" Value="{x:Static abstractions:BadgeVariant.Outline}" />
+                                <Condition Property="Tone" Value="{x:Static abstractions:BadgeTone.Accent}" />
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Background" Value="{DynamicResource Brush.Badge.Accent.Outline.Fill}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Badge.Accent.Outline.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Badge.Accent.Outline.Text}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Variant" Value="{x:Static abstractions:BadgeVariant.Outline}" />
+                                <Condition Property="Tone" Value="{x:Static abstractions:BadgeTone.Warning}" />
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Background" Value="{DynamicResource Brush.Badge.Warning.Outline.Fill}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Badge.Warning.Outline.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Badge.Warning.Outline.Text}" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Variant" Value="{x:Static abstractions:BadgeVariant.Outline}" />
+                                <Condition Property="Tone" Value="{x:Static abstractions:BadgeTone.Danger}" />
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Background" Value="{DynamicResource Brush.Badge.Danger.Outline.Fill}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Badge.Danger.Outline.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Badge.Danger.Outline.Text}" />
+                        </MultiTrigger>
+                        <Trigger Property="IconGlyph" Value="">
+                            <Setter TargetName="BadgeLeadingIcon" Property="Visibility" Value="Collapsed" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.6" />
+                            <Setter Property="Opacity" Value="0.72" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type buttons:YamlButton}" BasedOn="{StaticResource YamlButton.DefaultStyle}" />
+
+    <Style TargetType="{x:Type actions:YamlDocumentActionAreaHost}">
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type actions:YamlDocumentActionAreaHost}">
+                    <Grid x:Name="ActionAreaRoot"
+                          MinHeight="62"
+                          SnapsToDevicePixels="True"
+                          UseLayoutRounding="True">
+                        <actions:YamlDocumentActionAreaSkiaChromePresenter x:Name="ActionAreaChrome"
+                                                                           BackgroundBrush="{DynamicResource Brush.FormShell.ContentBackground}"
+                                                                           BorderBrush="{DynamicResource Brush.FormShell.RegionBorder}"
+                                                                           CornerRadius="14" />
+                        <ContentPresenter x:Name="ActionAreaContent"
+                                          Margin="12"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Placement" Value="{x:Static abstractions:ActionPlacement.Top}">
+                            <Setter TargetName="ActionAreaChrome" Property="BackgroundBrush" Value="{DynamicResource Brush.FormShell.TopActionBackground}" />
+                            <Setter TargetName="ActionAreaChrome" Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+                        </Trigger>
+                        <Trigger Property="Placement" Value="{x:Static abstractions:ActionPlacement.Bottom}">
+                            <Setter TargetName="ActionAreaChrome" Property="BackgroundBrush" Value="{DynamicResource Brush.FormShell.BottomActionBackground}" />
+                            <Setter TargetName="ActionAreaChrome" Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+                        </Trigger>
+                        <Trigger Property="ChromeMode" Value="{x:Static abstractions:ActionAreaChromeMode.Blended}">
+                            <Setter TargetName="ActionAreaChrome" Property="BackgroundBrush" Value="Transparent" />
+                            <Setter TargetName="ActionAreaChrome" Property="BorderBrush" Value="Transparent" />
+                            <Setter TargetName="ActionAreaChrome" Property="CornerRadius" Value="10" />
+                            <Setter TargetName="ActionAreaContent" Property="Margin" Value="0" />
+                            <Setter TargetName="ActionAreaRoot" Property="MinHeight" Value="44" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSticky" Value="True" />
+                                <Condition Property="Placement" Value="{x:Static abstractions:ActionPlacement.Top}" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ActionAreaChrome" Property="CornerRadius" Value="14,14,0,0" />
+                            <Setter TargetName="ActionAreaContent" Property="Margin" Value="12,12,12,16" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSticky" Value="True" />
+                                <Condition Property="Placement" Value="{x:Static abstractions:ActionPlacement.Bottom}" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ActionAreaChrome" Property="CornerRadius" Value="0,0,14,14" />
+                            <Setter TargetName="ActionAreaContent" Property="Margin" Value="12,16,12,12" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ChromeMode" Value="{x:Static abstractions:ActionAreaChromeMode.Blended}" />
+                                <Condition Property="IsSticky" Value="True" />
+                                <Condition Property="Placement" Value="{x:Static abstractions:ActionPlacement.Top}" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ActionAreaChrome" Property="CornerRadius" Value="10" />
+                            <Setter TargetName="ActionAreaContent" Property="Margin" Value="0,0,0,4" />
+                        </MultiTrigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="ChromeMode" Value="{x:Static abstractions:ActionAreaChromeMode.Blended}" />
+                                <Condition Property="IsSticky" Value="True" />
+                                <Condition Property="Placement" Value="{x:Static abstractions:ActionPlacement.Bottom}" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ActionAreaChrome" Property="CornerRadius" Value="10" />
+                            <Setter TargetName="ActionAreaContent" Property="Margin" Value="0" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type actions:YamlDocumentActionButton}" BasedOn="{StaticResource YamlButton.DefaultStyle}">
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Variant" Value="{x:Static abstractions:ButtonVariant.ActionStrip}" />
     </Style>
 
     <Style x:Key="YamlTextBox.ClearButtonStyle" TargetType="{x:Type Button}">

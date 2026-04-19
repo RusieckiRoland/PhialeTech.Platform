@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.Shell.Wpf</PackageId>
+    <AssemblyName>PhialeTech.Shell.Wpf</AssemblyName>
+    <RootNamespace>PhialeTech.Shell.Wpf</RootNamespace>
+    <Description>Thin WPF host for the shared PhialeTech application shell.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\PhialeTech.Shell.Abstractions\PhialeTech.Shell.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\PhialeTech.Shell\PhialeTech.Shell.csproj" />
+    <ProjectReference Include="..\..\..\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\PhialeTech.Styles.Wpf\PhialeTech.Styles.Wpf.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\..\..\PhialeTech.Styles.Wpf\Themes.Linked\Shell\Generic.xaml" Link="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+</Project>

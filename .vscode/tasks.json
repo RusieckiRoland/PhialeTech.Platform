@@ -116,6 +116,24 @@
         "scripts/check-prereqs.ps1"
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "build: components wpf net48",
+      "type": "shell",
+      "command": "C:\\Program Files\\dotnet\\dotnet.exe",
+      "args": [
+        "build",
+        "demo/PhialeTech/Wpf/PhialeTech.Components.Wpf/PhialeTech.Components.Wpf.csproj",
+        "-c",
+        "Debug",
+        "-f",
+        "net48"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build",
+      "presentation": {
+        "reveal": "silent"
+      }
     }
   ]
 }

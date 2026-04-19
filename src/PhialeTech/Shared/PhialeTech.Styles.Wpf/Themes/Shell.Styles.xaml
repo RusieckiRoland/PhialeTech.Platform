@@ -1,0 +1,245 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Key="Shell.WindowRootBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.Window.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.Window.Border}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.Shell.Window.BorderThickness}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource CornerRadius.Shell.Window.Root}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <Style x:Key="Shell.TitleBarRootBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.TitleBar.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.TitleBar.Border}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.Shell.TitleBar.BorderThickness}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.Shell.TitleBar.Padding}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <Style x:Key="Shell.TitleBarApplicationTitleTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.TitleBar.TitleForeground}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Shell.ApplicationTitle.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Shell.ApplicationTitle.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <Style x:Key="Shell.TitleBarApplicationSubtitleTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.TitleBar.SubtitleForeground}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Shell.ApplicationSubtitle.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Shell.ApplicationSubtitle.FontSize}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <Style x:Key="Shell.TitleBarCommandButtonStyle" TargetType="{x:Type Button}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.CommandButton.Foreground}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.CommandButton.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.CommandButton.Border}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.Shell.CommandButton.BorderThickness}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.Shell.CommandButton.Padding}" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.Shell.CommandButton.Margin}" />
+        <Setter Property="MinHeight" Value="{DynamicResource Size.Shell.CommandButton.MinHeight}" />
+        <Setter Property="MinWidth" Value="{DynamicResource Size.Shell.CommandButton.MinWidth}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Shell.Command.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Shell.Command.FontSize}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource CornerRadius.Shell.CommandButton}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Shell.CommandButton.HoverBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Brush.Shell.CommandButton.HoverBorder}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Brush.Focus.Ring}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.56" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Shell.TitleBarSystemButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource Shell.TitleBarCommandButtonStyle}">
+        <Setter Property="MinWidth" Value="{DynamicResource Size.Shell.SystemButton.MinWidth}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.Shell.SystemButton.Padding}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.SystemButton.Foreground}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.SystemButton.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.SystemButton.Border}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Icon.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Icon.FontSize}" />
+    </Style>
+
+    <Style x:Key="Shell.TitleBarSystemCloseButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource Shell.TitleBarSystemButtonStyle}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource CornerRadius.Shell.CommandButton}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Shell.SystemCloseButton.HoverBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Brush.Shell.SystemCloseButton.HoverBorder}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.SystemCloseButton.HoverForeground}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Brush.Focus.Ring}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.56" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Shell.NavigationRailBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.NavigationRail.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.NavigationRail.Border}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.Shell.NavigationRail.BorderThickness}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.Shell.NavigationRail.Padding}" />
+    </Style>
+
+    <Style x:Key="Shell.NavigationButtonStyle" TargetType="{x:Type Button}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.NavigationButton.Foreground}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.NavigationButton.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.NavigationButton.Border}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.Shell.NavigationButton.BorderThickness}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.Shell.NavigationButton.Padding}" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.Shell.NavigationButton.Margin}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource CornerRadius.Shell.NavigationButton}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource Brush.Shell.NavigationButton.HoverBackground}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Brush.Shell.NavigationButton.HoverBorder}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource Brush.Focus.Ring}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.56" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Shell.NavigationButtonStyle.Selected" TargetType="{x:Type Button}" BasedOn="{StaticResource Shell.NavigationButtonStyle}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.NavigationButton.SelectedForeground}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.NavigationButton.SelectedBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.NavigationButton.SelectedBorder}" />
+    </Style>
+
+    <Style x:Key="Shell.NavigationButtonContentPanelStyle" TargetType="{x:Type StackPanel}">
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style x:Key="Shell.NavigationButtonIconTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.NavigationButton.IconForeground}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Icon.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Shell.Navigation.FontSize}" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.Shell.NavigationButton.IconMargin}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="Shell.NavigationButtonTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.NavigationButton.Foreground}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Shell.Navigation.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Shell.Navigation.FontSize}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="Shell.ViewHeaderBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.ViewHeader.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.ViewHeader.Border}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.Shell.ViewHeader.BorderThickness}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.Shell.ViewHeader.Padding}" />
+    </Style>
+
+    <Style x:Key="Shell.ViewTitleTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.ViewHeader.TitleForeground}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Shell.ViewTitle.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Shell.ViewTitle.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="Shell.ViewDescriptionTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.ViewHeader.DescriptionForeground}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Shell.ViewDescription.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Shell.ViewDescription.FontSize}" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.Shell.ViewDescription.Margin}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="Shell.ContentHostBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.Content.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.Content.Border}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.Shell.Content.BorderThickness}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.Shell.Content.Padding}" />
+    </Style>
+
+    <Style x:Key="Shell.StatusBarBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Shell.StatusBar.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Shell.StatusBar.Border}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.Shell.StatusBar.BorderThickness}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.Shell.StatusBar.Padding}" />
+    </Style>
+
+    <Style x:Key="Shell.StatusItemHostStyle" TargetType="{x:Type StackPanel}">
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.Shell.StatusItem.Margin}" />
+    </Style>
+
+    <Style x:Key="Shell.StatusItemLabelTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.StatusBar.LabelForeground}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Shell.Status.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Shell.Status.FontSize}" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.Shell.StatusItem.LabelMargin}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="Shell.StatusItemValueTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Shell.StatusBar.ValueForeground}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Shell.Status.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Shell.Status.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+</ResourceDictionary>

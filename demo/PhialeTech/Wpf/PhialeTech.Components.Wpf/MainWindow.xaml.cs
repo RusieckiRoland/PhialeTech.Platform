@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Windows;
@@ -18,16 +19,24 @@ using Microsoft.Win32;
 using PhialeGrid.Core;
 using PhialeGrid.Core.Regions;
 using PhialeGrid.Core.State;
+using PhialeTech.ComponentHost.Abstractions.Presentation;
+using PhialeTech.ComponentHost.Presentation;
 using PhialeTech.ComponentHost.State;
 using PhialeTech.Components.Shared.Model;
 using PhialeTech.Components.Shared.Services;
 using PhialeTech.Yaml.Library;
 using PhialeTech.Components.Shared.ViewModels;
+using PhialeTech.Components.Wpf.Hosting;
 using PhialeTech.MonacoEditor.Abstractions;
 using PhialeTech.MonacoEditor.Wpf.Controls;
 using PhialeTech.PhialeGrid.Wpf.Controls;
 using PhialeTech.PhialeGrid.Wpf.Diagnostics;
 using PhialeTech.PhialeGrid.Wpf.State;
+using PhialeTech.ComponentHost.Wpf.Hosting;
+using PhialeTech.ComponentHost.Wpf.Services;
+using PhialeTech.Shell.Abstractions.Presentation;
+using PhialeTech.Shell.Wpf.Controls;
+using PhialeTech.Shell.Wpf.Input;
 using PhialeTech.WebHost.Wpf;
 using PhialeTech.YamlApp.Abstractions.Enums;
 using PhialeTech.YamlApp.Abstractions.Results;
@@ -37,12 +46,13 @@ using PhialeTech.YamlApp.Definitions.Documents;
 using PhialeTech.YamlApp.Definitions.Fields;
 using PhialeTech.YamlApp.Infrastructure.Loading;
 using PhialeTech.YamlApp.Runtime.Model;
+using PhialeTech.YamlApp.Wpf.Controls.Buttons;
 using PhialeTech.YamlApp.Runtime.Services;
 using PhialeTech.YamlApp.Wpf.Document;
 
 namespace PhialeTech.Components.Wpf
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : PhialeWindow
     {
         public static readonly DependencyProperty SelectedInputDensityModeProperty =
             DependencyProperty.Register(
@@ -71,6 +81,20 @@ namespace PhialeTech.Components.Wpf
                 typeof(string),
                 typeof(MainWindow),
                 new PropertyMetadata(string.Empty));
+
+        public static readonly DependencyProperty YamlPrimitiveLastCommandTextProperty =
+            DependencyProperty.Register(
+                nameof(YamlPrimitiveLastCommandText),
+                typeof(string),
+                typeof(MainWindow),
+                new PropertyMetadata("No command invoked yet."));
+
+        public static readonly DependencyProperty HostedModalLastResultTextProperty =
+            DependencyProperty.Register(
+                nameof(HostedModalLastResultText),
+                typeof(string),
+                typeof(MainWindow),
+                new PropertyMetadata("No hosted modal opened yet."));
 
         public static readonly DependencyProperty YamlGeneratedFormSourceTextProperty =
             DependencyProperty.Register(
@@ -120,6 +144,7 @@ namespace PhialeTech.Components.Wpf
         private const string EditingInvalidRowId = "BLD-WRO-FAB-0002";
         private readonly DemoApplicationServices _applicationServices;
         private readonly bool _ownsApplicationServices;
+        private readonly HostedSurfaceManager _hostedSurfaceManager;
         private ApplicationStateRegistration _gridStateRegistration;
         private PhialeGridViewStateComponent _gridStateComponent;
         private string _registeredGridStateKey = string.Empty;
@@ -129,13 +154,19 @@ namespace PhialeTech.Components.Wpf
         private PdfViewerShowcaseView _pdfViewerShowcaseView;
         private ReportDesignerShowcaseView _reportDesignerShowcaseView;
         private MonacoEditorShowcaseView _monacoEditorShowcaseView;
-        private PhialeMonacoEditor _yamlGeneratedFormMonacoEditor;
+        private PhialeMonacoEditor _yamlActionsMonacoEditor;
+        private PhialeMonacoEditor _yamlDocumentMonacoEditor;
         private IWebDemoFocusModeSource _activeWebDemoFocusModeSource;
         private bool _isWebDemoChromeCollapsed;
         private bool _webHostPrewarmQueued;
         private WebHostLoadTrace _webHostLoadTrace;
         private int _webComponentsClickTimestamp = -1;
         private bool _isUpdatingYamlGeneratedFormEditor;
+        private readonly IReadOnlyList<YamlLibraryFormTemplateOption> _yamlLibraryFormTemplates;
+        private readonly IReadOnlyList<YamlDocumentInheritanceOption> _yamlDocumentInheritanceOptions;
+        private bool _isApplyingYamlActionTemplateSelection;
+        private bool _isApplyingYamlDocumentInheritanceSelection;
+        private readonly HashSet<PhialeMonacoEditor> _diagnosticMonacoEditors = new HashSet<PhialeMonacoEditor>();
 
         public IReadOnlyList<DensityMode> InputDensityOptions { get; } =
             new[] { DensityMode.Compact, DensityMode.Normal, DensityMode.Comfortable };
@@ -167,6 +198,18 @@ namespace PhialeTech.Components.Wpf
             set => SetValue(YamlDocumentLastResultTextProperty, value);
         }
 
+        public string YamlPrimitiveLastCommandText
+        {
+            get => (string)GetValue(YamlPrimitiveLastCommandTextProperty);
+            set => SetValue(YamlPrimitiveLastCommandTextProperty, value);
+        }
+
+        public string HostedModalLastResultText
+        {
+            get => (string)GetValue(HostedModalLastResultTextProperty);
+            set => SetValue(HostedModalLastResultTextProperty, value);
+        }
+
         public string YamlGeneratedFormSourceText
         {
             get => (string)GetValue(YamlGeneratedFormSourceTextProperty);
@@ -191,6 +234,8 @@ namespace PhialeTech.Components.Wpf
             set => SetValue(HasYamlGeneratedFormDiagnosticsProperty, value);
         }
 
+        public WpfHostedSurfaceService HostedSurfaceService { get; }
+
         public MainWindow()
             : this(DemoApplicationServices.CreateIsolatedForWindow(), true)
         {
@@ -199,14 +244,30 @@ namespace PhialeTech.Components.Wpf
         public MainWindow(DemoApplicationServices applicationServices, bool ownsApplicationServices = false)
         {
             InitializeComponent();
+            _yamlLibraryFormTemplates = LoadYamlLibraryFormTemplates();
+            _yamlDocumentInheritanceOptions = BuildYamlDocumentInheritanceOptions();
             _applicationServices = applicationServices ?? throw new ArgumentNullException(nameof(applicationServices));
             _ownsApplicationServices = ownsApplicationServices;
+            PhialeWebHostDiagnostics.Sink = (source, message) => MonacoInputTrace.Write("webhost", source, message);
+            MonacoInputTrace.Write("app", "MainWindow", "constructed log=" + MonacoInputTrace.CurrentLogFilePath);
             AddHandler(UIElement.PreviewMouseDownEvent, new MouseButtonEventHandler(DebugObserveWindowPreviewMouseDown), true);
+            AddHandler(UIElement.PreviewKeyDownEvent, new KeyEventHandler(HandleWindowPreviewKeyDownDiagnostic), true);
+            AddHandler(UIElement.PreviewKeyUpEvent, new KeyEventHandler(HandleWindowPreviewKeyUpDiagnostic), true);
+            AddHandler(UIElement.PreviewTextInputEvent, new TextCompositionEventHandler(HandleWindowPreviewTextInputDiagnostic), true);
+            AddHandler(Keyboard.GotKeyboardFocusEvent, new KeyboardFocusChangedEventHandler(HandleWindowGotKeyboardFocusDiagnostic), true);
+            AddHandler(Keyboard.LostKeyboardFocusEvent, new KeyboardFocusChangedEventHandler(HandleWindowLostKeyboardFocusDiagnostic), true);
             SourceInitialized += HandleSourceInitialized;
             _viewModel = new DemoShellViewModel(
                 "Wpf",
                 remoteGridClient: CreateRemoteGridClient(),
                 definitionManager: _applicationServices.DefinitionManager);
+            _hostedSurfaceManager = new HostedSurfaceManager(new DemoHostedShellCoordinator(_viewModel));
+            var hostedSurfaceRegistry = new WpfHostedSurfaceFactoryRegistry();
+            hostedSurfaceRegistry.Register(new DemoViewHostedSurfaceFactory());
+            hostedSurfaceRegistry.Register(new DemoYamlHostedSurfaceFactory());
+            HostedSurfaceService = new WpfHostedSurfaceService(_hostedSurfaceManager, hostedSurfaceRegistry);
+            HostedSurfaceService.SessionChanged += HandleHostedSurfaceSessionChanged;
+            AddHandler(PhialeTitleBar.CommandInvokedEvent, new EventHandler<ShellCommandInvokedRoutedEventArgs>(HandleShellCommandInvoked));
             _viewModel.PropertyChanged += HandleViewModelPropertyChanged;
             DataContext = _viewModel;
             var gridLanguageDirectory = Path.Combine(AppContext.BaseDirectory, "PhialeGrid.Localization", "Languages");
@@ -214,6 +275,9 @@ namespace PhialeTech.Components.Wpf
             ApplicationStateDemoGrid.LanguageDirectory = gridLanguageDirectory;
             DemoActiveLayerSelector.LanguageDirectory = Path.Combine(AppContext.BaseDirectory, "PhialeTech.ActiveLayerSelector", "Languages");
             ApplySelectedTheme();
+            UpdateApplicationShellState();
+            InitializeYamlActionTemplatePicker();
+            InitializeYamlDocumentInheritancePicker();
             Loaded += HandleWindowLoaded;
             Closed += HandleWindowClosed;
             if (ExampleTabControl != null)
@@ -221,7 +285,7 @@ namespace PhialeTech.Components.Wpf
                 ExampleTabControl.SelectionChanged += HandleExampleTabSelectionChanged;
             }
 
-            RebuildYamlDocumentRuntimeState();
+            ResetYamlGenerateFormState();
         }
 
         private void HandleWindowLoaded(object sender, RoutedEventArgs e)
@@ -248,12 +312,8 @@ namespace PhialeTech.Components.Wpf
             _reportDesignerShowcaseView = null;
             _monacoEditorShowcaseView?.Dispose();
             _monacoEditorShowcaseView = null;
-            if (_yamlGeneratedFormMonacoEditor != null)
-            {
-                _yamlGeneratedFormMonacoEditor.ContentChanged -= HandleYamlGeneratedFormMonacoContentChanged;
-                _yamlGeneratedFormMonacoEditor.Dispose();
-                _yamlGeneratedFormMonacoEditor = null;
-            }
+            DisposeYamlGeneratedFormMonacoEditor(ref _yamlActionsMonacoEditor);
+            DisposeYamlGeneratedFormMonacoEditor(ref _yamlDocumentMonacoEditor);
             if (ExampleTabControl != null)
             {
                 ExampleTabControl.SelectionChanged -= HandleExampleTabSelectionChanged;
@@ -262,6 +322,13 @@ namespace PhialeTech.Components.Wpf
             {
                 _applicationServices.Dispose();
             }
+
+            if (HostedSurfaceService != null)
+            {
+                HostedSurfaceService.SessionChanged -= HandleHostedSurfaceSessionChanged;
+            }
+
+            HostedSurfaceService?.Dispose();
         }
 
         private void QueueGridStateRegistrationRefresh()
@@ -570,7 +637,7 @@ namespace PhialeTech.Components.Wpf
                 var captures = await CaptureDemoBookAsync().ConfigureAwait(true);
                 new WpfDemoBookPdfExporter().Export(
                     dialog.FileName,
-                    "PhialeTech Demo",
+                    _viewModel.AppTitle,
                     captures);
             }
             catch (Exception ex)
@@ -1047,6 +1114,15 @@ namespace PhialeTech.Components.Wpf
 
         private async void HandleViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
+            if (e.PropertyName == nameof(DemoShellViewModel.SelectedThemeCode) ||
+                e.PropertyName == nameof(DemoShellViewModel.LanguageCode) ||
+                e.PropertyName == nameof(DemoShellViewModel.SelectedExample) ||
+                e.PropertyName == nameof(DemoShellViewModel.WorkspaceOverviewTitle) ||
+                e.PropertyName == nameof(DemoShellViewModel.WorkspaceOverviewSubtitle))
+            {
+                UpdateApplicationShellState();
+            }
+
             if (e.PropertyName == nameof(DemoShellViewModel.SelectedThemeCode))
             {
                 ApplySelectedTheme();
@@ -1058,9 +1134,13 @@ namespace PhialeTech.Components.Wpf
                 {
                     await _monacoEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme()).ConfigureAwait(true);
                 }
-                if (_yamlGeneratedFormMonacoEditor != null)
+                if (_yamlActionsMonacoEditor != null)
                 {
-                    await _yamlGeneratedFormMonacoEditor.SetThemeAsync(ResolveReportDesignerTheme()).ConfigureAwait(true);
+                    await _yamlActionsMonacoEditor.SetThemeAsync(ResolveReportDesignerTheme()).ConfigureAwait(true);
+                }
+                if (_yamlDocumentMonacoEditor != null)
+                {
+                    await _yamlDocumentMonacoEditor.SetThemeAsync(ResolveReportDesignerTheme()).ConfigureAwait(true);
                 }
                 return;
             }
@@ -1095,11 +1175,7 @@ namespace PhialeTech.Components.Wpf
                 return;
             }
 
-            if (_viewModel.IsYamlDocumentExample)
-            {
-                RebuildYamlDocumentRuntimeState();
-            }
-            else if (_viewModel.IsYamlGenerateFormExample || _viewModel.IsYamlActionsExample)
+            if (_viewModel.IsYamlDocumentExample || _viewModel.IsYamlActionsExample)
             {
                 ResetYamlGenerateFormState();
             }
@@ -1400,6 +1476,7 @@ namespace PhialeTech.Components.Wpf
                 if (_monacoEditorShowcaseView == null)
                 {
                     _monacoEditorShowcaseView = new MonacoEditorShowcaseView(_viewModel.LanguageCode, ResolveReportDesignerTheme());
+                    MonacoInputTrace.Write("monaco.showcase", "MainWindow", "showcase view created");
                 }
 
                 if (!ReferenceEquals(WebHostSamplePresenter.Content, _monacoEditorShowcaseView))
@@ -1409,6 +1486,13 @@ namespace PhialeTech.Components.Wpf
 
                 _ = _monacoEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme());
                 AttachWebDemoFocusModeSource(_monacoEditorShowcaseView);
+                return;
+            }
+
+            if (_viewModel.IsWebComponentScrollHostExample)
+            {
+                WebHostSamplePresenter.Content = null;
+                AttachWebDemoFocusModeSource(null);
                 return;
             }
 
@@ -1932,6 +2016,92 @@ namespace PhialeTech.Components.Wpf
             return ResolveNightMode(_viewModel.SelectedThemeCode) ? "dark" : "light";
         }
 
+        private void UpdateApplicationShellState()
+        {
+            if (_viewModel == null)
+            {
+                return;
+            }
+
+            var titleBarCommands = new List<ApplicationShellCommandItem>();
+            if (_viewModel.IsDetailVisible && !IsHostedSurfaceSessionOpen())
+            {
+                titleBarCommands.Add(new ApplicationShellCommandItem("shell.overview", _viewModel.BackToOverviewText, ApplicationShellCommandPlacement.Leading));
+            }
+
+            ShellState = new ApplicationShellState(
+                _viewModel.AppTitle,
+                _viewModel.AppSubtitle,
+                _viewModel.IsOverviewVisible ? _viewModel.WorkspaceOverviewTitle : _viewModel.SelectedExampleTitle,
+                _viewModel.IsOverviewVisible ? _viewModel.WorkspaceOverviewSubtitle : _viewModel.SelectedExampleDescription,
+                navigationItems: Array.Empty<ApplicationShellNavigationItem>(),
+                titleBarCommands: titleBarCommands,
+                statusItems: BuildApplicationShellStatusItems());
+        }
+
+        private bool IsHostedSurfaceSessionOpen()
+        {
+            return HostedSurfaceService != null && HostedSurfaceService.CurrentSession != null;
+        }
+
+        private IReadOnlyList<ApplicationShellStatusItem> BuildApplicationShellStatusItems()
+        {
+            return new[]
+            {
+                new ApplicationShellStatusItem("shell.platform", "Platform", "Wpf"),
+                new ApplicationShellStatusItem("shell.language", _viewModel.LanguageLabelText, (_viewModel.LanguageCode ?? string.Empty).ToUpperInvariant()),
+                new ApplicationShellStatusItem("shell.theme", _viewModel.ThemeLabelText, ResolveThemeDisplayName()),
+            };
+        }
+
+        private string ResolveThemeDisplayName()
+        {
+            if (_viewModel == null || _viewModel.ThemeOptions == null)
+            {
+                return string.Empty;
+            }
+
+            var selectedTheme = _viewModel.ThemeOptions.FirstOrDefault(option =>
+                option != null &&
+                string.Equals(option.Code, _viewModel.SelectedThemeCode, StringComparison.OrdinalIgnoreCase));
+
+            return selectedTheme == null
+                ? _viewModel.SelectedThemeCode ?? string.Empty
+                : selectedTheme.DisplayName ?? string.Empty;
+        }
+
+        private void HandleShellCommandInvoked(object sender, ShellCommandInvokedRoutedEventArgs e)
+        {
+            if (e == null || e.Command == null)
+            {
+                return;
+            }
+
+            if (string.Equals(e.Command.CommandId, "shell.overview", StringComparison.OrdinalIgnoreCase))
+            {
+                if (_viewModel != null && _viewModel.ShowOverviewCommand != null && _viewModel.ShowOverviewCommand.CanExecute(null))
+                {
+                    _viewModel.ShowOverviewCommand.Execute(null);
+                    e.Handled = true;
+                }
+
+                return;
+            }
+
+            throw new InvalidOperationException("Unsupported shell command: " + e.Command.CommandId);
+        }
+
+        private void HandleHostedSurfaceSessionChanged(object sender, EventArgs e)
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.InvokeAsync(UpdateApplicationShellState);
+                return;
+            }
+
+            UpdateApplicationShellState();
+        }
+
         private static bool IsSystemNightMode()
         {
             try
@@ -1971,10 +2141,7 @@ namespace PhialeTech.Components.Wpf
                 return;
             }
 
-            if (window._viewModel != null && window._viewModel.IsYamlDocumentSurfaceExample)
-            {
-                window.RebuildYamlDocumentRuntimeState();
-            }
+            // YAML document demos are generated on demand from Monaco content.
         }
 
         private void ResetYamlGenerateFormState()
@@ -1985,48 +2152,6 @@ namespace PhialeTech.Components.Wpf
             ClearYamlGeneratedFormDiagnostics();
             YamlDocumentLastResultText = BuildDefaultYamlEditorResultHint();
             _ = EnsureYamlGeneratedFormMonacoReadyAsync();
-        }
-
-        private void RebuildYamlDocumentRuntimeState()
-        {
-            try
-            {
-                var resolvedDocument = BuildYamlDocumentDefinition();
-                var runtimeState = new RuntimeDocumentStateFactory().Create(resolvedDocument);
-
-                if (_viewModel == null || !_viewModel.IsYamlActionsExample)
-                {
-                    var customerName = runtimeState.GetField("customerName");
-                    customerName?.SetValidation("required", "Customer is required.");
-
-                    var ticketCode = runtimeState.GetField("ticketCode");
-                    ticketCode?.LoadValue("OPS-2401");
-
-                    var contactEmail = runtimeState.GetField("contactEmail");
-                    contactEmail?.LoadValue("roland@example.com");
-
-                    var ownerName = runtimeState.GetField("ownerName");
-                    ownerName?.LoadValue("Field Team Alpha");
-
-                    var summary = runtimeState.GetField("summary");
-                    if (summary != null)
-                    {
-                        summary.LoadValue("Initial triage note.");
-                        summary.SetValue("Bridge inspection package for the north district.");
-                    }
-
-                    var resolutionNotes = runtimeState.GetField("resolutionNotes");
-                    resolutionNotes?.LoadValue("Coordinate maintenance and safety teams before publishing the task.");
-                }
-
-                YamlDocumentRuntimeState = runtimeState;
-                YamlDocumentLastResultText = "Try OK or Cancel to see the document action result here.";
-            }
-            catch (Exception ex)
-            {
-                YamlDocumentRuntimeState = null;
-                YamlDocumentLastResultText = "Document demo initialization failed." + Environment.NewLine + ex.Message;
-            }
         }
 
         private void HandleGenerateYamlFormClick(object sender, RoutedEventArgs e)
@@ -2093,15 +2218,111 @@ namespace PhialeTech.Components.Wpf
             }
         }
 
-        private void EnsureYamlGeneratedFormMonacoEditor()
+        private void HandleYamlPrimitiveButtonInvoked(object sender, YamlButtonInvokedEventArgs e)
         {
-            if (_yamlGeneratedFormMonacoEditor != null)
+            if (e?.Command == null)
             {
-                AttachYamlGeneratedFormEditorToActivePresenter();
                 return;
             }
 
-            _yamlGeneratedFormMonacoEditor = new PhialeMonacoEditor(
+            YamlPrimitiveLastCommandText = string.Format(
+                "Last command: {0}{1}Source: UniversalInput -> Core controller -> YamlButton routed event",
+                e.CommandId,
+                Environment.NewLine);
+        }
+
+        private async void HandleHostedModalButtonInvoked(object sender, YamlButtonInvokedEventArgs e)
+        {
+            if (e?.Command == null || HostedSurfaceService == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var result = await HostedSurfaceService.ShowAsync(BuildHostedSurfaceRequest(e.CommandId)).ConfigureAwait(true);
+                HostedModalLastResultText = FormatHostedModalResult(result);
+            }
+            catch (Exception ex)
+            {
+                HostedModalLastResultText = "Hosted modal failed: " + ex.Message;
+            }
+        }
+
+        private async void HandleShowGeneratedYamlAsDialogClick(object sender, RoutedEventArgs e)
+        {
+            await ShowGeneratedYamlAsDialogAsync(HostedEntranceStyle.Directional).ConfigureAwait(true);
+        }
+
+        private async void HandleShowGeneratedYamlAsSoftDialogClick(object sender, RoutedEventArgs e)
+        {
+            await ShowGeneratedYamlAsDialogAsync(HostedEntranceStyle.Materialize).ConfigureAwait(true);
+        }
+
+        private async Task ShowGeneratedYamlAsDialogAsync(HostedEntranceStyle entranceStyle)
+        {
+            if (HostedSurfaceService == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(YamlGeneratedFormSourceText))
+            {
+                HostedModalLastResultText = "Generated form YAML is empty.";
+                return;
+            }
+
+            try
+            {
+                var request = new HostedSurfaceRequest
+                {
+                    SurfaceKind = HostedSurfaceKind.YamlDocument,
+                    ContentKey = "demo.yaml.generated-preview",
+                    PresentationMode = HostedPresentationMode.CompactModal,
+                    EntranceStyle = entranceStyle,
+                    Size = HostedPresentationSize.Large,
+                    Placement = HostedSheetPlacement.Center,
+                    Title = entranceStyle == HostedEntranceStyle.Materialize ? "Generated Yaml form (soft dialog)" : "Generated Yaml form",
+                    CanDismiss = true,
+                    Payload = YamlGeneratedFormSourceText,
+                };
+
+                var result = await HostedSurfaceService.ShowAsync(request).ConfigureAwait(true);
+                HostedModalLastResultText = FormatHostedModalResult(result);
+                YamlDocumentLastResultText = FormatHostedModalResult(result);
+            }
+            catch (Exception ex)
+            {
+                HostedModalLastResultText = "Hosted modal failed: " + ex.Message;
+                SetYamlGeneratedFormDiagnostics("Nie udalo sie pokazac formularza jako dialog." + Environment.NewLine + ex.Message);
+            }
+        }
+
+        private PhialeMonacoEditor EnsureYamlGeneratedFormMonacoEditor()
+        {
+            if (_viewModel != null && _viewModel.IsYamlActionsExample)
+            {
+                if (_yamlActionsMonacoEditor == null)
+                {
+                    _yamlActionsMonacoEditor = CreateYamlGeneratedFormMonacoEditor("yaml.actions");
+                }
+
+                AttachYamlGeneratedFormEditorToActivePresenter(_yamlActionsMonacoEditor);
+                return _yamlActionsMonacoEditor;
+            }
+
+            if (_yamlDocumentMonacoEditor == null)
+            {
+                _yamlDocumentMonacoEditor = CreateYamlGeneratedFormMonacoEditor("yaml.document");
+            }
+
+            AttachYamlGeneratedFormEditorToActivePresenter(_yamlDocumentMonacoEditor);
+            return _yamlDocumentMonacoEditor;
+        }
+
+        private PhialeMonacoEditor CreateYamlGeneratedFormMonacoEditor(string traceName)
+        {
+            var editor = new PhialeMonacoEditor(
                 new WpfWebComponentHostFactory(),
                 new MonacoEditorOptions
                 {
@@ -2113,33 +2334,73 @@ namespace PhialeTech.Components.Wpf
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch
             };
-            _yamlGeneratedFormMonacoEditor.ContentChanged += HandleYamlGeneratedFormMonacoContentChanged;
-            AttachYamlGeneratedFormEditorToActivePresenter();
+            editor.ContentChanged += HandleYamlGeneratedFormMonacoContentChanged;
+            AttachMonacoEditorDiagnostics(editor, traceName);
+            MonacoInputTrace.Write(traceName, "MainWindow", "editor created");
+            return editor;
         }
 
-        private async Task EnsureYamlGeneratedFormMonacoReadyAsync()
+        private void InitializeYamlActionTemplatePicker()
         {
-            EnsureYamlGeneratedFormMonacoEditor();
-            if (_yamlGeneratedFormMonacoEditor == null)
+            if (YamlActionTemplateComboBox == null)
             {
                 return;
             }
 
-            await _yamlGeneratedFormMonacoEditor.InitializeAsync().ConfigureAwait(true);
-            await _yamlGeneratedFormMonacoEditor.SetThemeAsync(ResolveReportDesignerTheme()).ConfigureAwait(true);
-            await _yamlGeneratedFormMonacoEditor.SetLanguageAsync("yaml").ConfigureAwait(true);
+            YamlActionTemplateComboBox.ItemsSource = _yamlLibraryFormTemplates;
+            if (_yamlLibraryFormTemplates.Count == 0)
+            {
+                return;
+            }
+
+            SetSelectedYamlActionTemplate(GetSelectedOrDefaultYamlActionTemplate());
+        }
+
+        private void InitializeYamlDocumentInheritancePicker()
+        {
+            if (YamlDocumentInheritanceComboBox == null)
+            {
+                return;
+            }
+
+            YamlDocumentInheritanceComboBox.ItemsSource = _yamlDocumentInheritanceOptions;
+            if (_yamlDocumentInheritanceOptions.Count == 0)
+            {
+                return;
+            }
+
+            SetSelectedYamlDocumentInheritanceOption(GetSelectedOrDefaultYamlDocumentInheritanceOption());
+        }
+
+        private async Task EnsureYamlGeneratedFormMonacoReadyAsync()
+        {
+            var editor = EnsureYamlGeneratedFormMonacoEditor();
+            if (editor == null)
+            {
+                return;
+            }
+
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "EnsureYamlGeneratedFormMonacoReadyAsync start");
+            await editor.InitializeAsync().ConfigureAwait(true);
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "InitializeAsync completed");
+            await editor.SetThemeAsync(ResolveReportDesignerTheme()).ConfigureAwait(true);
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "SetThemeAsync completed theme=" + ResolveReportDesignerTheme());
+            await editor.SetLanguageAsync("yaml").ConfigureAwait(true);
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "SetLanguageAsync completed yaml");
 
             _isUpdatingYamlGeneratedFormEditor = true;
             try
             {
-                await _yamlGeneratedFormMonacoEditor.SetValueAsync(YamlGeneratedFormSourceText ?? string.Empty).ConfigureAwait(true);
+                await editor.SetValueAsync(YamlGeneratedFormSourceText ?? string.Empty).ConfigureAwait(true);
+                MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "SetValueAsync completed length=" + (YamlGeneratedFormSourceText ?? string.Empty).Length);
             }
             finally
             {
                 _isUpdatingYamlGeneratedFormEditor = false;
             }
 
-            AttachYamlGeneratedFormEditorToActivePresenter();
+            AttachYamlGeneratedFormEditorToActivePresenter(editor);
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "AttachYamlGeneratedFormEditorToActivePresenter completed");
         }
 
         private void HandleYamlGeneratedFormMonacoContentChanged(object sender, MonacoEditorContentChangedEventArgs e)
@@ -2149,300 +2410,58 @@ namespace PhialeTech.Components.Wpf
                 return;
             }
 
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "ContentChanged length=" + (e?.Value ?? string.Empty).Length + " snippet=" + MonacoInputTrace.SafeSnippet(e?.Value));
             YamlGeneratedFormSourceText = e?.Value ?? string.Empty;
         }
 
-        private ResolvedFormDocumentDefinition BuildYamlDocumentDefinition()
+        private async void HandleYamlActionTemplateSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var interactionMode = SelectedInputInteractionMode;
-            var densityMode = SelectedInputDensityMode;
-            const FieldChromeMode chromeMode = FieldChromeMode.Framed;
-            const CaptionPlacement captionPlacement = CaptionPlacement.Top;
-
-            var customerNameDefinition = new YamlStringFieldDefinition
+            if (_isApplyingYamlActionTemplateSelection)
             {
-                Id = "customerName",
-                Name = "Customer",
-                CaptionKey = "Customer",
-                PlaceholderKey = "Type customer name",
-                WidthHint = FieldWidthHint.Fill,
-                IsRequired = true,
-                ShowLabel = true,
-                ShowPlaceholder = true,
-                Visible = true,
-                Enabled = true,
-                ShowOldValueRestoreButton = false,
-            };
+                return;
+            }
 
-            var ticketCodeDefinition = new YamlStringFieldDefinition
+            var template = YamlActionTemplateComboBox == null
+                ? null
+                : YamlActionTemplateComboBox.SelectedItem as YamlLibraryFormTemplateOption;
+            if (template == null)
             {
-                Id = "ticketCode",
-                Name = "Ticket code",
-                CaptionKey = "Ticket code",
-                PlaceholderKey = "OPS-2401",
-                WidthHint = FieldWidthHint.Short,
-                ShowLabel = true,
-                ShowPlaceholder = true,
-                Visible = true,
-                Enabled = true,
-            };
+                return;
+            }
 
-            var contactEmailDefinition = new YamlStringFieldDefinition
-            {
-                Id = "contactEmail",
-                Name = "Contact email",
-                CaptionKey = "Contact email",
-                PlaceholderKey = "name@example.com",
-                WidthHint = FieldWidthHint.Long,
-                ShowLabel = true,
-                ShowPlaceholder = true,
-                Visible = true,
-                Enabled = true,
-            };
-
-            var ownerNameDefinition = new YamlStringFieldDefinition
-            {
-                Id = "ownerName",
-                Name = "Owner",
-                CaptionKey = "Owner",
-                PlaceholderKey = "Field team",
-                WidthHint = FieldWidthHint.Medium,
-                ShowLabel = true,
-                ShowPlaceholder = true,
-                Visible = true,
-                Enabled = true,
-            };
-
-            var summaryDefinition = new YamlStringFieldDefinition
-            {
-                Id = "summary",
-                Name = "Operational summary",
-                CaptionKey = "Operational summary",
-                PlaceholderKey = "Describe the current request",
-                WidthHint = FieldWidthHint.Fill,
-                ShowLabel = true,
-                ShowPlaceholder = true,
-                Visible = true,
-                Enabled = true,
-                ShowOldValueRestoreButton = true,
-            };
-
-            var resolutionNotesDefinition = new YamlStringFieldDefinition
-            {
-                Id = "resolutionNotes",
-                Name = "Resolution notes",
-                CaptionKey = "Resolution notes",
-                PlaceholderKey = "Add internal delivery notes",
-                WidthHint = FieldWidthHint.Fill,
-                ShowLabel = true,
-                ShowPlaceholder = true,
-                Visible = true,
-                Enabled = true,
-            };
-
-            var fields = new List<ResolvedFieldDefinition>
-            {
-                BuildResolvedField(customerNameDefinition, FieldWidthHint.Fill, interactionMode, densityMode, chromeMode, captionPlacement),
-                BuildResolvedField(ticketCodeDefinition, FieldWidthHint.Short, interactionMode, densityMode, chromeMode, captionPlacement),
-                BuildResolvedField(contactEmailDefinition, FieldWidthHint.Long, interactionMode, densityMode, chromeMode, captionPlacement),
-                BuildResolvedField(ownerNameDefinition, FieldWidthHint.Medium, interactionMode, densityMode, chromeMode, captionPlacement),
-                BuildResolvedField(summaryDefinition, FieldWidthHint.Fill, interactionMode, densityMode, chromeMode, captionPlacement, showOldValueRestoreButton: true),
-                BuildResolvedField(resolutionNotesDefinition, FieldWidthHint.Fill, interactionMode, densityMode, chromeMode, captionPlacement),
-            };
-
-            var fieldMap = fields.ToDictionary(field => field.Id, StringComparer.OrdinalIgnoreCase);
-
-            var layout = new ResolvedLayoutDefinition(
-                id: "root",
-                name: "Root",
-                width: null,
-                widthHint: FieldWidthHint.Fill,
-                visible: true,
-                enabled: true,
-                showOldValueRestoreButton: false,
-                validationTrigger: ValidationTrigger.OnChange,
-                interactionMode: interactionMode,
-                densityMode: densityMode,
-                fieldChromeMode: chromeMode,
-                captionPlacement: captionPlacement,
-                items: new ResolvedLayoutItemDefinition[]
-                {
-                    new ResolvedContainerDefinition(
-                        id: "primaryIdentity",
-                        name: "Primary identity",
-                        width: null,
-                        widthHint: FieldWidthHint.Fill,
-                        visible: true,
-                        enabled: true,
-                        showOldValueRestoreButton: false,
-                        validationTrigger: ValidationTrigger.OnChange,
-                        interactionMode: interactionMode,
-                        densityMode: densityMode,
-                        fieldChromeMode: chromeMode,
-                        captionPlacement: captionPlacement,
-                        captionKey: "Primary identity",
-                        showBorder: true,
-                        items: new ResolvedLayoutItemDefinition[]
-                        {
-                            new ResolvedRowDefinition(
-                                id: "identityRow",
-                                name: "Identity row",
-                                width: null,
-                                widthHint: FieldWidthHint.Fill,
-                                visible: true,
-                                enabled: true,
-                                showOldValueRestoreButton: false,
-                                validationTrigger: ValidationTrigger.OnChange,
-                                interactionMode: interactionMode,
-                                densityMode: densityMode,
-                                fieldChromeMode: chromeMode,
-                                captionPlacement: captionPlacement,
-                                items: new ResolvedLayoutItemDefinition[]
-                                {
-                                    new ResolvedFieldReferenceDefinition("customerNameRef", "Customer ref", null, FieldWidthHint.Fill, true, true, false, ValidationTrigger.OnChange, interactionMode, densityMode, chromeMode, captionPlacement, fieldMap["customerName"]),
-                                    new ResolvedFieldReferenceDefinition("ticketCodeRef", "Ticket code ref", null, FieldWidthHint.Short, true, true, false, ValidationTrigger.OnChange, interactionMode, densityMode, chromeMode, captionPlacement, fieldMap["ticketCode"]),
-                                })
-                        }),
-                    new ResolvedContainerDefinition(
-                        id: "communication",
-                        name: "Communication",
-                        width: null,
-                        widthHint: FieldWidthHint.Fill,
-                        visible: true,
-                        enabled: true,
-                        showOldValueRestoreButton: false,
-                        validationTrigger: ValidationTrigger.OnChange,
-                        interactionMode: interactionMode,
-                        densityMode: densityMode,
-                        fieldChromeMode: chromeMode,
-                        captionPlacement: captionPlacement,
-                        captionKey: "Communication",
-                        showBorder: true,
-                        items: new ResolvedLayoutItemDefinition[]
-                        {
-                            new ResolvedRowDefinition(
-                                id: "communicationRow",
-                                name: "Communication row",
-                                width: null,
-                                widthHint: FieldWidthHint.Fill,
-                                visible: true,
-                                enabled: true,
-                                showOldValueRestoreButton: false,
-                                validationTrigger: ValidationTrigger.OnChange,
-                                interactionMode: interactionMode,
-                                densityMode: densityMode,
-                                fieldChromeMode: chromeMode,
-                                captionPlacement: captionPlacement,
-                                items: new ResolvedLayoutItemDefinition[]
-                                {
-                                    new ResolvedFieldReferenceDefinition("contactEmailRef", "Contact email ref", null, FieldWidthHint.Long, true, true, false, ValidationTrigger.OnChange, interactionMode, densityMode, chromeMode, captionPlacement, fieldMap["contactEmail"]),
-                                    new ResolvedFieldReferenceDefinition("ownerNameRef", "Owner ref", null, FieldWidthHint.Medium, true, true, false, ValidationTrigger.OnChange, interactionMode, densityMode, chromeMode, captionPlacement, fieldMap["ownerName"]),
-                                })
-                        }),
-                    new ResolvedContainerDefinition(
-                        id: "summaryContainer",
-                        name: "Operational summary",
-                        width: null,
-                        widthHint: FieldWidthHint.Fill,
-                        visible: true,
-                        enabled: true,
-                        showOldValueRestoreButton: false,
-                        validationTrigger: ValidationTrigger.OnChange,
-                        interactionMode: interactionMode,
-                        densityMode: densityMode,
-                        fieldChromeMode: chromeMode,
-                        captionPlacement: captionPlacement,
-                        captionKey: "Operational summary",
-                        showBorder: true,
-                        items: new ResolvedLayoutItemDefinition[]
-                        {
-                            new ResolvedFieldReferenceDefinition("summaryRef", "Summary ref", null, FieldWidthHint.Fill, true, true, false, ValidationTrigger.OnChange, interactionMode, densityMode, chromeMode, captionPlacement, fieldMap["summary"]),
-                            new ResolvedFieldReferenceDefinition("resolutionNotesRef", "Resolution notes ref", null, FieldWidthHint.Fill, true, true, false, ValidationTrigger.OnChange, interactionMode, densityMode, chromeMode, captionPlacement, fieldMap["resolutionNotes"]),
-                        }),
-                });
-
-            var actions = new List<ResolvedDocumentActionDefinition>
-            {
-                new ResolvedDocumentActionDefinition(
-                    new YamlDocumentActionDefinition
-                    {
-                        Id = "save",
-                        Name = "Save document",
-                        CaptionKey = "Save document",
-                        Enabled = true,
-                        Visible = true,
-                        Semantic = ActionSemantic.Ok,
-                    },
-                    visible: true,
-                    enabled: true),
-                new ResolvedDocumentActionDefinition(
-                    new YamlDocumentActionDefinition
-                    {
-                        Id = "cancel",
-                        Name = "Cancel",
-                        CaptionKey = "Cancel",
-                        Enabled = true,
-                        Visible = true,
-                        Semantic = ActionSemantic.Cancel,
-                    },
-                    visible: true,
-                    enabled: true),
-            };
-
-            return new ResolvedFormDocumentDefinition(
-                id: "ops-intake",
-                name: "Operational intake document",
-                kind: DocumentKind.Form,
-                width: null,
-                widthHint: FieldWidthHint.Fill,
-                visible: true,
-                enabled: true,
-                showOldValueRestoreButton: false,
-                validationTrigger: ValidationTrigger.OnChange,
-                interactionMode: interactionMode,
-                densityMode: densityMode,
-                fieldChromeMode: chromeMode,
-                captionPlacement: captionPlacement,
-                layout: layout,
-                actionAreas: Array.Empty<ResolvedActionAreaDefinition>(),
-                fields: fields,
-                actions: actions,
-                fieldMap: fieldMap);
+            await ApplyYamlActionTemplateAsync(template).ConfigureAwait(true);
         }
 
-        private static ResolvedFieldDefinition BuildResolvedField(
-            YamlStringFieldDefinition definition,
-            FieldWidthHint widthHint,
-            InteractionMode interactionMode,
-            DensityMode densityMode,
-            FieldChromeMode chromeMode,
-            CaptionPlacement captionPlacement,
-            bool showOldValueRestoreButton = false)
+        private async void HandleYamlDocumentInheritanceSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            return new ResolvedFieldDefinition(
-                definition,
-                width: null,
-                widthHint: widthHint,
-                visible: true,
-                enabled: true,
-                showOldValueRestoreButton: showOldValueRestoreButton,
-                validationTrigger: ValidationTrigger.OnChange,
-                interactionMode: interactionMode,
-                densityMode: densityMode,
-                fieldChromeMode: chromeMode,
-                captionPlacement: captionPlacement);
+            if (_isApplyingYamlDocumentInheritanceSelection)
+            {
+                return;
+            }
+
+            var option = YamlDocumentInheritanceComboBox == null
+                ? null
+                : YamlDocumentInheritanceComboBox.SelectedItem as YamlDocumentInheritanceOption;
+            if (option == null)
+            {
+                return;
+            }
+
+            await ApplyYamlDocumentInheritanceOptionAsync(option).ConfigureAwait(true);
         }
 
         private void SetYamlGeneratedFormDiagnostics(string text)
         {
-            YamlGeneratedFormDiagnosticsText = text ?? string.Empty;
+            var diagnosticText = string.IsNullOrWhiteSpace(text)
+                ? "Input log file: " + MonacoInputTrace.CurrentLogFilePath
+                : text + Environment.NewLine + "Input log file: " + MonacoInputTrace.CurrentLogFilePath;
+            YamlGeneratedFormDiagnosticsText = diagnosticText;
             HasYamlGeneratedFormDiagnostics = !string.IsNullOrWhiteSpace(YamlGeneratedFormDiagnosticsText);
         }
 
         private void ClearYamlGeneratedFormDiagnostics()
         {
-            YamlGeneratedFormDiagnosticsText = string.Empty;
-            HasYamlGeneratedFormDiagnostics = false;
+            SetYamlGeneratedFormDiagnostics(string.Empty);
         }
 
         private static string BuildYamlDiagnosticsText(string header, IReadOnlyList<string> diagnostics)
@@ -2510,7 +2529,12 @@ namespace PhialeTech.Components.Wpf
         {
             if (_viewModel != null && _viewModel.IsYamlActionsExample)
             {
-                return BuildYamlActionsDemoSample();
+                return GetSelectedOrDefaultYamlActionTemplate()?.YamlText ?? BuildYamlActionsDemoSample();
+            }
+
+            if (_viewModel != null && _viewModel.IsYamlDocumentExample)
+            {
+                return BuildYamlDocumentInheritanceSample(GetSelectedOrDefaultYamlDocumentInheritanceOption());
             }
 
             return BuildDefaultYamlGeneratedFormSample();
@@ -2518,9 +2542,17 @@ namespace PhialeTech.Components.Wpf
 
         private string BuildDefaultYamlEditorResultHint()
         {
-            return _viewModel != null && _viewModel.IsYamlActionsExample
-                ? "Wklej YAML definiujacy formatke z akcjami, kliknij Generate form, a wynik po kliknieciu akcji pojawi sie tutaj."
-                : "Wklej YAML, kliknij Generate form, a wynik po OK albo Anuluj pojawi sie tutaj.";
+            if (_viewModel != null && _viewModel.IsYamlActionsExample)
+            {
+                return "Wybierz shell formularza z biblioteki albo wklej wlasny YAML, kliknij Generate form, a wynik po kliknieciu akcji pojawi sie tutaj.";
+            }
+
+            if (_viewModel != null && _viewModel.IsYamlDocumentExample)
+            {
+                return "Ten przyklad pokazuje formularz dziedziczacy gotowy shell akcji. Zmien pola albo layout, kliknij Generate form i sprawdz wynik.";
+            }
+
+            return "Wklej YAML, kliknij Generate form, a wynik po OK albo Anuluj pojawi sie tutaj.";
         }
 
         private static string BuildYamlActionsDemoSample()
@@ -2542,6 +2574,7 @@ namespace PhialeTech.Components.Wpf
                 "    - id: headerActions",
                 "      placement: Top",
                 "      horizontalAlignment: Stretch",
+                "      chromeMode: Blended",
                 "      shared: true",
                 "      sticky: true",
                 "    - id: leftTools",
@@ -2551,6 +2584,7 @@ namespace PhialeTech.Components.Wpf
                 "    - id: footerPrimary",
                 "      placement: Bottom",
                 "      horizontalAlignment: Right",
+                "      chromeMode: Explicit",
                 "      shared: true",
                 "      sticky: true",
                 "    - id: rightHelp",
@@ -2581,40 +2615,104 @@ namespace PhialeTech.Components.Wpf
                 "    - id: help",
                 "      semantic: Help",
                 "      caption: Help",
+                "      iconKey: help",
                 "      area: headerActions",
                 "      slot: Start",
                 "      order: 10",
                 "    - id: docs",
                 "      semantic: Secondary",
                 "      caption: Documentation",
+                "      iconKey: document",
                 "      area: rightHelp",
                 "      slot: Start",
                 "      order: 10",
                 "    - id: history",
                 "      semantic: Secondary",
                 "      caption: History",
+                "      iconKey: history",
                 "      area: leftTools",
                 "      slot: Start",
                 "      order: 10",
                 "    - id: validate",
                 "      semantic: Apply",
                 "      caption: Validate",
+                "      iconKey: validate",
                 "      area: headerActions",
                 "      slot: End",
                 "      order: 20",
                 "    - id: cancel",
                 "      semantic: Cancel",
                 "      caption: Cancel",
+                "      iconKey: cancel",
                 "      area: footerPrimary",
                 "      slot: End",
                 "      order: 20",
                 "    - id: save",
                 "      semantic: Ok",
                 "      caption: Save document",
+                "      iconKey: save",
                 "      area: footerPrimary",
                 "      isPrimary: true",
                 "      slot: End",
                 "      order: 10",
+            });
+        }
+
+        private static string BuildYamlDocumentInheritanceSample(YamlDocumentInheritanceOption option)
+        {
+            var shell = option ?? BuildYamlDocumentInheritanceOptions().First();
+            var documentId = string.IsNullOrWhiteSpace(shell.SampleDocumentId) ? "review-request" : shell.SampleDocumentId;
+            var extendsId = string.IsNullOrWhiteSpace(shell.BaseDocumentId) ? "review-sticky-header-footer" : shell.BaseDocumentId;
+            var documentName = string.IsNullOrWhiteSpace(shell.SampleDisplayName) ? "Review request document" : shell.SampleDisplayName;
+
+            return string.Join(Environment.NewLine, new[]
+            {
+                "namespace: application.forms",
+                "imports:",
+                "  - domain.person",
+                "  - application.forms.actionShells",
+                "",
+                "document:",
+                "  id: " + documentId,
+                "  kind: Form",
+                "  extends: " + extendsId,
+                "  name: " + documentName,
+                "  topRegionChrome: Merged",
+                "  bottomRegionChrome: Merged",
+                "  header:",
+                "    title: Review request",
+                "    subtitle: Customer verification",
+                "    description: Validate personal details and notes before completing the review workflow.",
+                "    status: Draft",
+                "    context: Internal form",
+                "  footer:",
+                "    note: Fields marked with * are required.",
+                "    status: Draft saved locally",
+                "    source: Demo YAML runtime",
+                "  fields:",
+                "    - id: firstName",
+                "      extends: firstName",
+                "    - id: lastName",
+                "      extends: lastName",
+                "    - id: notes",
+                "      extends: notes",
+                "  layout:",
+                "    type: Column",
+                "    items:",
+                "      - type: Container",
+                "        caption: Reviewer",
+                "        showBorder: true",
+                "        variant: Compact",
+                "        items:",
+                "          - type: Row",
+                "            items:",
+                "              - fieldRef: firstName",
+                "              - fieldRef: lastName",
+                "      - type: Container",
+                "        caption: Review notes",
+                "        showBorder: true",
+                "        items:",
+                "          - fieldRef: notes",
             });
         }
 
@@ -2669,9 +2767,77 @@ namespace PhialeTech.Components.Wpf
             return string.Join(Environment.NewLine, lines);
         }
 
-        private void AttachYamlGeneratedFormEditorToActivePresenter()
+        private static HostedSurfaceRequest BuildHostedSurfaceRequest(string commandId)
         {
-            if (_yamlGeneratedFormMonacoEditor == null)
+            switch (commandId)
+            {
+                case "demo.modal.view.compact":
+                    return new HostedSurfaceRequest
+                    {
+                        SurfaceKind = HostedSurfaceKind.View,
+                        ContentKey = "demo.view.hosted-modal",
+                        PresentationMode = HostedPresentationMode.CompactModal,
+                        Size = HostedPresentationSize.Medium,
+                        Placement = HostedSheetPlacement.Center,
+                        Title = "Hosted WPF view",
+                        CanDismiss = true,
+                    };
+                case "demo.modal.view.sheet":
+                    return new HostedSurfaceRequest
+                    {
+                        SurfaceKind = HostedSurfaceKind.View,
+                        ContentKey = "demo.view.hosted-modal",
+                        PresentationMode = HostedPresentationMode.OverlaySheet,
+                        Size = HostedPresentationSize.Large,
+                        Placement = HostedSheetPlacement.Right,
+                        Title = "Workflow overlay view",
+                        CanDismiss = true,
+                    };
+                case "demo.modal.yaml.compact":
+                    return new HostedSurfaceRequest
+                    {
+                        SurfaceKind = HostedSurfaceKind.YamlDocument,
+                        ContentKey = "demo.yaml.hosted-modal",
+                        PresentationMode = HostedPresentationMode.CompactModal,
+                        Size = HostedPresentationSize.Medium,
+                        Placement = HostedSheetPlacement.Center,
+                        Title = "YamlApp compact modal",
+                        CanDismiss = true,
+                    };
+                case "demo.modal.yaml.sheet":
+                    return new HostedSurfaceRequest
+                    {
+                        SurfaceKind = HostedSurfaceKind.YamlDocument,
+                        ContentKey = "demo.yaml.hosted-modal",
+                        PresentationMode = HostedPresentationMode.OverlaySheet,
+                        Size = HostedPresentationSize.Large,
+                        Placement = HostedSheetPlacement.Right,
+                        Title = "YamlApp overlay sheet",
+                        CanDismiss = true,
+                    };
+                default:
+                    throw new InvalidOperationException("Unknown hosted modal command: " + commandId);
+            }
+        }
+
+        private static string FormatHostedModalResult(IHostedSurfaceResult result)
+        {
+            if (result == null)
+            {
+                return "Hosted modal closed without a result.";
+            }
+
+            return string.Format(
+                "Hosted modal result: {0}{1}Command: {2}{1}Session: {3}",
+                result.Outcome,
+                Environment.NewLine,
+                string.IsNullOrWhiteSpace(result.CommandId) ? "n/a" : result.CommandId,
+                string.IsNullOrWhiteSpace(result.SessionId) ? "n/a" : result.SessionId);
+        }
+
+        private void AttachYamlGeneratedFormEditorToActivePresenter(PhialeMonacoEditor editor)
+        {
+            if (editor == null)
             {
                 return;
             }
@@ -2690,7 +2856,8 @@ namespace PhialeTech.Components.Wpf
             {
                 if (YamlActionsEditorPresenter != null)
                 {
-                    YamlActionsEditorPresenter.Content = _yamlGeneratedFormMonacoEditor;
+                    YamlActionsEditorPresenter.Content = editor;
+                    MonacoInputTrace.Write("yaml.actions", "MainWindow", "editor attached to YamlActionsEditorPresenter");
                 }
 
                 return;
@@ -2698,7 +2865,340 @@ namespace PhialeTech.Components.Wpf
 
             if (YamlGeneratedFormEditorPresenter != null)
             {
-                YamlGeneratedFormEditorPresenter.Content = _yamlGeneratedFormMonacoEditor;
+                YamlGeneratedFormEditorPresenter.Content = editor;
+                MonacoInputTrace.Write("yaml.document", "MainWindow", "editor attached to YamlGeneratedFormEditorPresenter");
+            }
+        }
+
+        private void AttachMonacoEditorDiagnostics(PhialeMonacoEditor editor, string traceName)
+        {
+            if (editor == null || !_diagnosticMonacoEditors.Add(editor))
+            {
+                return;
+            }
+
+            editor.ReadyStateChanged += (_, args) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "ReadyStateChanged initialized=" + args.IsInitialized + " ready=" + args.IsReady);
+            editor.ErrorOccurred += (_, args) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "ErrorOccurred message=" + args.Message + " detail=" + args.Detail);
+            editor.Loaded += (_, __) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "Loaded");
+            editor.Unloaded += (_, __) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "Unloaded");
+            editor.PreviewMouseDown += (_, args) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "PreviewMouseDown button=" + args.ChangedButton);
+            editor.PreviewKeyDown += (_, args) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "PreviewKeyDown key=" + args.Key + " handled=" + args.Handled);
+            editor.PreviewKeyUp += (_, args) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "PreviewKeyUp key=" + args.Key + " handled=" + args.Handled);
+            editor.PreviewTextInput += (_, args) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "PreviewTextInput text=" + MonacoInputTrace.SafeSnippet(args.Text) + " handled=" + args.Handled);
+            editor.GotKeyboardFocus += (_, args) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "GotKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+            editor.LostKeyboardFocus += (_, args) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "LostKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+            editor.IsKeyboardFocusWithinChanged += (_, __) => MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "IsKeyboardFocusWithin=" + editor.IsKeyboardFocusWithin);
+
+            var hostField = typeof(PhialeMonacoEditor).GetField("_host", BindingFlags.Instance | BindingFlags.NonPublic);
+            var hostElement = hostField?.GetValue(editor) as UIElement;
+            if (hostElement == null)
+            {
+                MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "host reflection failed");
+                return;
+            }
+
+            MonacoInputTrace.Write(traceName, "PhialeMonacoEditor", "host type=" + hostElement.GetType().FullName);
+            hostElement.PreviewMouseDown += (_, args) => MonacoInputTrace.Write(traceName, "HostElement", "PreviewMouseDown button=" + args.ChangedButton);
+            hostElement.PreviewKeyDown += (_, args) => MonacoInputTrace.Write(traceName, "HostElement", "PreviewKeyDown key=" + args.Key + " handled=" + args.Handled);
+            hostElement.PreviewKeyUp += (_, args) => MonacoInputTrace.Write(traceName, "HostElement", "PreviewKeyUp key=" + args.Key + " handled=" + args.Handled);
+            hostElement.PreviewTextInput += (_, args) => MonacoInputTrace.Write(traceName, "HostElement", "PreviewTextInput text=" + MonacoInputTrace.SafeSnippet(args.Text) + " handled=" + args.Handled);
+            hostElement.GotKeyboardFocus += (_, args) => MonacoInputTrace.Write(traceName, "HostElement", "GotKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+            hostElement.LostKeyboardFocus += (_, args) => MonacoInputTrace.Write(traceName, "HostElement", "LostKeyboardFocus original=" + DescribeElement(args.OriginalSource as DependencyObject));
+            hostElement.IsKeyboardFocusWithinChanged += (_, __) => MonacoInputTrace.Write(traceName, "HostElement", "IsKeyboardFocusWithin=" + hostElement.IsKeyboardFocusWithin);
+        }
+
+        private void HandleWindowPreviewKeyDownDiagnostic(object sender, KeyEventArgs e)
+        {
+            if (!ShouldLogMonacoInput())
+            {
+                return;
+            }
+
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "PreviewKeyDown key=" + e.Key + " handled=" + e.Handled + " original=" + DescribeElement(e.OriginalSource as DependencyObject));
+        }
+
+        private void HandleWindowPreviewKeyUpDiagnostic(object sender, KeyEventArgs e)
+        {
+            if (!ShouldLogMonacoInput())
+            {
+                return;
+            }
+
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "PreviewKeyUp key=" + e.Key + " handled=" + e.Handled + " original=" + DescribeElement(e.OriginalSource as DependencyObject));
+        }
+
+        private void HandleWindowPreviewTextInputDiagnostic(object sender, TextCompositionEventArgs e)
+        {
+            if (!ShouldLogMonacoInput())
+            {
+                return;
+            }
+
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "PreviewTextInput text=" + MonacoInputTrace.SafeSnippet(e.Text) + " handled=" + e.Handled + " original=" + DescribeElement(e.OriginalSource as DependencyObject));
+        }
+
+        private void HandleWindowGotKeyboardFocusDiagnostic(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (!ShouldLogMonacoInput())
+            {
+                return;
+            }
+
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "GotKeyboardFocus original=" + DescribeElement(e.OriginalSource as DependencyObject) + " new=" + DescribeElement(e.NewFocus as DependencyObject));
+        }
+
+        private void HandleWindowLostKeyboardFocusDiagnostic(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (!ShouldLogMonacoInput())
+            {
+                return;
+            }
+
+            MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "LostKeyboardFocus original=" + DescribeElement(e.OriginalSource as DependencyObject) + " old=" + DescribeElement(e.OldFocus as DependencyObject));
+        }
+
+        private bool ShouldLogMonacoInput()
+        {
+            return (_viewModel != null && (_viewModel.ShowMonacoEditorSurface || _viewModel.IsYamlDocumentExample || _viewModel.IsYamlActionsExample));
+        }
+
+        private string GetActiveMonacoScenario()
+        {
+            if (_viewModel == null)
+            {
+                return "main.unknown";
+            }
+
+            if (_viewModel.ShowMonacoEditorSurface)
+            {
+                return "monaco.showcase";
+            }
+
+            if (_viewModel.IsYamlDocumentExample)
+            {
+                return "yaml.document";
+            }
+
+            if (_viewModel.IsYamlActionsExample)
+            {
+                return "yaml.actions";
+            }
+
+            return "main.other";
+        }
+
+        private static string DescribeElement(DependencyObject element)
+        {
+            if (element == null)
+            {
+                return "null";
+            }
+
+            if (element is FrameworkElement frameworkElement)
+            {
+                return frameworkElement.GetType().Name + "#" + (frameworkElement.Name ?? string.Empty);
+            }
+
+            return element.GetType().Name;
+        }
+
+
+        private YamlLibraryFormTemplateOption GetSelectedOrDefaultYamlActionTemplate()
+        {
+            if (YamlActionTemplateComboBox != null && YamlActionTemplateComboBox.SelectedItem is YamlLibraryFormTemplateOption selected)
+            {
+                return selected;
+            }
+
+            return _yamlLibraryFormTemplates.FirstOrDefault();
+        }
+
+        private YamlDocumentInheritanceOption GetSelectedOrDefaultYamlDocumentInheritanceOption()
+        {
+            if (YamlDocumentInheritanceComboBox != null && YamlDocumentInheritanceComboBox.SelectedItem is YamlDocumentInheritanceOption selected)
+            {
+                return selected;
+            }
+
+            return _yamlDocumentInheritanceOptions.FirstOrDefault();
+        }
+
+        private void SetSelectedYamlActionTemplate(YamlLibraryFormTemplateOption template)
+        {
+            if (YamlActionTemplateComboBox == null || template == null)
+            {
+                return;
+            }
+
+            _isApplyingYamlActionTemplateSelection = true;
+            try
+            {
+                YamlActionTemplateComboBox.SelectedItem = template;
+            }
+            finally
+            {
+                _isApplyingYamlActionTemplateSelection = false;
+            }
+        }
+
+        private void SetSelectedYamlDocumentInheritanceOption(YamlDocumentInheritanceOption option)
+        {
+            if (YamlDocumentInheritanceComboBox == null || option == null)
+            {
+                return;
+            }
+
+            _isApplyingYamlDocumentInheritanceSelection = true;
+            try
+            {
+                YamlDocumentInheritanceComboBox.SelectedItem = option;
+            }
+            finally
+            {
+                _isApplyingYamlDocumentInheritanceSelection = false;
+            }
+        }
+
+        private async Task ApplyYamlActionTemplateAsync(YamlLibraryFormTemplateOption template)
+        {
+            if (template == null)
+            {
+                return;
+            }
+
+            YamlGeneratedFormSourceText = template.YamlText ?? string.Empty;
+            IsYamlGeneratedFormVisible = false;
+            YamlDocumentRuntimeState = null;
+            ClearYamlGeneratedFormDiagnostics();
+            YamlDocumentLastResultText = BuildDefaultYamlEditorResultHint();
+
+            if (_yamlActionsMonacoEditor == null)
+            {
+                return;
+            }
+
+            _isUpdatingYamlGeneratedFormEditor = true;
+            try
+            {
+                await _yamlActionsMonacoEditor.SetValueAsync(YamlGeneratedFormSourceText).ConfigureAwait(true);
+            }
+            finally
+            {
+                _isUpdatingYamlGeneratedFormEditor = false;
+            }
+        }
+
+        private async Task ApplyYamlDocumentInheritanceOptionAsync(YamlDocumentInheritanceOption option)
+        {
+            if (option == null)
+            {
+                return;
+            }
+
+            YamlGeneratedFormSourceText = BuildYamlDocumentInheritanceSample(option);
+            IsYamlGeneratedFormVisible = false;
+            YamlDocumentRuntimeState = null;
+            ClearYamlGeneratedFormDiagnostics();
+            YamlDocumentLastResultText = BuildDefaultYamlEditorResultHint();
+
+            if (_yamlDocumentMonacoEditor == null)
+            {
+                return;
+            }
+
+            _isUpdatingYamlGeneratedFormEditor = true;
+            try
+            {
+                await _yamlDocumentMonacoEditor.SetValueAsync(YamlGeneratedFormSourceText).ConfigureAwait(true);
+            }
+            finally
+            {
+                _isUpdatingYamlGeneratedFormEditor = false;
+            }
+        }
+
+        private void DisposeYamlGeneratedFormMonacoEditor(ref PhialeMonacoEditor editor)
+        {
+            if (editor == null)
+            {
+                return;
+            }
+
+            editor.ContentChanged -= HandleYamlGeneratedFormMonacoContentChanged;
+            editor.Dispose();
+            editor = null;
+        }
+
+        private static IReadOnlyList<YamlLibraryFormTemplateOption> LoadYamlLibraryFormTemplates()
+        {
+            var assembly = typeof(YamlLibraryMarker).Assembly;
+            var compiler = new YamlComposedDocumentCompiler();
+            var templates = new List<YamlLibraryFormTemplateOption>();
+
+            foreach (var resourceName in assembly.GetManifestResourceNames()
+                .Where(name =>
+                    name.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase) &&
+                    name.IndexOf(".Definitions.application.forms.actionShells.", StringComparison.OrdinalIgnoreCase) >= 0)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
+            {
+                var yaml = ReadEmbeddedResourceText(assembly, resourceName);
+                if (string.IsNullOrWhiteSpace(yaml))
+                {
+                    continue;
+                }
+
+                var compiled = compiler.Compile(yaml, new[] { assembly }, "en");
+                if (!compiled.Success || !(compiled.Definition is YamlFormDocumentDefinition formDefinition))
+                {
+                    continue;
+                }
+
+                var displayName = string.IsNullOrWhiteSpace(formDefinition.Name)
+                    ? formDefinition.Id
+                    : formDefinition.Name;
+                templates.Add(new YamlLibraryFormTemplateOption(resourceName, formDefinition.Id, displayName, yaml));
+            }
+
+            return templates
+                .OrderBy(template => template.DisplayName, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        private static IReadOnlyList<YamlDocumentInheritanceOption> BuildYamlDocumentInheritanceOptions()
+        {
+            return new[]
+            {
+                new YamlDocumentInheritanceOption(
+                    "header-confirm-bar",
+                    "Header actions inheritance",
+                    "review-request-header",
+                    "Review request inheriting top actions"),
+                new YamlDocumentInheritanceOption(
+                    "confirm-footer-right",
+                    "Footer actions inheritance",
+                    "review-request-footer",
+                    "Review request inheriting footer actions"),
+                new YamlDocumentInheritanceOption(
+                    "review-sticky-header-footer",
+                    "Header and footer inheritance",
+                    "review-request-full",
+                    "Review request inheriting sticky header and footer")
+            };
+        }
+
+        private static string ReadEmbeddedResourceText(Assembly assembly, string resourceName)
+        {
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                {
+                    return string.Empty;
+                }
+
+                using (var reader = new StreamReader(stream))
+                {
+                    return reader.ReadToEnd();
+                }
             }
         }
 
@@ -2761,6 +3261,44 @@ namespace PhialeTech.Components.Wpf
             Baseline,
             EditedWinsOverCurrent,
             InvalidWinsOverEditedAndCurrent,
+        }
+
+        private sealed class YamlLibraryFormTemplateOption
+        {
+            public YamlLibraryFormTemplateOption(string resourceName, string documentId, string displayName, string yamlText)
+            {
+                ResourceName = resourceName ?? string.Empty;
+                DocumentId = documentId ?? string.Empty;
+                DisplayName = string.IsNullOrWhiteSpace(displayName) ? DocumentId : displayName;
+                YamlText = yamlText ?? string.Empty;
+            }
+
+            public string ResourceName { get; }
+
+            public string DocumentId { get; }
+
+            public string DisplayName { get; }
+
+            public string YamlText { get; }
+        }
+
+        private sealed class YamlDocumentInheritanceOption
+        {
+            public YamlDocumentInheritanceOption(string baseDocumentId, string displayName, string sampleDocumentId, string sampleDisplayName)
+            {
+                BaseDocumentId = baseDocumentId ?? string.Empty;
+                DisplayName = string.IsNullOrWhiteSpace(displayName) ? BaseDocumentId : displayName;
+                SampleDocumentId = sampleDocumentId ?? string.Empty;
+                SampleDisplayName = sampleDisplayName ?? string.Empty;
+            }
+
+            public string BaseDocumentId { get; }
+
+            public string DisplayName { get; }
+
+            public string SampleDocumentId { get; }
+
+            public string SampleDisplayName { get; }
         }
     }
 }

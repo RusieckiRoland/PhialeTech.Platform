@@ -38,6 +38,24 @@
     <sys:Double x:Key="Text.Label.FontSize">14</sys:Double>
     <FontFamily x:Key="Text.Support.FontFamily">Segoe UI</FontFamily>
     <sys:Double x:Key="Text.Support.FontSize">13</sys:Double>
+    <FontFamily x:Key="Text.FormTitle.FontFamily">Bahnschrift SemiBold</FontFamily>
+    <sys:Double x:Key="Text.FormTitle.FontSize">18</sys:Double>
+    <FontFamily x:Key="Text.FormSubtitle.FontFamily">Bahnschrift SemiBold</FontFamily>
+    <sys:Double x:Key="Text.FormSubtitle.FontSize">13</sys:Double>
+    <FontFamily x:Key="Text.FormDescription.FontFamily">Segoe UI</FontFamily>
+    <sys:Double x:Key="Text.FormDescription.FontSize">12</sys:Double>
+    <FontFamily x:Key="Text.FormMeta.FontFamily">Segoe UI</FontFamily>
+    <sys:Double x:Key="Text.FormMeta.FontSize">12</sys:Double>
+    <FontFamily x:Key="Text.FormSection.FontFamily">Bahnschrift SemiBold</FontFamily>
+    <sys:Double x:Key="Text.FormSection.FontSize">14</sys:Double>
+    <FontFamily x:Key="Text.FormFooter.FontFamily">Segoe UI</FontFamily>
+    <sys:Double x:Key="Text.FormFooter.FontSize">12</sys:Double>
+    <FontFamily x:Key="Text.Icon.FontFamily">Segoe MDL2 Assets</FontFamily>
+    <sys:Double x:Key="Text.Icon.FontSize">12</sys:Double>
+    <FontFamily x:Key="Text.Badge.FontFamily">Bahnschrift SemiBold</FontFamily>
+    <sys:Double x:Key="Text.Badge.FontSize">12</sys:Double>
+    <FontFamily x:Key="Text.Button.FontFamily">Bahnschrift SemiBold</FontFamily>
+    <sys:Double x:Key="Text.Button.FontSize">13</sys:Double>
 
     <FontFamily x:Key="YamlTextBox.Caption.FontFamily">Bahnschrift SemiBold</FontFamily>
     <sys:Double x:Key="YamlTextBox.Caption.FontSize">14</sys:Double>

@@ -38,7 +38,7 @@ namespace PhialeTech.Components.Wpf
 
             using (var document = new PdfDocument())
             {
-                document.Info.Title = string.IsNullOrWhiteSpace(documentTitle) ? "Design Foundations" : documentTitle;
+                document.Info.Title = string.IsNullOrWhiteSpace(documentTitle) ? "Preview foundations" : documentTitle;
 
                 var pagePrototype = document.AddPage();
                 pagePrototype.Size = PageSize.A4;

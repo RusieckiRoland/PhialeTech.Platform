@@ -82,6 +82,10 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 "densityMode",
                 "fieldChromeMode",
                 "captionPlacement",
+                "topRegionChrome",
+                "bottomRegionChrome",
+                "header",
+                "footer",
                 "actionAreas",
                 "fields",
                 "layout",
@@ -105,6 +109,10 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             form.DensityMode = ReadNullableEnum<DensityMode>(root, "densityMode");
             form.FieldChromeMode = ReadNullableEnum<FieldChromeMode>(root, "fieldChromeMode");
             form.CaptionPlacement = ReadNullableEnum<CaptionPlacement>(root, "captionPlacement");
+            form.TopRegionChrome = ReadNullableEnum<DocumentRegionChromeMode>(root, "topRegionChrome");
+            form.BottomRegionChrome = ReadNullableEnum<DocumentRegionChromeMode>(root, "bottomRegionChrome");
+            form.Header = ReadHeader(root, diagnostics);
+            form.Footer = ReadFooter(root, diagnostics);
             form.Layout = ReadLayout(root, diagnostics);
 
             ValidateNullableEnumValue<FieldWidthHint>(root, "widthHint", "Document", diagnostics);
@@ -113,6 +121,8 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             ValidateNullableEnumValue<DensityMode>(root, "densityMode", "Document", diagnostics);
             ValidateNullableEnumValue<FieldChromeMode>(root, "fieldChromeMode", "Document", diagnostics);
             ValidateNullableEnumValue<CaptionPlacement>(root, "captionPlacement", "Document", diagnostics);
+            ValidateNullableEnumValue<DocumentRegionChromeMode>(root, "topRegionChrome", "Document", diagnostics);
+            ValidateNullableEnumValue<DocumentRegionChromeMode>(root, "bottomRegionChrome", "Document", diagnostics);
             ValidateNullableEnumValue<DocumentKind>(root, "kind", "Document", diagnostics);
             ValidateExclusiveWidth("Document", form.Width, form.WidthHint, diagnostics);
 
@@ -158,6 +168,71 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             }
 
             return form;
+        }
+
+        private static YamlDocumentHeaderDefinition ReadHeader(YamlMappingNode root, List<string> diagnostics)
+        {
+            if (!TryGetMappingChild(root, "header", out var headerNode) || !(headerNode is YamlMappingNode headerMapping))
+            {
+                return null;
+            }
+
+            ValidateAllowedKeys(
+                headerMapping,
+                "Document header",
+                diagnostics,
+                "title",
+                "titleKey",
+                "subtitle",
+                "subtitleKey",
+                "description",
+                "descriptionKey",
+                "status",
+                "statusKey",
+                "context",
+                "contextKey",
+                "icon",
+                "iconKey",
+                "visible");
+
+            return new YamlDocumentHeaderDefinition
+            {
+                TitleKey = FirstNonEmpty(ReadScalar(headerMapping, "titleKey"), ReadScalar(headerMapping, "title")),
+                SubtitleKey = FirstNonEmpty(ReadScalar(headerMapping, "subtitleKey"), ReadScalar(headerMapping, "subtitle")),
+                DescriptionKey = FirstNonEmpty(ReadScalar(headerMapping, "descriptionKey"), ReadScalar(headerMapping, "description")),
+                StatusKey = FirstNonEmpty(ReadScalar(headerMapping, "statusKey"), ReadScalar(headerMapping, "status")),
+                ContextKey = FirstNonEmpty(ReadScalar(headerMapping, "contextKey"), ReadScalar(headerMapping, "context")),
+                IconKey = FirstNonEmpty(ReadScalar(headerMapping, "iconKey"), ReadScalar(headerMapping, "icon")),
+                Visible = ReadNullableBoolean(headerMapping, "visible")
+            };
+        }
+
+        private static YamlDocumentFooterDefinition ReadFooter(YamlMappingNode root, List<string> diagnostics)
+        {
+            if (!TryGetMappingChild(root, "footer", out var footerNode) || !(footerNode is YamlMappingNode footerMapping))
+            {
+                return null;
+            }
+
+            ValidateAllowedKeys(
+                footerMapping,
+                "Document footer",
+                diagnostics,
+                "note",
+                "noteKey",
+                "status",
+                "statusKey",
+                "source",
+                "sourceKey",
+                "visible");
+
+            return new YamlDocumentFooterDefinition
+            {
+                NoteKey = FirstNonEmpty(ReadScalar(footerMapping, "noteKey"), ReadScalar(footerMapping, "note")),
+                StatusKey = FirstNonEmpty(ReadScalar(footerMapping, "statusKey"), ReadScalar(footerMapping, "status")),
+                SourceKey = FirstNonEmpty(ReadScalar(footerMapping, "sourceKey"), ReadScalar(footerMapping, "source")),
+                Visible = ReadNullableBoolean(footerMapping, "visible")
+            };
         }
 
         private static IEnumerable<IFieldDefinition> ReadFields(YamlMappingNode root, List<string> diagnostics)
@@ -369,6 +444,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                     "name",
                     "placement",
                     "horizontalAlignment",
+                    "chromeMode",
                     "shared",
                     "sticky",
                     "visible");
@@ -380,6 +456,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                     Name = ReadScalar(areaNode, "name"),
                     Placement = ReadNullableEnum<ActionPlacement>(areaNode, "placement"),
                     HorizontalAlignment = ReadNullableEnum<ActionAlignment>(areaNode, "horizontalAlignment"),
+                    ChromeMode = ReadNullableEnum<ActionAreaChromeMode>(areaNode, "chromeMode"),
                     Shared = ReadNullableBoolean(areaNode, "shared"),
                     Sticky = ReadNullableBoolean(areaNode, "sticky"),
                     Visible = ReadNullableBoolean(areaNode, "visible")
@@ -387,6 +464,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
 
                 ValidateNullableEnumValue<ActionPlacement>(areaNode, "placement", string.Format(CultureInfo.InvariantCulture, "Action area '{0}'", area.Id ?? "<unknown>"), diagnostics);
                 ValidateNullableEnumValue<ActionAlignment>(areaNode, "horizontalAlignment", string.Format(CultureInfo.InvariantCulture, "Action area '{0}'", area.Id ?? "<unknown>"), diagnostics);
+                ValidateNullableEnumValue<ActionAreaChromeMode>(areaNode, "chromeMode", string.Format(CultureInfo.InvariantCulture, "Action area '{0}'", area.Id ?? "<unknown>"), diagnostics);
 
                 if (string.IsNullOrWhiteSpace(area.Name))
                 {
@@ -651,7 +729,8 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 "items",
                 "caption",
                 "captionKey",
-                "showBorder");
+                "showBorder",
+                "variant");
 
             if (TryGetMappingChild(itemNode, "field", out var inlineFieldNode))
             {
@@ -706,6 +785,10 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                     return ParseColumn(itemNode, diagnostics);
                 case "Container":
                     return ParseContainer(itemNode, diagnostics);
+                case "Badge":
+                    return ParseBadge(itemNode, diagnostics);
+                case "Button":
+                    return ParseButton(itemNode, diagnostics);
                 default:
                     diagnostics.Add(string.Format(CultureInfo.InvariantCulture, "Unsupported layout item type '{0}'.", type));
                     return null;
@@ -805,6 +888,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 WidthHint = ReadNullableEnum<FieldWidthHint>(itemNode, "widthHint"),
                 Weight = ReadNullableDouble(itemNode, "weight"),
                 ShowBorder = ReadBoolean(itemNode, "showBorder", true),
+                Variant = ReadNullableEnum<ContainerVariant>(itemNode, "variant"),
                 Visible = ReadNullableBoolean(itemNode, "visible"),
                 Enabled = ReadNullableBoolean(itemNode, "enabled"),
                 ShowOldValueRestoreButton = ReadNullableBoolean(itemNode, "showOldValueRestoreButton"),
@@ -822,6 +906,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             ValidateNullableEnumValue<DensityMode>(itemNode, "densityMode", containerScope, diagnostics);
             ValidateNullableEnumValue<FieldChromeMode>(itemNode, "fieldChromeMode", containerScope, diagnostics);
             ValidateNullableEnumValue<CaptionPlacement>(itemNode, "captionPlacement", containerScope, diagnostics);
+            ValidateNullableEnumValue<ContainerVariant>(itemNode, "variant", containerScope, diagnostics);
             ValidateExclusiveWidth(containerScope, container.Width, container.WidthHint, diagnostics);
 
             if (string.IsNullOrWhiteSpace(container.Name))
@@ -835,6 +920,168 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             }
 
             return container;
+        }
+
+        private static YamlBadgeDefinition ParseBadge(YamlMappingNode itemNode, List<string> diagnostics)
+        {
+            var badge = new YamlBadgeDefinition
+            {
+                Id = ReadScalar(itemNode, "id"),
+                Name = ReadScalar(itemNode, "name"),
+                TextKey = FirstNonEmpty(ReadScalar(itemNode, "textKey"), ReadScalar(itemNode, "text")),
+                IconKey = FirstNonEmpty(ReadScalar(itemNode, "iconKey"), ReadScalar(itemNode, "icon")),
+                ToolTipKey = FirstNonEmpty(
+                    FirstNonEmpty(ReadScalar(itemNode, "toolTipKey"), ReadScalar(itemNode, "tooltipKey")),
+                    FirstNonEmpty(ReadScalar(itemNode, "toolTip"), ReadScalar(itemNode, "tooltip"))),
+                Tone = ReadNullableEnum<BadgeTone>(itemNode, "tone"),
+                Variant = ReadNullableEnum<BadgeVariant>(itemNode, "variant"),
+                Size = ReadNullableEnum<BadgeSize>(itemNode, "size"),
+                IconPlacement = ReadNullableEnum<IconPlacement>(itemNode, "iconPlacement"),
+                Width = ReadNullableDouble(itemNode, "width"),
+                WidthHint = ReadNullableEnum<FieldWidthHint>(itemNode, "widthHint"),
+                Weight = ReadNullableDouble(itemNode, "weight"),
+                Visible = ReadNullableBoolean(itemNode, "visible"),
+                Enabled = ReadNullableBoolean(itemNode, "enabled"),
+                ShowOldValueRestoreButton = ReadNullableBoolean(itemNode, "showOldValueRestoreButton"),
+                ValidationTrigger = ReadNullableEnum<ValidationTrigger>(itemNode, "validationTrigger"),
+                InteractionMode = ReadNullableEnum<InteractionMode>(itemNode, "interactionMode"),
+                DensityMode = ReadNullableEnum<DensityMode>(itemNode, "densityMode"),
+                FieldChromeMode = ReadNullableEnum<FieldChromeMode>(itemNode, "fieldChromeMode"),
+                CaptionPlacement = ReadNullableEnum<CaptionPlacement>(itemNode, "captionPlacement")
+            };
+
+            var badgeScope = string.Format(CultureInfo.InvariantCulture, "Badge '{0}'", FirstNonEmpty(badge.Id, badge.Name) ?? "<unnamed>");
+            ValidateAllowedKeys(
+                itemNode,
+                badgeScope,
+                diagnostics,
+                "type",
+                "id",
+                "name",
+                "text",
+                "textKey",
+                "icon",
+                "iconKey",
+                "toolTip",
+                "toolTipKey",
+                "tooltip",
+                "tooltipKey",
+                "tone",
+                "variant",
+                "size",
+                "iconPlacement",
+                "width",
+                "widthHint",
+                "weight",
+                "visible",
+                "enabled",
+                "showOldValueRestoreButton",
+                "validationTrigger",
+                "interactionMode",
+                "densityMode",
+                "fieldChromeMode",
+                "captionPlacement");
+
+            ValidateNullableEnumValue<BadgeTone>(itemNode, "tone", badgeScope, diagnostics);
+            ValidateNullableEnumValue<BadgeVariant>(itemNode, "variant", badgeScope, diagnostics);
+            ValidateNullableEnumValue<BadgeSize>(itemNode, "size", badgeScope, diagnostics);
+            ValidateNullableEnumValue<IconPlacement>(itemNode, "iconPlacement", badgeScope, diagnostics);
+            ValidateNullableEnumValue<FieldWidthHint>(itemNode, "widthHint", badgeScope, diagnostics);
+            ValidateNullableEnumValue<ValidationTrigger>(itemNode, "validationTrigger", badgeScope, diagnostics);
+            ValidateNullableEnumValue<InteractionMode>(itemNode, "interactionMode", badgeScope, diagnostics);
+            ValidateNullableEnumValue<DensityMode>(itemNode, "densityMode", badgeScope, diagnostics);
+            ValidateNullableEnumValue<FieldChromeMode>(itemNode, "fieldChromeMode", badgeScope, diagnostics);
+            ValidateNullableEnumValue<CaptionPlacement>(itemNode, "captionPlacement", badgeScope, diagnostics);
+            ValidateExclusiveWidth(badgeScope, badge.Width, badge.WidthHint, diagnostics);
+
+            if (string.IsNullOrWhiteSpace(badge.Name))
+            {
+                badge.Name = badge.Id;
+            }
+
+            return badge;
+        }
+
+        private static YamlButtonDefinition ParseButton(YamlMappingNode itemNode, List<string> diagnostics)
+        {
+            var button = new YamlButtonDefinition
+            {
+                Id = ReadScalar(itemNode, "id"),
+                Name = ReadScalar(itemNode, "name"),
+                TextKey = FirstNonEmpty(ReadScalar(itemNode, "textKey"), ReadScalar(itemNode, "text")),
+                IconKey = FirstNonEmpty(ReadScalar(itemNode, "iconKey"), ReadScalar(itemNode, "icon")),
+                ToolTipKey = FirstNonEmpty(
+                    FirstNonEmpty(ReadScalar(itemNode, "toolTipKey"), ReadScalar(itemNode, "tooltipKey")),
+                    FirstNonEmpty(ReadScalar(itemNode, "toolTip"), ReadScalar(itemNode, "tooltip"))),
+                CommandId = FirstNonEmpty(ReadScalar(itemNode, "commandId"), ReadScalar(itemNode, "id")),
+                Tone = ReadNullableEnum<ButtonTone>(itemNode, "tone"),
+                Variant = ReadNullableEnum<ButtonVariant>(itemNode, "variant"),
+                Size = ReadNullableEnum<ButtonSize>(itemNode, "size"),
+                IconPlacement = ReadNullableEnum<IconPlacement>(itemNode, "iconPlacement"),
+                Width = ReadNullableDouble(itemNode, "width"),
+                WidthHint = ReadNullableEnum<FieldWidthHint>(itemNode, "widthHint"),
+                Weight = ReadNullableDouble(itemNode, "weight"),
+                Visible = ReadNullableBoolean(itemNode, "visible"),
+                Enabled = ReadNullableBoolean(itemNode, "enabled"),
+                ShowOldValueRestoreButton = ReadNullableBoolean(itemNode, "showOldValueRestoreButton"),
+                ValidationTrigger = ReadNullableEnum<ValidationTrigger>(itemNode, "validationTrigger"),
+                InteractionMode = ReadNullableEnum<InteractionMode>(itemNode, "interactionMode"),
+                DensityMode = ReadNullableEnum<DensityMode>(itemNode, "densityMode"),
+                FieldChromeMode = ReadNullableEnum<FieldChromeMode>(itemNode, "fieldChromeMode"),
+                CaptionPlacement = ReadNullableEnum<CaptionPlacement>(itemNode, "captionPlacement")
+            };
+
+            var buttonScope = string.Format(CultureInfo.InvariantCulture, "Button '{0}'", FirstNonEmpty(button.Id, button.Name) ?? "<unnamed>");
+            ValidateAllowedKeys(
+                itemNode,
+                buttonScope,
+                diagnostics,
+                "type",
+                "id",
+                "name",
+                "text",
+                "textKey",
+                "icon",
+                "iconKey",
+                "toolTip",
+                "toolTipKey",
+                "tooltip",
+                "tooltipKey",
+                "commandId",
+                "tone",
+                "variant",
+                "size",
+                "iconPlacement",
+                "width",
+                "widthHint",
+                "weight",
+                "visible",
+                "enabled",
+                "showOldValueRestoreButton",
+                "validationTrigger",
+                "interactionMode",
+                "densityMode",
+                "fieldChromeMode",
+                "captionPlacement");
+
+            ValidateNullableEnumValue<ButtonTone>(itemNode, "tone", buttonScope, diagnostics);
+            ValidateNullableEnumValue<ButtonVariant>(itemNode, "variant", buttonScope, diagnostics);
+            ValidateNullableEnumValue<ButtonSize>(itemNode, "size", buttonScope, diagnostics);
+            ValidateNullableEnumValue<IconPlacement>(itemNode, "iconPlacement", buttonScope, diagnostics);
+            ValidateNullableEnumValue<FieldWidthHint>(itemNode, "widthHint", buttonScope, diagnostics);
+            ValidateNullableEnumValue<ValidationTrigger>(itemNode, "validationTrigger", buttonScope, diagnostics);
+            ValidateNullableEnumValue<InteractionMode>(itemNode, "interactionMode", buttonScope, diagnostics);
+            ValidateNullableEnumValue<DensityMode>(itemNode, "densityMode", buttonScope, diagnostics);
+            ValidateNullableEnumValue<FieldChromeMode>(itemNode, "fieldChromeMode", buttonScope, diagnostics);
+            ValidateNullableEnumValue<CaptionPlacement>(itemNode, "captionPlacement", buttonScope, diagnostics);
+            ValidateExclusiveWidth(buttonScope, button.Width, button.WidthHint, diagnostics);
+
+            if (string.IsNullOrWhiteSpace(button.Name))
+            {
+                button.Name = button.Id;
+            }
+
+            return button;
         }
 
         private static string ReadScalar(YamlMappingNode node, string key)

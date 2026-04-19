@@ -152,6 +152,85 @@ namespace PhialeTech.Components.Shared.Services
             };
         }
 
+        public IReadOnlyList<DemoFoundationColorTokenViewModel> BuildFormShellTokens(string languageCode)
+        {
+            var polish = IsPolish(languageCode);
+            return new[]
+            {
+                new DemoFoundationColorTokenViewModel(
+                    "Brush.FormShell.HeaderBackground",
+                    polish ? "Tło nagłówka formatki: meta, tytuł i opis." : "Form header background: metadata, title and description.",
+                    "#F0F3F7",
+                    "#242B36"),
+                new DemoFoundationColorTokenViewModel(
+                    "Brush.FormShell.TopActionBackground",
+                    polish ? "Tło górnego paska akcji i narzędzi dokumentu." : "Top action bar background for document tools and commands.",
+                    "#F8FAFC",
+                    "#1E232D"),
+                new DemoFoundationColorTokenViewModel(
+                    "Brush.FormShell.ContentBackground",
+                    polish ? "Główna powierzchnia robocza dla layoutu i pól." : "Primary working surface for layout and editable fields.",
+                    "#FFFFFF",
+                    "#171C25"),
+                new DemoFoundationColorTokenViewModel(
+                    "Brush.FormShell.BottomActionBackground",
+                    polish ? "Tło dolnego paska akcji i commit stripu." : "Bottom action bar background for commit actions.",
+                    "#F8FAFC",
+                    "#1E232D"),
+                new DemoFoundationColorTokenViewModel(
+                    "Brush.FormShell.FooterBackground",
+                    polish ? "Tło stopki: noty, status i dolny chrome." : "Footer background: notes, status and bottom chrome.",
+                    "#F0F3F7",
+                    "#242B36"),
+                new DemoFoundationColorTokenViewModel(
+                    "Brush.FormShell.RegionBorder",
+                    polish ? "Obramowanie regionów i zewnętrzny kontur formatki." : "Region border and outer form shell outline.",
+                    "#D3D9E1",
+                    "#3E4657"),
+                new DemoFoundationColorTokenViewModel(
+                    "Brush.FormShell.Divider",
+                    polish ? "Delikatne separatory między headerem, contentem i footerem." : "Subtle dividers between header, content and footer.",
+                    "#E4E7EC",
+                    "#343C4B"),
+            };
+        }
+
+        public IReadOnlyList<DemoFoundationMeasureTokenViewModel> BuildFormShellSpacingTokens(string languageCode)
+        {
+            var polish = IsPolish(languageCode);
+            return new[]
+            {
+                new DemoFoundationMeasureTokenViewModel(
+                    "Thickness.FormShell.HeaderPadding",
+                    "24,18,24,14",
+                    polish ? "Inset regionu Header: metadata, tytuł i opis." : "Inset for the Header region: metadata, title and description."),
+                new DemoFoundationMeasureTokenViewModel(
+                    "Thickness.FormShell.TopActionPadding",
+                    "24,12,24,16",
+                    polish ? "Inset górnego paska akcji i narzędzi dokumentu." : "Inset for the top action panel and document tools."),
+                new DemoFoundationMeasureTokenViewModel(
+                    "Thickness.FormShell.TopActionMergedPadding",
+                    "24,0,24,16",
+                    polish ? "Inset górnych akcji, gdy panel wtapia się w nagłówek." : "Inset for top actions when the panel is merged into the header."),
+                new DemoFoundationMeasureTokenViewModel(
+                    "Thickness.FormShell.LayoutPadding",
+                    "24,20,24,20",
+                    polish ? "Główny oddech regionu Layout i pól edycyjnych." : "Primary breathing room for the Layout region and editable fields."),
+                new DemoFoundationMeasureTokenViewModel(
+                    "Thickness.FormShell.BottomActionPadding",
+                    "24,12,24,12",
+                    polish ? "Inset dolnego paska commit actions." : "Inset for the bottom commit action panel."),
+                new DemoFoundationMeasureTokenViewModel(
+                    "Thickness.FormShell.BottomActionMergedPadding",
+                    "24,12,24,8",
+                    polish ? "Inset dolnych akcji, gdy panel wtapia się w footer." : "Inset for bottom actions when the panel is merged into the footer."),
+                new DemoFoundationMeasureTokenViewModel(
+                    "Thickness.FormShell.FooterPadding",
+                    "24,12,24,16",
+                    polish ? "Inset stopki: noty, status i dolny chrome." : "Inset for the footer: notes, status and bottom chrome."),
+            };
+        }
+
         public IReadOnlyList<DemoFoundationColorTokenViewModel> BuildAccentTokens(string languageCode)
         {
             var polish = IsPolish(languageCode);
@@ -257,6 +336,30 @@ namespace PhialeTech.Components.Shared.Services
         public string GetAccentColorsTitle(string languageCode)
         {
             return IsPolish(languageCode) ? "Akcenty / statusy" : "Accents / states";
+        }
+
+        public string GetFormShellColorsTitle(string languageCode)
+        {
+            return IsPolish(languageCode) ? "Kolory FormShell" : "FormShell colors";
+        }
+
+        public string GetFormShellColorsDescription(string languageCode)
+        {
+            return IsPolish(languageCode)
+                ? "Globalne role powierzchni dla pięciu regionów shella: nagłówek, górny pasek akcji, layout, dolny pasek akcji i stopka."
+                : "Global surface roles for the five shell regions: header, top action bar, layout, bottom action bar and footer.";
+        }
+
+        public string GetFormShellSpacingTitle(string languageCode)
+        {
+            return IsPolish(languageCode) ? "Spacing FormShell" : "FormShell spacing";
+        }
+
+        public string GetFormShellSpacingDescription(string languageCode)
+        {
+            return IsPolish(languageCode)
+                ? "Te tokeny thickness sterują paddingiem pięciu regionów shella i muszą być wspólne dla design systemu oraz prawdziwej formatki."
+                : "These thickness tokens drive the padding of the five shell regions and must be shared by the design system and the real form.";
         }
 
         public string GetShapesTitle(string languageCode)

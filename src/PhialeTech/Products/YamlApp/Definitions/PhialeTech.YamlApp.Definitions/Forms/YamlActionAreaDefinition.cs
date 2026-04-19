@@ -15,6 +15,8 @@ namespace PhialeTech.YamlApp.Definitions.Documents
 
         public ActionAlignment? HorizontalAlignment { get; set; }
 
+        public ActionAreaChromeMode? ChromeMode { get; set; }
+
         public bool? Shared { get; set; }
 
         public bool? Sticky { get; set; }

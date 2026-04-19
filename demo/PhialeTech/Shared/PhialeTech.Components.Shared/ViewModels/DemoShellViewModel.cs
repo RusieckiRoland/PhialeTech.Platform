@@ -47,6 +47,8 @@ namespace PhialeTech.Components.Shared.ViewModels
         private IReadOnlyList<DemoFoundationTypographyTokenViewModel> _foundationsTypographyTokens;
         private IReadOnlyList<DemoFoundationColorTokenViewModel> _foundationsTextColorTokens;
         private IReadOnlyList<DemoFoundationColorTokenViewModel> _foundationsSurfaceTokens;
+        private IReadOnlyList<DemoFoundationColorTokenViewModel> _foundationsFormShellTokens;
+        private IReadOnlyList<DemoFoundationMeasureTokenViewModel> _foundationsFormShellSpacingTokens;
         private IReadOnlyList<DemoFoundationColorTokenViewModel> _foundationsAccentTokens;
         private IReadOnlyList<DemoFoundationMeasureTokenViewModel> _foundationsShapeTokens;
         private IReadOnlyList<DemoFoundationMeasureTokenViewModel> _foundationsSpacingTokens;
@@ -114,6 +116,8 @@ namespace PhialeTech.Components.Shared.ViewModels
             _foundationsTypographyTokens = Array.Empty<DemoFoundationTypographyTokenViewModel>();
             _foundationsTextColorTokens = Array.Empty<DemoFoundationColorTokenViewModel>();
             _foundationsSurfaceTokens = Array.Empty<DemoFoundationColorTokenViewModel>();
+            _foundationsFormShellTokens = Array.Empty<DemoFoundationColorTokenViewModel>();
+            _foundationsFormShellSpacingTokens = Array.Empty<DemoFoundationMeasureTokenViewModel>();
             _foundationsAccentTokens = Array.Empty<DemoFoundationColorTokenViewModel>();
             _foundationsShapeTokens = Array.Empty<DemoFoundationMeasureTokenViewModel>();
             _foundationsSpacingTokens = Array.Empty<DemoFoundationMeasureTokenViewModel>();
@@ -234,6 +238,18 @@ namespace PhialeTech.Components.Shared.ViewModels
         {
             get => _foundationsSurfaceTokens;
             private set => SetProperty(ref _foundationsSurfaceTokens, value ?? Array.Empty<DemoFoundationColorTokenViewModel>());
+        }
+
+        public IReadOnlyList<DemoFoundationColorTokenViewModel> FoundationsFormShellTokens
+        {
+            get => _foundationsFormShellTokens;
+            private set => SetProperty(ref _foundationsFormShellTokens, value ?? Array.Empty<DemoFoundationColorTokenViewModel>());
+        }
+
+        public IReadOnlyList<DemoFoundationMeasureTokenViewModel> FoundationsFormShellSpacingTokens
+        {
+            get => _foundationsFormShellSpacingTokens;
+            private set => SetProperty(ref _foundationsFormShellSpacingTokens, value ?? Array.Empty<DemoFoundationMeasureTokenViewModel>());
         }
 
         public IReadOnlyList<DemoFoundationColorTokenViewModel> FoundationsAccentTokens
@@ -615,6 +631,8 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public string CodeTabText => Localize(DemoTextKeys.ShellCodeTab);
 
+        public string ExplanationTabText => Localize(DemoTextKeys.ShellExplanationTab);
+
         public string FileLabelText => Localize(DemoTextKeys.ShellFileLabel);
 
         public string LanguageLabelText => Localize(DemoTextKeys.ShellLanguageLabel);
@@ -648,6 +666,16 @@ namespace PhialeTech.Components.Shared.ViewModels
         public string WebComponentsComponentText => Localize(DemoTextKeys.ShellComponentWebComponents);
 
         public string WebComponentsComponentDescription => Localize(DemoTextKeys.ShellComponentWebComponentsDescription);
+
+        public string WebComponentsScrollHostTitle => Localize(DemoTextKeys.WebComponentsScrollHostTitle);
+
+        public string WebComponentsScrollHostDescription => Localize(DemoTextKeys.WebComponentsScrollHostDescription);
+
+        public string WebComponentsScrollHostPointOne => Localize(DemoTextKeys.WebComponentsScrollHostPointOne);
+
+        public string WebComponentsScrollHostPointTwo => Localize(DemoTextKeys.WebComponentsScrollHostPointTwo);
+
+        public string WebComponentsScrollHostPointThree => Localize(DemoTextKeys.WebComponentsScrollHostPointThree);
 
         public string YamlUiComponentText => Localize(DemoTextKeys.ShellComponentYamlUi);
 
@@ -941,6 +969,14 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public string FoundationsSurfaceColorsTitle => _designFoundationsCatalog.GetSurfaceColorsTitle(LanguageCode);
 
+        public string FoundationsFormShellColorsTitle => _designFoundationsCatalog.GetFormShellColorsTitle(LanguageCode);
+
+        public string FoundationsFormShellColorsDescription => _designFoundationsCatalog.GetFormShellColorsDescription(LanguageCode);
+
+        public string FoundationsFormShellSpacingTitle => _designFoundationsCatalog.GetFormShellSpacingTitle(LanguageCode);
+
+        public string FoundationsFormShellSpacingDescription => _designFoundationsCatalog.GetFormShellSpacingDescription(LanguageCode);
+
         public string FoundationsAccentColorsTitle => _designFoundationsCatalog.GetAccentColorsTitle(LanguageCode);
 
         public string FoundationsShapesTitle => _designFoundationsCatalog.GetShapesTitle(LanguageCode);
@@ -1063,11 +1099,11 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public bool IsYamlInputsExample => SelectedExample != null && string.Equals(SelectedExample.Id, "yaml-inputs", StringComparison.OrdinalIgnoreCase);
 
+        public bool IsYamlPrimitivesExample => SelectedExample != null && string.Equals(SelectedExample.Id, "yaml-primitives", StringComparison.OrdinalIgnoreCase);
+
         public bool IsYamlDocumentExample => SelectedExample != null && string.Equals(SelectedExample.Id, "yaml-document", StringComparison.OrdinalIgnoreCase);
 
         public bool IsYamlActionsExample => SelectedExample != null && string.Equals(SelectedExample.Id, "yaml-actions", StringComparison.OrdinalIgnoreCase);
-
-        public bool IsYamlGenerateFormExample => SelectedExample != null && string.Equals(SelectedExample.Id, "yaml-generate-form", StringComparison.OrdinalIgnoreCase);
 
         public bool IsYamlDocumentSurfaceExample => IsYamlDocumentExample || IsYamlActionsExample;
 
@@ -1082,6 +1118,8 @@ namespace PhialeTech.Components.Shared.ViewModels
         public bool IsReportDesignerExample => SelectedExample != null && string.Equals(SelectedExample.Id, "report-designer", StringComparison.OrdinalIgnoreCase);
 
         public bool IsMonacoEditorExample => SelectedExample != null && string.Equals(SelectedExample.Id, "monaco-editor", StringComparison.OrdinalIgnoreCase);
+
+        public bool IsWebComponentScrollHostExample => SelectedExample != null && string.Equals(SelectedExample.Id, "web-component-scroll-host", StringComparison.OrdinalIgnoreCase);
 
         public bool IsMyLicenseExample => SelectedExample != null && string.Equals(SelectedExample.Id, "my-license", StringComparison.OrdinalIgnoreCase);
 
@@ -1099,7 +1137,9 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public bool ShowYamlUiSurface => IsYamlUiExample;
 
-        public bool ShowWebComponentsSurface => IsWebHostExample || IsPdfViewerExample || IsReportDesignerExample || IsMonacoEditorExample;
+        public bool ShowWebComponentsSurface => IsWebHostExample || IsPdfViewerExample || IsReportDesignerExample || IsMonacoEditorExample || IsWebComponentScrollHostExample;
+
+        public bool ShowWebComponentsExplanationTab => IsWebComponentsExample;
 
         public bool ShowWebHostSurface => IsWebHostExample;
 
@@ -1408,6 +1448,8 @@ namespace PhialeTech.Components.Shared.ViewModels
             FoundationsTypographyTokens = _designFoundationsCatalog.BuildTypographyTokens(LanguageCode);
             FoundationsTextColorTokens = _designFoundationsCatalog.BuildTextColorTokens(LanguageCode);
             FoundationsSurfaceTokens = _designFoundationsCatalog.BuildSurfaceTokens(LanguageCode);
+            FoundationsFormShellTokens = _designFoundationsCatalog.BuildFormShellTokens(LanguageCode);
+            FoundationsFormShellSpacingTokens = _designFoundationsCatalog.BuildFormShellSpacingTokens(LanguageCode);
             FoundationsAccentTokens = _designFoundationsCatalog.BuildAccentTokens(LanguageCode);
             FoundationsShapeTokens = _designFoundationsCatalog.BuildShapeTokens(LanguageCode);
             FoundationsSpacingTokens = _designFoundationsCatalog.BuildSpacingTokens(LanguageCode);
@@ -2203,6 +2245,7 @@ namespace PhialeTech.Components.Shared.ViewModels
             OnPropertyChanged(nameof(BackToOverviewText));
             OnPropertyChanged(nameof(DemoTabText));
             OnPropertyChanged(nameof(CodeTabText));
+            OnPropertyChanged(nameof(ExplanationTabText));
             OnPropertyChanged(nameof(FileLabelText));
             OnPropertyChanged(nameof(LanguageLabelText));
             OnPropertyChanged(nameof(ThemeLabelText));
@@ -2214,6 +2257,11 @@ namespace PhialeTech.Components.Shared.ViewModels
             OnPropertyChanged(nameof(ArchitectureComponentDescription));
             OnPropertyChanged(nameof(WebComponentsComponentText));
             OnPropertyChanged(nameof(WebComponentsComponentDescription));
+            OnPropertyChanged(nameof(WebComponentsScrollHostTitle));
+            OnPropertyChanged(nameof(WebComponentsScrollHostDescription));
+            OnPropertyChanged(nameof(WebComponentsScrollHostPointOne));
+            OnPropertyChanged(nameof(WebComponentsScrollHostPointTwo));
+            OnPropertyChanged(nameof(WebComponentsScrollHostPointThree));
             OnPropertyChanged(nameof(YamlUiComponentText));
             OnPropertyChanged(nameof(YamlUiComponentDescription));
             OnPropertyChanged(nameof(LicenseComponentText));
@@ -2267,6 +2315,10 @@ namespace PhialeTech.Components.Shared.ViewModels
             OnPropertyChanged(nameof(FoundationsRhythmDescription));
             OnPropertyChanged(nameof(FoundationsTextColorsTitle));
             OnPropertyChanged(nameof(FoundationsSurfaceColorsTitle));
+            OnPropertyChanged(nameof(FoundationsFormShellColorsTitle));
+            OnPropertyChanged(nameof(FoundationsFormShellColorsDescription));
+            OnPropertyChanged(nameof(FoundationsFormShellSpacingTitle));
+            OnPropertyChanged(nameof(FoundationsFormShellSpacingDescription));
             OnPropertyChanged(nameof(FoundationsAccentColorsTitle));
             OnPropertyChanged(nameof(FoundationsShapesTitle));
             OnPropertyChanged(nameof(FoundationsSpacingTitle));
@@ -2415,15 +2467,16 @@ namespace PhialeTech.Components.Shared.ViewModels
             OnPropertyChanged(nameof(IsWebComponentsExample));
             OnPropertyChanged(nameof(IsYamlUiExample));
             OnPropertyChanged(nameof(IsYamlInputsExample));
+            OnPropertyChanged(nameof(IsYamlPrimitivesExample));
             OnPropertyChanged(nameof(IsYamlDocumentExample));
             OnPropertyChanged(nameof(IsYamlActionsExample));
-            OnPropertyChanged(nameof(IsYamlGenerateFormExample));
             OnPropertyChanged(nameof(IsYamlDocumentSurfaceExample));
             OnPropertyChanged(nameof(IsLicenseExample));
             OnPropertyChanged(nameof(IsWebHostExample));
             OnPropertyChanged(nameof(IsPdfViewerExample));
             OnPropertyChanged(nameof(IsReportDesignerExample));
             OnPropertyChanged(nameof(IsMonacoEditorExample));
+            OnPropertyChanged(nameof(IsWebComponentScrollHostExample));
             OnPropertyChanged(nameof(IsMyLicenseExample));
             OnPropertyChanged(nameof(IsThirdPartyLicensesExample));
             OnPropertyChanged(nameof(IsFoundationsDrawerSelected));
@@ -2431,6 +2484,7 @@ namespace PhialeTech.Components.Shared.ViewModels
             OnPropertyChanged(nameof(IsGridDrawerSelected));
             OnPropertyChanged(nameof(IsActiveLayerSelectorDrawerSelected));
             OnPropertyChanged(nameof(IsWebComponentsDrawerSelected));
+            OnPropertyChanged(nameof(ShowWebComponentsExplanationTab));
             OnPropertyChanged(nameof(IsYamlUiDrawerSelected));
             OnPropertyChanged(nameof(IsLicenseDrawerSelected));
             OnPropertyChanged(nameof(ShowGridSurface));

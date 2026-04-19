@@ -9,6 +9,7 @@ namespace PhialeTech.YamlApp.Abstractions.Interfaces
         string Name { get; }
         ActionPlacement? Placement { get; }
         ActionAlignment? HorizontalAlignment { get; }
+        ActionAreaChromeMode? ChromeMode { get; }
         bool? Shared { get; }
         bool? Sticky { get; }
         bool? Visible { get; }

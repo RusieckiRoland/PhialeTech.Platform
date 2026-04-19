@@ -20,15 +20,19 @@ namespace PhialeTech.YamlApp.Core.Resolved
             CaptionPlacement captionPlacement,
             string captionKey,
             bool showBorder,
+            ContainerVariant variant,
             IReadOnlyList<ResolvedLayoutItemDefinition> items)
             : base(id, name, width, widthHint, visible, enabled, showOldValueRestoreButton, validationTrigger, interactionMode, densityMode, fieldChromeMode, captionPlacement, items)
         {
             CaptionKey = captionKey;
             ShowBorder = showBorder;
+            Variant = variant;
         }
 
         public string CaptionKey { get; }
 
         public bool ShowBorder { get; }
+
+        public ContainerVariant Variant { get; }
     }
 }

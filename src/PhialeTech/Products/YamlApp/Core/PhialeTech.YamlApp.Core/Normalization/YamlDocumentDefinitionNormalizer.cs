@@ -55,6 +55,8 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     Id = source.Id,
                     Name = source.Name,
                     Kind = source.Kind,
+                    TopRegionChrome = source.TopRegionChrome,
+                    BottomRegionChrome = source.BottomRegionChrome,
                     Width = source.Width,
                     WidthHint = source.WidthHint,
                     Visible = source.Visible,
@@ -65,6 +67,8 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     DensityMode = source.DensityMode,
                     FieldChromeMode = source.FieldChromeMode,
                     CaptionPlacement = source.CaptionPlacement,
+                    Header = CloneHeader(source.Header),
+                    Footer = CloneFooter(source.Footer),
                     Layout = NormalizeLayout(source.Layout, fieldMap, diagnostics)
                 };
 
@@ -105,6 +109,8 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 Id = source.Id,
                 Name = source.Name,
                 Kind = source.Kind,
+                TopRegionChrome = source.TopRegionChrome,
+                BottomRegionChrome = source.BottomRegionChrome,
                 Width = source.Width,
                 WidthHint = source.WidthHint,
                 Visible = source.Visible,
@@ -115,6 +121,8 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 DensityMode = source.DensityMode,
                 FieldChromeMode = source.FieldChromeMode,
                 CaptionPlacement = source.CaptionPlacement,
+                Header = CloneHeader(source.Header),
+                Footer = CloneFooter(source.Footer),
                 Layout = NormalizeLayout(source.Layout, fieldMap, diagnostics)
             };
             var resolvedDocument = BuildResolvedDocument(normalized);
@@ -260,6 +268,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     Name = container.Name,
                     CaptionKey = container.CaptionKey,
                     ShowBorder = container.ShowBorder,
+                    Variant = container.Variant,
                     Width = container.Width,
                     WidthHint = container.WidthHint,
                     Visible = container.Visible,
@@ -282,6 +291,54 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 }
 
                 return normalized;
+            }
+
+            if (source is IBadgeDefinition badge)
+            {
+                return new YamlBadgeDefinition
+                {
+                    Id = badge.Id,
+                    Name = badge.Name,
+                    TextKey = badge.TextKey,
+                    Tone = badge.Tone,
+                    Variant = badge.Variant,
+                    Size = badge.Size,
+                    Width = badge.Width,
+                    WidthHint = badge.WidthHint,
+                    Weight = badge.Weight,
+                    Visible = badge.Visible,
+                    Enabled = badge.Enabled,
+                    ShowOldValueRestoreButton = badge.ShowOldValueRestoreButton,
+                    ValidationTrigger = badge.ValidationTrigger,
+                    InteractionMode = badge.InteractionMode,
+                    DensityMode = badge.DensityMode,
+                    FieldChromeMode = badge.FieldChromeMode,
+                    CaptionPlacement = badge.CaptionPlacement
+                };
+            }
+
+            if (source is IButtonDefinition button)
+            {
+                return new YamlButtonDefinition
+                {
+                    Id = button.Id,
+                    Name = button.Name,
+                    TextKey = button.TextKey,
+                    CommandId = button.CommandId,
+                    Tone = button.Tone,
+                    Variant = button.Variant,
+                    Width = button.Width,
+                    WidthHint = button.WidthHint,
+                    Weight = button.Weight,
+                    Visible = button.Visible,
+                    Enabled = button.Enabled,
+                    ShowOldValueRestoreButton = button.ShowOldValueRestoreButton,
+                    ValidationTrigger = button.ValidationTrigger,
+                    InteractionMode = button.InteractionMode,
+                    DensityMode = button.DensityMode,
+                    FieldChromeMode = button.FieldChromeMode,
+                    CaptionPlacement = button.CaptionPlacement
+                };
             }
 
             diagnostics.Add(string.Format("Unsupported layout item type '{0}'.", source.GetType().FullName));
@@ -326,9 +383,45 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 Name = actionArea.Name,
                 Placement = actionArea.Placement,
                 HorizontalAlignment = actionArea.HorizontalAlignment,
+                ChromeMode = actionArea.ChromeMode,
                 Shared = actionArea.Shared,
                 Sticky = actionArea.Sticky,
                 Visible = actionArea.Visible
+            };
+        }
+
+        private static YamlDocumentHeaderDefinition CloneHeader(IDocumentHeaderDefinition header)
+        {
+            if (header == null)
+            {
+                return null;
+            }
+
+            return new YamlDocumentHeaderDefinition
+            {
+                TitleKey = header.TitleKey,
+                SubtitleKey = header.SubtitleKey,
+                DescriptionKey = header.DescriptionKey,
+                StatusKey = header.StatusKey,
+                ContextKey = header.ContextKey,
+                IconKey = header.IconKey,
+                Visible = header.Visible
+            };
+        }
+
+        private static YamlDocumentFooterDefinition CloneFooter(IDocumentFooterDefinition footer)
+        {
+            if (footer == null)
+            {
+                return null;
+            }
+
+            return new YamlDocumentFooterDefinition
+            {
+                NoteKey = footer.NoteKey,
+                StatusKey = footer.StatusKey,
+                SourceKey = footer.SourceKey,
+                Visible = footer.Visible
             };
         }
 
@@ -955,8 +1048,16 @@ namespace PhialeTech.YamlApp.Core.Normalization
             var effectiveDensityMode = normalized.DensityMode;
             var effectiveFieldChromeMode = normalized.FieldChromeMode ?? Abstractions.Enums.FieldChromeMode.Framed;
             var effectiveCaptionPlacement = normalized.CaptionPlacement ?? Abstractions.Enums.CaptionPlacement.Top;
+            var effectiveTopRegionChrome = normalized.TopRegionChrome ?? Abstractions.Enums.DocumentRegionChromeMode.Separate;
+            var effectiveBottomRegionChrome = normalized.BottomRegionChrome ?? Abstractions.Enums.DocumentRegionChromeMode.Separate;
             var effectiveWidth = normalized.Width;
             var effectiveWidthHint = normalized.WidthHint;
+            var resolvedHeader = normalized.Header == null
+                ? null
+                : new ResolvedDocumentHeaderDefinition(normalized.Header, normalized.Header.Visible ?? true);
+            var resolvedFooter = normalized.Footer == null
+                ? null
+                : new ResolvedDocumentFooterDefinition(normalized.Footer, normalized.Footer.Visible ?? true);
 
             var resolvedLayout = BuildResolvedLayout(
                 normalized.Layout,
@@ -976,6 +1077,8 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 normalized.Id,
                 normalized.Name,
                 normalized.Kind,
+                effectiveTopRegionChrome,
+                effectiveBottomRegionChrome,
                 effectiveWidth,
                 effectiveWidthHint,
                 effectiveVisible,
@@ -986,6 +1089,8 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 effectiveDensityMode,
                 effectiveFieldChromeMode,
                 effectiveCaptionPlacement,
+                resolvedHeader,
+                resolvedFooter,
                 resolvedLayout);
         }
 
@@ -1004,8 +1109,16 @@ namespace PhialeTech.YamlApp.Core.Normalization
             var effectiveFormDensityMode = normalized.DensityMode;
             var effectiveFormFieldChromeMode = normalized.FieldChromeMode ?? Abstractions.Enums.FieldChromeMode.Framed;
             var effectiveFormCaptionPlacement = normalized.CaptionPlacement ?? Abstractions.Enums.CaptionPlacement.Top;
+            var effectiveTopRegionChrome = normalized.TopRegionChrome ?? Abstractions.Enums.DocumentRegionChromeMode.Separate;
+            var effectiveBottomRegionChrome = normalized.BottomRegionChrome ?? Abstractions.Enums.DocumentRegionChromeMode.Separate;
             var effectiveFormWidth = normalized.Width;
             var effectiveFormWidthHint = normalized.WidthHint;
+            var resolvedHeader = normalized.Header == null
+                ? null
+                : new ResolvedDocumentHeaderDefinition(normalized.Header, normalized.Header.Visible ?? true);
+            var resolvedFooter = normalized.Footer == null
+                ? null
+                : new ResolvedDocumentFooterDefinition(normalized.Footer, normalized.Footer.Visible ?? true);
             var resolvedFields = new List<ResolvedFieldDefinition>();
             var resolvedFieldMap = new Dictionary<string, ResolvedFieldDefinition>(StringComparer.OrdinalIgnoreCase);
             var defaultFieldWidthHint = effectiveFormWidthHint ?? Abstractions.Enums.FieldWidthHint.Medium;
@@ -1046,6 +1159,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     actionArea,
                     actionArea.Placement ?? ActionPlacement.Bottom,
                     actionArea.HorizontalAlignment ?? ActionAlignment.Right,
+                    actionArea.ChromeMode ?? ActionAreaChromeMode.Explicit,
                     actionArea.Shared ?? true,
                     actionArea.Sticky ?? false,
                     actionArea.Visible ?? true);
@@ -1088,6 +1202,8 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 normalized.Id,
                 normalized.Name,
                 normalized.Kind,
+                effectiveTopRegionChrome,
+                effectiveBottomRegionChrome,
                 effectiveFormWidth,
                 effectiveFormWidthHint,
                 effectiveFormVisible,
@@ -1098,6 +1214,8 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 effectiveFormDensityMode,
                 effectiveFormFieldChromeMode,
                 effectiveFormCaptionPlacement,
+                resolvedHeader,
+                resolvedFooter,
                 resolvedLayout,
                 resolvedActionAreas,
                 resolvedFields,
@@ -1287,7 +1405,77 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     effectiveCaptionPlacement,
                     container.CaptionKey,
                     container.ShowBorder,
+                    container.Variant ?? ContainerVariant.Standard,
                     items);
+            }
+
+            if (item is IBadgeDefinition badge)
+            {
+                var effectiveVisible = badge.Visible ?? inheritedVisible;
+                var effectiveEnabled = badge.Enabled ?? inheritedEnabled;
+                var effectiveShowOldValueRestoreButton = badge.ShowOldValueRestoreButton ?? inheritedShowOldValueRestoreButton;
+                var effectiveValidationTrigger = badge.ValidationTrigger ?? inheritedValidationTrigger;
+                var effectiveInteractionMode = badge.InteractionMode ?? inheritedInteractionMode;
+                var effectiveDensityMode = badge.DensityMode ?? inheritedDensityMode;
+                var effectiveFieldChromeMode = badge.FieldChromeMode ?? inheritedFieldChromeMode;
+                var effectiveCaptionPlacement = badge.CaptionPlacement ?? inheritedCaptionPlacement;
+                var effectiveWidth = ResolveWidth(badge.Width, badge.WidthHint, inheritedWidth, inheritedWidthHint, out var effectiveWidthHint);
+
+                return new ResolvedBadgeDefinition(
+                    badge.Id,
+                    badge.Name,
+                    effectiveWidth,
+                    effectiveWidthHint,
+                    effectiveVisible,
+                    effectiveEnabled,
+                    effectiveShowOldValueRestoreButton,
+                    effectiveValidationTrigger,
+                    effectiveInteractionMode,
+                    effectiveDensityMode,
+                    effectiveFieldChromeMode,
+                    effectiveCaptionPlacement,
+                    badge.TextKey,
+                    badge.IconKey,
+                    badge.ToolTipKey,
+                    badge.Tone ?? BadgeTone.Neutral,
+                    badge.Variant ?? BadgeVariant.Soft,
+                    badge.Size ?? BadgeSize.Regular,
+                    badge.IconPlacement ?? IconPlacement.Leading);
+            }
+
+            if (item is IButtonDefinition button)
+            {
+                var effectiveVisible = button.Visible ?? inheritedVisible;
+                var effectiveEnabled = button.Enabled ?? inheritedEnabled;
+                var effectiveShowOldValueRestoreButton = button.ShowOldValueRestoreButton ?? inheritedShowOldValueRestoreButton;
+                var effectiveValidationTrigger = button.ValidationTrigger ?? inheritedValidationTrigger;
+                var effectiveInteractionMode = button.InteractionMode ?? inheritedInteractionMode;
+                var effectiveDensityMode = button.DensityMode ?? inheritedDensityMode;
+                var effectiveFieldChromeMode = button.FieldChromeMode ?? inheritedFieldChromeMode;
+                var effectiveCaptionPlacement = button.CaptionPlacement ?? inheritedCaptionPlacement;
+                var effectiveWidth = ResolveWidth(button.Width, button.WidthHint, inheritedWidth, inheritedWidthHint, out var effectiveWidthHint);
+
+                return new ResolvedButtonDefinition(
+                    button.Id,
+                    button.Name,
+                    effectiveWidth,
+                    effectiveWidthHint,
+                    effectiveVisible,
+                    effectiveEnabled,
+                    effectiveShowOldValueRestoreButton,
+                    effectiveValidationTrigger,
+                    effectiveInteractionMode,
+                    effectiveDensityMode,
+                    effectiveFieldChromeMode,
+                    effectiveCaptionPlacement,
+                    button.TextKey,
+                    button.IconKey,
+                    button.ToolTipKey,
+                    button.CommandId,
+                    button.Tone ?? ButtonTone.Secondary,
+                    button.Variant ?? ButtonVariant.Standard,
+                    button.Size ?? ButtonSize.Regular,
+                    button.IconPlacement ?? IconPlacement.Leading);
             }
 
             if (item is IRowDefinition row)

@@ -844,7 +844,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
             if (TryResolveDatePickerResource<Style>("Calendar.Shared.ItemStyle") is Style sharedCalendarItemStyle)
             {
                 popupCalendar.Resources["Calendar.Shared.ItemStyle"] = sharedCalendarItemStyle;
-                popupCalendar.Resources[typeof(CalendarItem)] = new Style(typeof(CalendarItem), sharedCalendarItemStyle);
+                popupCalendar.Resources[typeof(CalendarItem)] = sharedCalendarItemStyle;
             }
             else if (TryResolveDatePickerResource<Style>(typeof(CalendarItem)) is Style implicitCalendarItemStyle)
             {
@@ -908,7 +908,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
             {
                 if (TryResolveDatePickerResource<Style>("Calendar.Shared.ItemStyle") is Style popupCalendarItemSharedStyle)
                 {
-                    popupCalendarItem.Style = new Style(typeof(CalendarItem), popupCalendarItemSharedStyle);
+                    popupCalendarItem.Style = popupCalendarItemSharedStyle;
                 }
                 else if (TryResolveDatePickerResource<Style>(typeof(CalendarItem)) is Style popupCalendarItemImplicitStyle)
                 {

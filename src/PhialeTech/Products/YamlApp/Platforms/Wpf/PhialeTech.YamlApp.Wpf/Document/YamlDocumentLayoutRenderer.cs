@@ -5,13 +5,13 @@ using System.Windows.Media;
 using PhialeTech.YamlApp.Abstractions.Enums;
 using PhialeTech.YamlApp.Core.Resolved;
 using PhialeTech.YamlApp.Runtime.Model;
+using PhialeTech.YamlApp.Wpf.Controls.Badges;
+using PhialeTech.YamlApp.Wpf.Controls.Buttons;
 
 namespace PhialeTech.YamlApp.Wpf.Document
 {
     public sealed class YamlDocumentLayoutRenderer
     {
-        private const double VerticalItemSpacing = 16d;
-        private const double HorizontalItemSpacing = 16d;
         private readonly YamlFieldControlFactory _fieldControlFactory;
 
         public YamlDocumentLayoutRenderer()
@@ -31,12 +31,17 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 throw new InvalidOperationException("Runtime document state is required.");
             }
 
-            if (documentState.Document == null || documentState.Document.Layout == null)
+            if (documentState.Document == null)
             {
-                throw new InvalidOperationException("Document layout is required.");
+                throw new InvalidOperationException("Runtime document definition is required.");
             }
 
-            var root = BuildVerticalItemsPanel(documentState, documentState.Document.Layout.Items);
+            if (documentState.Document.Layout == null)
+            {
+                return BuildVerticalItemsPanel(documentState, null, isCompactSpacing: false);
+            }
+
+            var root = BuildVerticalItemsPanel(documentState, documentState.Document.Layout.Items, isCompactSpacing: false);
             YamlWpfPresentationHelper.ApplyPresentation(
                 root,
                 documentState.Document.Layout.Width,
@@ -47,7 +52,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return root;
         }
 
-        private FrameworkElement BuildVerticalItemsPanel(RuntimeDocumentState documentState, System.Collections.Generic.IReadOnlyList<ResolvedLayoutItemDefinition> items)
+        private FrameworkElement BuildVerticalItemsPanel(RuntimeDocumentState documentState, System.Collections.Generic.IReadOnlyList<ResolvedLayoutItemDefinition> items, bool isCompactSpacing)
         {
             var panel = new StackPanel
             {
@@ -68,12 +73,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
                     continue;
                 }
 
-                if (index < items.Count - 1)
-                {
-                    element.Margin = MergeMargins(element.Margin, new Thickness(0, 0, 0, VerticalItemSpacing));
-                }
-
-                panel.Children.Add(element);
+                panel.Children.Add(index < items.Count - 1 ? WrapVerticalItem(element, isCompactSpacing) : element);
             }
 
             return panel;
@@ -94,6 +94,16 @@ namespace PhialeTech.YamlApp.Wpf.Document
             if (item is ResolvedContainerDefinition container)
             {
                 return BuildContainer(documentState, container);
+            }
+
+            if (item is ResolvedBadgeDefinition badge)
+            {
+                return BuildBadge(badge);
+            }
+
+            if (item is ResolvedButtonDefinition button)
+            {
+                return BuildButton(button);
             }
 
             if (item is ResolvedColumnDefinition column)
@@ -135,14 +145,16 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 var caption = new TextBlock
                 {
                     Text = container.CaptionKey,
-                    Margin = new Thickness(0, 0, 0, 12),
-                    TextWrapping = TextWrapping.Wrap,
                 };
-                caption.SetResourceReference(FrameworkElement.StyleProperty, "YamlDocument.ContainerCaptionTextStyle");
+                caption.SetResourceReference(
+                    FrameworkElement.StyleProperty,
+                    container.Variant == ContainerVariant.Compact
+                        ? "YamlDocument.ContainerCaptionTextStyle.Compact"
+                        : "YamlDocument.ContainerCaptionTextStyle");
                 contentStack.Children.Add(caption);
             }
 
-            var itemsPanel = BuildVerticalItemsPanel(documentState, container.Items);
+            var itemsPanel = BuildVerticalItemsPanel(documentState, container.Items, container.Variant == ContainerVariant.Compact);
             contentStack.Children.Add(itemsPanel);
 
             FrameworkElement element;
@@ -152,7 +164,11 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 {
                     Child = contentStack,
                 };
-                border.SetResourceReference(FrameworkElement.StyleProperty, "YamlDocument.ContainerBorderStyle");
+                border.SetResourceReference(
+                    FrameworkElement.StyleProperty,
+                    container.Variant == ContainerVariant.Compact
+                        ? "YamlDocument.ContainerBorderStyle.Compact"
+                        : "YamlDocument.ContainerBorderStyle");
                 element = border;
             }
             else
@@ -164,9 +180,48 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return element;
         }
 
+        private FrameworkElement BuildBadge(ResolvedBadgeDefinition badge)
+        {
+            var element = new YamlBadge
+            {
+                Text = badge.TextKey ?? string.Empty,
+                IconKey = badge.IconKey,
+                ToolTip = badge.ToolTipKey,
+                Tone = badge.Tone,
+                Variant = badge.Variant,
+                Size = badge.Size,
+                IconPlacement = badge.IconPlacement,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            ApplyLayoutItemPresentation(element, badge);
+            return element;
+        }
+
+        private FrameworkElement BuildButton(ResolvedButtonDefinition button)
+        {
+            var element = new YamlButton
+            {
+                Content = button.TextKey ?? string.Empty,
+                IconKey = button.IconKey,
+                ToolTip = button.ToolTipKey,
+                CommandId = button.CommandId,
+                Tone = button.Tone,
+                Variant = button.Variant,
+                Size = button.Size,
+                IconPlacement = button.IconPlacement,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            ApplyLayoutItemPresentation(element, button);
+            return element;
+        }
+
         private FrameworkElement BuildColumn(RuntimeDocumentState documentState, ResolvedColumnDefinition column)
         {
-            var panel = BuildVerticalItemsPanel(documentState, column.Items);
+            var panel = BuildVerticalItemsPanel(documentState, column.Items, isCompactSpacing: false);
             ApplyLayoutItemPresentation(panel, column);
             return panel;
         }
@@ -191,9 +246,17 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = columnWidth });
 
                 var child = BuildItem(documentState, childDefinition) ?? new Border();
-                Grid.SetColumn(child, index);
-                child.Margin = MergeMargins(child.Margin, new Thickness(0, 0, index < row.Items.Count - 1 ? HorizontalItemSpacing : 0, 0));
-                grid.Children.Add(child);
+                if (index < row.Items.Count - 1)
+                {
+                    var host = WrapRowItem(child);
+                    Grid.SetColumn(host, index);
+                    grid.Children.Add(host);
+                }
+                else
+                {
+                    Grid.SetColumn(child, index);
+                    grid.Children.Add(child);
+                }
             }
 
             ApplyLayoutItemPresentation(grid, row);
@@ -267,13 +330,28 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return item != null && (item.Width.HasValue || item.WidthHint.HasValue);
         }
 
-        private static Thickness MergeMargins(Thickness current, Thickness addition)
+        private static Border WrapVerticalItem(UIElement child, bool isCompactSpacing)
         {
-            return new Thickness(
-                current.Left + addition.Left,
-                current.Top + addition.Top,
-                current.Right + addition.Right,
-                current.Bottom + addition.Bottom);
+            var border = new Border
+            {
+                Child = child,
+            };
+            border.SetResourceReference(
+                FrameworkElement.StyleProperty,
+                isCompactSpacing
+                    ? "YamlDocument.LayoutItemHostStyle.Compact"
+                    : "YamlDocument.LayoutItemHostStyle");
+            return border;
+        }
+
+        private static Border WrapRowItem(UIElement child)
+        {
+            var border = new Border
+            {
+                Child = child,
+            };
+            border.SetResourceReference(FrameworkElement.StyleProperty, "YamlDocument.RowItemHostStyle");
+            return border;
         }
     }
 }

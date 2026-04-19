@@ -698,6 +698,23 @@ namespace PhialeGis.Library.Tests.Demo
         }
 
         [Test]
+        public void FeatureCatalog_ShouldBuildDeterministicOverviewRows_WithThreeCardsPerRow()
+        {
+            var catalog = new DemoFeatureCatalog();
+
+            var overviewSection = catalog.BuildSections("en", string.Empty)
+                .Single(section => section.Title == "Overview");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(overviewSection.Rows.Count, Is.EqualTo(3));
+                Assert.That(overviewSection.Rows[0].Examples.Select(example => example.Id), Is.EqualTo(new[] { "foundations", "web-host", "pdf-viewer" }));
+                Assert.That(overviewSection.Rows[1].Examples.Select(example => example.Id), Is.EqualTo(new[] { "report-designer", "monaco-editor", "my-license" }));
+                Assert.That(overviewSection.Rows[2].Examples.Select(example => example.Id), Is.EqualTo(new[] { "third-party-licenses" }));
+            });
+        }
+
+        [Test]
         public void FeatureCatalog_ShouldExposeDedicatedExamples_ForRichEditorsAndSummaryDesigner()
         {
             var catalog = new DemoFeatureCatalog();

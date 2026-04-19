@@ -1,0 +1,59 @@
+namespace: application.forms.actionShells
+
+document:
+  id: review-sticky-header-footer
+  kind: Form
+  name: Review workflow with sticky header and footer
+  interactionMode: Classic
+  densityMode: Normal
+  fieldChromeMode: Framed
+  actionAreas:
+    - id: headerActions
+      placement: Top
+      horizontalAlignment: Stretch
+      chromeMode: Blended
+      shared: true
+      sticky: true
+    - id: footerPrimary
+      placement: Bottom
+      horizontalAlignment: Right
+      chromeMode: Blended
+      shared: true
+      sticky: true
+  actions:
+    - id: history
+      semantic: Secondary
+      captionKey: actions.history.caption
+      iconKey: history
+      area: headerActions
+      slot: Start
+      order: 10
+    - id: help
+      semantic: Help
+      captionKey: actions.help.caption
+      iconKey: help
+      area: headerActions
+      slot: Start
+      order: 20
+    - id: validate
+      semantic: Apply
+      captionKey: actions.validate.caption
+      iconKey: validate
+      area: headerActions
+      slot: End
+      order: 30
+    - id: save
+      semantic: Ok
+      captionKey: actions.save.caption
+      iconKey: save
+      area: footerPrimary
+      isPrimary: true
+      slot: End
+      order: 10
+    - id: cancel
+      semantic: Cancel
+      captionKey: actions.cancel.caption
+      iconKey: cancel
+      area: footerPrimary
+      slot: End
+      order: 20

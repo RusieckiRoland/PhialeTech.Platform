@@ -1,6 +1,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <Color x:Key="Color.Surface0">#171C25</Color>
     <Color x:Key="Color.Surface1">#1E232D</Color>
     <Color x:Key="Color.Surface2">#242B36</Color>
@@ -78,6 +79,27 @@
     <SolidColorBrush x:Key="Brush.Badge.Fill" Color="{DynamicResource Color.Badge.Fill}" />
     <SolidColorBrush x:Key="Brush.Badge.Border" Color="{DynamicResource Color.Badge.Border}" />
     <SolidColorBrush x:Key="Brush.Badge.Text" Color="{DynamicResource Color.Badge.Text}" />
+    <SolidColorBrush x:Key="Brush.Badge.Outline.Fill" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Badge.Outline.Border" Color="#586782" />
+    <SolidColorBrush x:Key="Brush.Badge.Outline.Text" Color="#DCE6F6" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Fill" Color="#274E7A" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Border" Color="#84B8FF" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Text" Color="#F8FBFF" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Outline.Fill" Color="#1C2E47" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Outline.Border" Color="#6EA9FF" />
+    <SolidColorBrush x:Key="Brush.Badge.Accent.Outline.Text" Color="#BFD9FF" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Fill" Color="{DynamicResource Color.Warning.Fill}" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Border" Color="{DynamicResource Color.Warning.Border}" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Text" Color="{DynamicResource Color.Warning.Text}" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Outline.Fill" Color="#3B3122" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Outline.Border" Color="#C79A35" />
+    <SolidColorBrush x:Key="Brush.Badge.Warning.Outline.Text" Color="#FFD882" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Fill" Color="{DynamicResource Color.Danger.Fill}" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Border" Color="{DynamicResource Color.Danger.Border}" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Text" Color="{DynamicResource Color.Danger.Text}" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Outline.Fill" Color="#4A2428" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Outline.Border" Color="#F08B95" />
+    <SolidColorBrush x:Key="Brush.Badge.Danger.Outline.Text" Color="#FFD9DC" />
 
     <SolidColorBrush x:Key="Brush.Button.Primary.Background" Color="{DynamicResource Color.Accent}" />
     <SolidColorBrush x:Key="Brush.Button.Primary.Border" Color="{DynamicResource Color.Accent}" />
@@ -94,7 +116,146 @@
     <SolidColorBrush x:Key="Brush.Button.Danger.Foreground" Color="{DynamicResource Color.Danger.Text}" />
     <SolidColorBrush x:Key="Brush.Button.Danger.HoverBackground" Color="#5B3136" />
     <SolidColorBrush x:Key="Brush.Button.Danger.HoverBorder" Color="#F08B95" />
-    <SolidColorBrush x:Key="Brush.Button.Tertiary.Background" Color="#00FFFFFF" />
-    <SolidColorBrush x:Key="Brush.Button.Tertiary.Border" Color="#00FFFFFF" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.Background" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.Border" Color="#00000000" />
     <SolidColorBrush x:Key="Brush.Button.Tertiary.Foreground" Color="{DynamicResource Color.Accent.Strong}" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.HoverBackground" Color="#273144" />
+    <SolidColorBrush x:Key="Brush.Button.Tertiary.HoverBorder" Color="#42516A" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.Background" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.Border" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.Foreground" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.HoverBackground" Color="#273144" />
+    <SolidColorBrush x:Key="Brush.Button.Toolbar.HoverBorder" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.Background" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.Border" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.Foreground" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.HoverBackground" Color="{DynamicResource Color.Surface2}" />
+    <SolidColorBrush x:Key="Brush.Button.ActionStrip.HoverBorder" Color="{DynamicResource Color.Border.Strong}" />
+    <SolidColorBrush x:Key="Brush.FormShell.HeaderBackground" Color="{DynamicResource Color.Surface2}" />
+    <SolidColorBrush x:Key="Brush.FormShell.TopActionBackground" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.FormShell.ContentBackground" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.FormShell.BottomActionBackground" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.FormShell.FooterBackground" Color="{DynamicResource Color.Surface2}" />
+    <SolidColorBrush x:Key="Brush.FormShell.RegionBorder" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.FormShell.Divider" Color="{DynamicResource Color.Border.Subtle}" />
+    <Thickness x:Key="Thickness.FormShell.HeaderPadding">24,18,24,14</Thickness>
+    <Thickness x:Key="Thickness.FormShell.TopActionPadding">24,12,24,16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.TopActionMergedPadding">24,0,24,16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.LayoutPadding">24,20,24,20</Thickness>
+    <Thickness x:Key="Thickness.FormShell.BottomActionPadding">24,12,24,12</Thickness>
+    <Thickness x:Key="Thickness.FormShell.BottomActionMergedPadding">24,12,24,8</Thickness>
+    <Thickness x:Key="Thickness.FormShell.FooterPadding">24,12,24,16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderMetaMargin">0,0,0,10</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderTitleMargin">0,8,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderSubtitleMargin">0,4,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderDescriptionMargin">0,6,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.HeaderContextMargin">0,0,8,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.FooterSupportMargin">0,4,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.FooterStatusMargin">16,0,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ActionAreaGap">0,8,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ActionButtonHorizontalGap">0,0,8,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ActionButtonVerticalGap">0,0,0,8</Thickness>
+    <Thickness x:Key="Thickness.FormShell.SideAreaLeftMargin">0,0,16,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.SideAreaRightMargin">16,0,0,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.LayoutItemGap">0,0,0,16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.LayoutItemGap.Compact">0,0,0,12</Thickness>
+    <Thickness x:Key="Thickness.FormShell.LayoutRowItemGap">0,0,16,0</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ErrorBorderThickness">1</Thickness>
+    <Thickness x:Key="Thickness.FormShell.ErrorPadding">16</Thickness>
+    <Thickness x:Key="Thickness.FormShell.RootBorderThickness">1</Thickness>
+    <CornerRadius x:Key="CornerRadius.FormShell.Root">18</CornerRadius>
+    <sys:Double x:Key="Size.FormShell.ActionButton.VerticalMinWidth">132</sys:Double>
+    <SolidColorBrush x:Key="Brush.ComponentHost.Overlay.Scrim" Color="#B3151C25" />
+    <SolidColorBrush x:Key="Brush.ComponentHost.Overlay.Highlight" Color="#2FFFFFFF" />
+    <SolidColorBrush x:Key="Brush.ComponentHost.Sheet.Background" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.ComponentHost.Sheet.Border" Color="#394457" />
+    <SolidColorBrush x:Key="Brush.ComponentHost.Sheet.Shadow" Color="#59000000" />
+    <SolidColorBrush x:Key="Brush.Shell.Window.Background" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Shell.Window.Border" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.Shell.TitleBar.Background" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.Shell.TitleBar.Border" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="Brush.Shell.TitleBar.TitleForeground" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Shell.TitleBar.SubtitleForeground" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="Brush.Shell.CommandButton.Background" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.Shell.CommandButton.Border" Color="{DynamicResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.Shell.CommandButton.Foreground" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Shell.CommandButton.HoverBackground" Color="{DynamicResource Color.Hover.Fill}" />
+    <SolidColorBrush x:Key="Brush.Shell.CommandButton.HoverBorder" Color="{DynamicResource Color.Border.Strong}" />
+    <SolidColorBrush x:Key="Brush.Shell.SystemButton.Background" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Shell.SystemButton.Border" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Shell.SystemButton.Foreground" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="Brush.Shell.SystemCloseButton.HoverBackground" Color="{DynamicResource Color.Danger.Fill}" />
+    <SolidColorBrush x:Key="Brush.Shell.SystemCloseButton.HoverBorder" Color="{DynamicResource Color.Danger.Border}" />
+    <SolidColorBrush x:Key="Brush.Shell.SystemCloseButton.HoverForeground" Color="{DynamicResource Color.Danger.Text}" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationRail.Background" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationRail.Border" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationButton.Background" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationButton.Border" Color="#00000000" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationButton.Foreground" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationButton.IconForeground" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationButton.HoverBackground" Color="{DynamicResource Color.Hover.Fill}" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationButton.HoverBorder" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationButton.SelectedBackground" Color="{DynamicResource Color.Selection.Active.Fill}" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationButton.SelectedBorder" Color="{DynamicResource Color.Selection.Active.Border}" />
+    <SolidColorBrush x:Key="Brush.Shell.NavigationButton.SelectedForeground" Color="{DynamicResource Color.Selection.Active.Text}" />
+    <SolidColorBrush x:Key="Brush.Shell.ViewHeader.Background" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Shell.ViewHeader.Border" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="Brush.Shell.ViewHeader.TitleForeground" Color="{DynamicResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Shell.ViewHeader.DescriptionForeground" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="Brush.Shell.Content.Background" Color="{DynamicResource Color.Surface0}" />
+    <SolidColorBrush x:Key="Brush.Shell.Content.Border" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="Brush.Shell.StatusBar.Background" Color="{DynamicResource Color.Surface1}" />
+    <SolidColorBrush x:Key="Brush.Shell.StatusBar.Border" Color="{DynamicResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="Brush.Shell.StatusBar.LabelForeground" Color="{DynamicResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="Brush.Shell.StatusBar.ValueForeground" Color="{DynamicResource Color.Text.Primary}" />
+    <FontFamily x:Key="Text.Shell.ApplicationTitle.FontFamily">Bahnschrift SemiBold</FontFamily>
+    <sys:Double x:Key="Text.Shell.ApplicationTitle.FontSize">15</sys:Double>
+    <FontFamily x:Key="Text.Shell.ApplicationSubtitle.FontFamily">Segoe UI</FontFamily>
+    <sys:Double x:Key="Text.Shell.ApplicationSubtitle.FontSize">12</sys:Double>
+    <FontFamily x:Key="Text.Shell.Command.FontFamily">Bahnschrift SemiBold</FontFamily>
+    <sys:Double x:Key="Text.Shell.Command.FontSize">12</sys:Double>
+    <FontFamily x:Key="Text.Shell.Navigation.FontFamily">Bahnschrift SemiBold</FontFamily>
+    <sys:Double x:Key="Text.Shell.Navigation.FontSize">13</sys:Double>
+    <FontFamily x:Key="Text.Shell.ViewTitle.FontFamily">Bahnschrift SemiBold</FontFamily>
+    <sys:Double x:Key="Text.Shell.ViewTitle.FontSize">24</sys:Double>
+    <FontFamily x:Key="Text.Shell.ViewDescription.FontFamily">Segoe UI</FontFamily>
+    <sys:Double x:Key="Text.Shell.ViewDescription.FontSize">13</sys:Double>
+    <FontFamily x:Key="Text.Shell.Status.FontFamily">Segoe UI</FontFamily>
+    <sys:Double x:Key="Text.Shell.Status.FontSize">12</sys:Double>
+    <Thickness x:Key="Thickness.Shell.Window.BorderThickness">1</Thickness>
+    <Thickness x:Key="Thickness.Shell.Window.ResizeBorderThickness">6</Thickness>
+    <Thickness x:Key="Thickness.Shell.TitleBar.Padding">18,10,12,10</Thickness>
+    <Thickness x:Key="Thickness.Shell.TitleBar.BorderThickness">0,0,0,1</Thickness>
+    <Thickness x:Key="Thickness.Shell.TitleBar.CommandHostMargin">24,0,0,0</Thickness>
+    <Thickness x:Key="Thickness.Shell.TitleBar.SystemButtonsMargin">12,0,0,0</Thickness>
+    <Thickness x:Key="Thickness.Shell.CommandButton.Padding">12,6</Thickness>
+    <Thickness x:Key="Thickness.Shell.CommandButton.Margin">0,0,8,0</Thickness>
+    <Thickness x:Key="Thickness.Shell.CommandButton.BorderThickness">1</Thickness>
+    <Thickness x:Key="Thickness.Shell.SystemButton.Padding">10,6</Thickness>
+    <Thickness x:Key="Thickness.Shell.NavigationRail.Padding">12,16,12,16</Thickness>
+    <Thickness x:Key="Thickness.Shell.NavigationRail.BorderThickness">0,0,1,0</Thickness>
+    <Thickness x:Key="Thickness.Shell.NavigationButton.Padding">12,10</Thickness>
+    <Thickness x:Key="Thickness.Shell.NavigationButton.Margin">0,0,0,8</Thickness>
+    <Thickness x:Key="Thickness.Shell.NavigationButton.BorderThickness">1</Thickness>
+    <Thickness x:Key="Thickness.Shell.NavigationButton.IconMargin">0,0,10,0</Thickness>
+    <Thickness x:Key="Thickness.Shell.ViewHeader.Padding">24,20,24,16</Thickness>
+    <Thickness x:Key="Thickness.Shell.ViewHeader.BorderThickness">0,0,0,1</Thickness>
+    <Thickness x:Key="Thickness.Shell.ViewDescription.Margin">0,8,0,0</Thickness>
+    <Thickness x:Key="Thickness.Shell.Content.Padding">24</Thickness>
+    <Thickness x:Key="Thickness.Shell.Content.BorderThickness">0</Thickness>
+    <Thickness x:Key="Thickness.Shell.StatusBar.Padding">16,10,16,10</Thickness>
+    <Thickness x:Key="Thickness.Shell.StatusBar.BorderThickness">1,1,0,0</Thickness>
+    <Thickness x:Key="Thickness.Shell.StatusItem.Margin">0,0,18,0</Thickness>
+    <Thickness x:Key="Thickness.Shell.StatusItem.LabelMargin">0,0,6,0</Thickness>
+    <CornerRadius x:Key="CornerRadius.Shell.Window.Root">14</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Shell.CommandButton">8</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Shell.NavigationButton">10</CornerRadius>
+    <sys:Double x:Key="Size.Shell.TitleBar.Height">56</sys:Double>
+    <sys:Double x:Key="Size.Shell.NavigationRail.Width">220</sys:Double>
+    <sys:Double x:Key="Size.Shell.CommandButton.MinHeight">34</sys:Double>
+    <sys:Double x:Key="Size.Shell.CommandButton.MinWidth">76</sys:Double>
+    <sys:Double x:Key="Size.Shell.SystemButton.MinWidth">38</sys:Double>
+    <GridLength x:Key="GridLength.Shell.NavigationRail.Width">220</GridLength>
+    <GridLength x:Key="GridLength.Shell.NavigationRail.Collapsed">0</GridLength>
+    <GridLength x:Key="GridLength.Shell.StatusBar.CollapsedHeight">0</GridLength>
 </ResourceDictionary>

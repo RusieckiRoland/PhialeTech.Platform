@@ -10,6 +10,8 @@ namespace PhialeTech.YamlApp.Definitions.Layouts
 
         public bool ShowBorder { get; set; }
 
+        public ContainerVariant? Variant { get; set; }
+
         public double? Width { get; set; }
 
         public FieldWidthHint? WidthHint { get; set; }

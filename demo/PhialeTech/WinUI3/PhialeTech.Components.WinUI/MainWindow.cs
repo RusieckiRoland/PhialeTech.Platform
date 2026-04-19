@@ -210,7 +210,7 @@ namespace PhialeTech.Components.WinUI
             {
                 var sectionPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 28) };
                 sectionPanel.Children.Add(CreateTextBlock(section.Title, 18, FontWeights.SemiBold, "#1F2933", new Thickness(0, 0, 0, 14)));
-                sectionPanel.Children.Add(BuildCardGrid(section.Examples));
+                sectionPanel.Children.Add(BuildCardRows(section.Rows));
                 _contentPanel.Children.Add(sectionPanel);
             }
         }
@@ -541,29 +541,26 @@ namespace PhialeTech.Components.WinUI
             return cell;
         }
 
-        private UIElement BuildCardGrid(IReadOnlyList<DemoExampleCardViewModel> examples)
+        private UIElement BuildCardRows(IReadOnlyList<DemoSectionRowViewModel> rows)
         {
-            var grid = new Grid();
-            for (var columnIndex = 0; columnIndex < 3; columnIndex++)
+            var panel = new StackPanel();
+            foreach (var row in rows)
             {
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(330) });
+                var rowPanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(0, 0, 0, 16),
+                };
+
+                foreach (var example in row.Examples)
+                {
+                    rowPanel.Children.Add(CreateExampleCard(example));
+                }
+
+                panel.Children.Add(rowPanel);
             }
 
-            var rowCount = (int)Math.Ceiling(examples.Count / 3d);
-            for (var rowIndex = 0; rowIndex < rowCount; rowIndex++)
-            {
-                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            }
-
-            for (var index = 0; index < examples.Count; index++)
-            {
-                var card = CreateExampleCard(examples[index]);
-                Grid.SetColumn(card, index % 3);
-                Grid.SetRow(card, index / 3);
-                grid.Children.Add(card);
-            }
-
-            return grid;
+            return panel;
         }
 
         private FrameworkElement CreateExampleCard(DemoExampleCardViewModel example)

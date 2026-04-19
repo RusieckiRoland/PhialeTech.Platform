@@ -1,0 +1,136 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:abstractions="clr-namespace:PhialeTech.YamlApp.Abstractions.Enums;assembly=PhialeTech.YamlApp.Abstractions"
+    xmlns:actions="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Actions"
+    xmlns:badges="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Badges"
+    xmlns:buttons="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Buttons">
+    <Style x:Key="YamlDocument.StatusBadgeStyle" TargetType="{x:Type badges:YamlBadge}">
+        <Setter Property="Tone" Value="{x:Static abstractions:BadgeTone.Accent}" />
+        <Setter Property="Variant" Value="{x:Static abstractions:BadgeVariant.Soft}" />
+        <Setter Property="Size" Value="{x:Static abstractions:BadgeSize.Compact}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="YamlButton.DefaultStyle" TargetType="{x:Type buttons:YamlButton}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Button.Secondary.Foreground}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Button.Secondary.Background}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Button.Secondary.Border}" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Button.FontFamily}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+        <Setter Property="TextOptions.TextRenderingMode" Value="Auto" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type buttons:YamlButton}">
+                    <Grid MinWidth="{TemplateBinding ChromeMinWidth}"
+                          MinHeight="{TemplateBinding ChromeMinHeight}"
+                          SnapsToDevicePixels="True"
+                          UseLayoutRounding="True">
+                        <buttons:YamlButtonSkiaChromePresenter x:Name="PART_ChromePresenter"
+                                                               BackgroundBrush="{TemplateBinding Background}"
+                                                               BorderBrush="{TemplateBinding BorderBrush}"
+                                                               HoverBackgroundBrush="{DynamicResource Brush.Button.Secondary.HoverBackground}"
+                                                               HoverBorderBrush="{DynamicResource Brush.Button.Secondary.HoverBorder}"
+                                                               FocusBrush="{DynamicResource Brush.Focus.Ring}"
+                                                               CornerRadius="{TemplateBinding ChromeCornerRadius}"
+                                                               IsHovered="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}"
+                                                               IsPressed="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
+                                                               HasKeyboardFocus="{Binding IsKeyboardFocused, RelativeSource={RelativeSource TemplatedParent}}"
+                                                               IsEnabledState="{Binding IsEnabled, RelativeSource={RelativeSource TemplatedParent}}" />
+                        <DockPanel Margin="{TemplateBinding ChromePadding}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   LastChildFill="False">
+                            <TextBlock x:Name="ButtonLeadingIcon"
+                                       Margin="{TemplateBinding ChromeIconMargin}"
+                                       FontFamily="{DynamicResource Text.Icon.FontFamily}"
+                                       FontSize="{TemplateBinding ChromeIconSize}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       Text="{TemplateBinding IconGlyph}" />
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"
+                                              TextElement.FontSize="{TemplateBinding ChromeFontSize}" />
+                        </DockPanel>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IconPlacement" Value="{x:Static abstractions:IconPlacement.Trailing}">
+                            <Setter TargetName="ButtonLeadingIcon" Property="DockPanel.Dock" Value="Right" />
+                        </Trigger>
+                        <Trigger Property="Variant" Value="{x:Static abstractions:ButtonVariant.Toolbar}">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Button.Toolbar.Background}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Button.Toolbar.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Button.Toolbar.Foreground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBackgroundBrush" Value="{DynamicResource Brush.Button.Toolbar.HoverBackground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBorderBrush" Value="{DynamicResource Brush.Button.Toolbar.HoverBorder}" />
+                        </Trigger>
+                        <Trigger Property="Variant" Value="{x:Static abstractions:ButtonVariant.ActionStrip}">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Button.ActionStrip.Background}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Button.ActionStrip.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Button.ActionStrip.Foreground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBackgroundBrush" Value="{DynamicResource Brush.Button.ActionStrip.HoverBackground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBorderBrush" Value="{DynamicResource Brush.Button.ActionStrip.HoverBorder}" />
+                        </Trigger>
+                        <Trigger Property="Tone" Value="{x:Static abstractions:ButtonTone.Primary}">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Button.Primary.Background}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Button.Primary.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Button.Primary.Foreground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBackgroundBrush" Value="{DynamicResource Brush.Button.Primary.HoverBackground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBorderBrush" Value="{DynamicResource Brush.Button.Primary.HoverBorder}" />
+                        </Trigger>
+                        <Trigger Property="Tone" Value="{x:Static abstractions:ButtonTone.Danger}">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Button.Danger.Background}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Button.Danger.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Button.Danger.Foreground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBackgroundBrush" Value="{DynamicResource Brush.Button.Danger.HoverBackground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBorderBrush" Value="{DynamicResource Brush.Button.Danger.HoverBorder}" />
+                        </Trigger>
+                        <Trigger Property="Tone" Value="{x:Static abstractions:ButtonTone.Tertiary}">
+                            <Setter Property="Background" Value="{DynamicResource Brush.Button.Tertiary.Background}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Button.Tertiary.Border}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Button.Tertiary.Foreground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBackgroundBrush" Value="{DynamicResource Brush.Button.Tertiary.HoverBackground}" />
+                            <Setter TargetName="PART_ChromePresenter" Property="HoverBorderBrush" Value="{DynamicResource Brush.Button.Tertiary.HoverBorder}" />
+                        </Trigger>
+                        <Trigger Property="IconGlyph" Value="">
+                            <Setter TargetName="ButtonLeadingIcon" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.72" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="YamlDocument.ActionButtonStyle.Horizontal.Last"
+           TargetType="{x:Type actions:YamlDocumentActionButton}"
+           BasedOn="{StaticResource YamlButton.DefaultStyle}">
+        <Setter Property="Margin" Value="0" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ActionButtonStyle.Horizontal.Spaced"
+           TargetType="{x:Type actions:YamlDocumentActionButton}"
+           BasedOn="{StaticResource YamlDocument.ActionButtonStyle.Horizontal.Last}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.ActionButtonHorizontalGap}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ActionButtonStyle.Vertical.Last"
+           TargetType="{x:Type actions:YamlDocumentActionButton}"
+           BasedOn="{StaticResource YamlButton.DefaultStyle}">
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="MinWidth" Value="{DynamicResource Size.FormShell.ActionButton.VerticalMinWidth}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ActionButtonStyle.Vertical.Spaced"
+           TargetType="{x:Type actions:YamlDocumentActionButton}"
+           BasedOn="{StaticResource YamlDocument.ActionButtonStyle.Vertical.Last}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.ActionButtonVerticalGap}" />
+    </Style>
+</ResourceDictionary>

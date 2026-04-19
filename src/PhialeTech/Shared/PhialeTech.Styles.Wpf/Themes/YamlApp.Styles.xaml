@@ -1,0 +1,341 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:abstractions="clr-namespace:PhialeTech.YamlApp.Abstractions.Enums;assembly=PhialeTech.YamlApp.Abstractions"
+    xmlns:actions="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Actions"
+    xmlns:badges="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Badges"
+xmlns:buttons="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Buttons"
+xmlns:local="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.TextBox">
+    <Style x:Key="YamlDocument.RootBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.ContentBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.FormShell.RootBorderThickness}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource CornerRadius.FormShell.Root}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.TitleTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormTitle.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormTitle.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderContentPanelStyle" TargetType="{x:Type StackPanel}">
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style x:Key="YamlDocument.LayoutFlowPanelStyle" TargetType="{x:Type StackPanel}">
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderLeadRowStyle" TargetType="{x:Type Grid}">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderTitleTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource YamlDocument.TitleTextStyle}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.HeaderTitleMargin}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderContextTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormMeta.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormMeta.FontSize}" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.HeaderContextMargin}" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderIconTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource YamlDocument.HeaderContextTextStyle}">
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderSubtitleTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormSubtitle.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormSubtitle.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.HeaderSubtitleMargin}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderDescriptionTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormDescription.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormDescription.FontSize}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.HeaderDescriptionMargin}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="YamlDocument.FooterContentGridStyle" TargetType="{x:Type Grid}">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style x:Key="YamlDocument.FooterPrimaryStackStyle" TargetType="{x:Type StackPanel}">
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+    </Style>
+
+    <Style x:Key="YamlDocument.FooterNoteTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormFooter.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormFooter.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="YamlDocument.FooterSupportTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormMeta.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormMeta.FontSize}" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.FooterSupportMargin}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="YamlDocument.FooterStatusTextStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource YamlDocument.FooterSupportTextStyle}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.FooterStatusMargin}" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderMetaPanelStyle" TargetType="{x:Type WrapPanel}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.HeaderMetaMargin}" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ActionAreaSpacerStyle" TargetType="{x:Type Border}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.ActionAreaGap}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.SideAreaStackStyle.Left" TargetType="{x:Type StackPanel}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.SideAreaLeftMargin}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.SideAreaStackStyle.Right" TargetType="{x:Type StackPanel}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.SideAreaRightMargin}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.LayoutItemHostStyle" TargetType="{x:Type Border}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.LayoutItemGap}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.LayoutItemHostStyle.Compact" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.LayoutItemHostStyle}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.LayoutItemGap.Compact}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.RowItemHostStyle" TargetType="{x:Type Border}">
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.LayoutRowItemGap}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ErrorTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Danger.Text}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="0" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ErrorBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger.Border}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.FormShell.ErrorBorderThickness}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.ErrorPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.StatusBadgeBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="8,2" />
+    </Style>
+
+    <Style x:Key="YamlDocument.StatusBadgeTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormMeta.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormMeta.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="YamlBadge.TextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Badge.FontFamily}" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="YamlBadge.IconStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Icon.FontFamily}" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ContainerCaptionTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormSection.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormSection.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.LayoutItemGap.Compact}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ContainerCaptionTextStyle.Compact" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource YamlDocument.ContainerCaptionTextStyle}">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.ActionAreaGap}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.SectionBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.ContentBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderRegionBorderStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.SectionBorderStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.HeaderBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.HeaderPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.FooterRegionBorderStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.SectionBorderStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.FooterBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style x:Key="YamlDocument.TopMergedRegionOuterBorderStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.SectionBorderStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.HeaderBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style x:Key="YamlDocument.BottomMergedRegionOuterBorderStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.SectionBorderStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.FooterBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style x:Key="YamlDocument.MergedHeaderRegionHostStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.HeaderBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.HeaderPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.MergedTopActionRegionHostStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.TopActionBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.TopActionPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.MergedBottomActionRegionHostStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.BottomActionBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.BottomActionPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.MergedFooterRegionHostStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.FooterBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.FooterPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ContentRegionBorderStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.SectionBorderStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.ContentBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ShellRegionStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.ContentBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderShellRegionStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.ShellRegionStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.HeaderBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.HeaderPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.HeaderShellRegionStyle.WithDivider" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.HeaderShellRegionStyle}">
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.Divider}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.TopActionPanelShellRegionStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.ShellRegionStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.TopActionBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.TopActionPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.TopActionPanelShellRegionStyle.WithDivider" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.TopActionPanelShellRegionStyle}">
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.Divider}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.TopActionPanelMergedShellRegionStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.TopActionPanelShellRegionStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.HeaderBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.TopActionMergedPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.TopActionPanelMergedShellRegionStyle.WithDivider" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.TopActionPanelMergedShellRegionStyle}">
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.Divider}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.LayoutShellRegionStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.ShellRegionStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.ContentBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.LayoutPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.LayoutShellRegionStyle.WithDivider" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.LayoutShellRegionStyle}">
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.Divider}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.BottomActionPanelShellRegionStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.ShellRegionStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.BottomActionBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.BottomActionPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.BottomActionPanelShellRegionStyle.WithDivider" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.BottomActionPanelShellRegionStyle}">
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.Divider}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.BottomActionPanelMergedShellRegionStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.BottomActionPanelShellRegionStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.FooterBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.BottomActionMergedPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.BottomActionPanelMergedShellRegionStyle.WithDivider" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.BottomActionPanelMergedShellRegionStyle}">
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.Divider}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.FooterShellRegionStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.ShellRegionStyle}">
+        <Setter Property="Background" Value="{DynamicResource Brush.FormShell.FooterBackground}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.FormShell.FooterPadding}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.FooterShellRegionStyle.WithDivider" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.FooterShellRegionStyle}">
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.Divider}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ContainerBorderStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ContainerBorderStyle.Compact" TargetType="{x:Type Border}" BasedOn="{StaticResource YamlDocument.ContainerBorderStyle}">
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="12" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+</ResourceDictionary>

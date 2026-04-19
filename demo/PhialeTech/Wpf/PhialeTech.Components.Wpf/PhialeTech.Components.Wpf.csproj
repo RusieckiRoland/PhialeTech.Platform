@@ -20,7 +20,11 @@
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\YamlApp\Infrastructure\PhialeTech.YamlApp.Infrastructure\PhialeTech.YamlApp.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\YamlLibraries\PhialeTech.Yaml.Library\PhialeTech.Yaml.Library.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\Platforms\Wpf\PhialeTech.WebHost.Wpf\PhialeTech.WebHost.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\Platforms\Wpf\PhialeTech.ComponentHost.Wpf\PhialeTech.ComponentHost.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\Platforms\Wpf\PhialeTech.Shell.Wpf\PhialeTech.Shell.Wpf.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.WebAssets\PhialeTech.WebAssets.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.ComponentHost\PhialeTech.ComponentHost.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.ComponentHost.Abstractions\PhialeTech.ComponentHost.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.WebAssets\PhialeGis.WebAssets.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.Styles.Wpf\PhialeTech.Styles.Wpf.csproj" />
     <ProjectReference Include="..\..\Shared\PhialeTech.Components.Shared\PhialeTech.Components.Shared.csproj" />

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>disable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\demo\PhialeTech\Wpf\PhialeTech.Components.Wpf\PhialeTech.Components.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\PhialeTech\Products\MonacoEditor\Abstractions\PhialeTech.MonacoEditor.Abstractions\PhialeTech.MonacoEditor.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\PhialeTech\Products\MonacoEditor\Platforms\Wpf\PhialeTech.MonacoEditor.Wpf\PhialeTech.MonacoEditor.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\PhialeTech\Shared\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\PhialeTech\Shared\Platforms\Wpf\PhialeTech.WebHost.Wpf\PhialeTech.WebHost.Wpf.csproj" />
+  </ItemGroup>
+</Project>

@@ -9,11 +9,24 @@ document:
   interactionMode: Classic
   densityMode: Normal
   fieldChromeMode: Framed
+  bottomRegionChrome: Merged
+  header:
+    title: YAML generated form
+    subtitle: Example document
+    description: This sample shows the base document structure with header, content, footer, and footer actions.
+    status: Ready
+    context: Demo
+  footer:
+    note: Fields marked with * are required.
+    status: Changes are not saved automatically.
+    source: application.forms.generated-form
   actionAreas:
     - id: footerPrimary
       placement: Bottom
       horizontalAlignment: Right
+      chromeMode: Blended
       shared: true
+      sticky: true
   fields:
     - id: firstName
       extends: firstName
@@ -26,18 +39,29 @@ document:
   layout:
     type: Column
     items:
-      - type: Row
+      - type: Container
+        caption: Reviewer
+        showBorder: true
+        variant: Compact
         items:
-          - fieldRef: firstName
-          - fieldRef: lastName
-          - fieldRef: age
-      - fieldRef: notes
+          - type: Row
+            items:
+              - fieldRef: firstName
+              - fieldRef: lastName
+              - fieldRef: age
+      - type: Container
+        caption: Review notes
+        showBorder: true
+        items:
+          - fieldRef: notes
   actions:
     - id: ok
       semantic: Ok
       captionKey: actions.ok.caption
+      iconKey: ok
       area: footerPrimary
     - id: cancel
       semantic: Cancel
       captionKey: actions.cancel.caption
+      iconKey: cancel
       area: footerPrimary

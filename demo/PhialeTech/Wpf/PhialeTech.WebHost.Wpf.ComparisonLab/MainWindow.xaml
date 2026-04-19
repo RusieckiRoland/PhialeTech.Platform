@@ -1,0 +1,19 @@
+<Window x:Class="PhialeTech.WebHost.Wpf.ComparisonLab.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:PhialeTech.WebHost.Wpf.Controls;assembly=PhialeTech.WebHost.Wpf"
+        Title="WebHost WPF Comparison Lab"
+        Width="1800"
+        Height="1200"
+        MinWidth="1280"
+        MinHeight="900"
+        Background="#FFF7FAFC">
+    <Grid>
+        <controls:PhialeWebComponentScrollHost>
+            <controls:PhialeWebComponentScrollHost.HostedContent>
+                <StackPanel x:Name="ScenarioStack"
+                            Margin="20" />
+            </controls:PhialeWebComponentScrollHost.HostedContent>
+        </controls:PhialeWebComponentScrollHost>
+    </Grid>
+</Window>

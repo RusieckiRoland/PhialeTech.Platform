@@ -4,5 +4,6 @@ namespace PhialeTech.Components.Shared.Model
     {
         Demo = 0,
         Code = 1,
+        Explanation = 2,
     }
 }

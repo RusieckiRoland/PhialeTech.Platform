@@ -15,4 +15,7 @@
     <Page Remove="Themes.Linked\**\*.xaml" />
     <None Include="Themes.Linked\**\*.xaml" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Platforms\Wpf\PhialeTech.WebHost.Wpf\PhialeTech.WebHost.Wpf.csproj" />
+  </ItemGroup>
 </Project>

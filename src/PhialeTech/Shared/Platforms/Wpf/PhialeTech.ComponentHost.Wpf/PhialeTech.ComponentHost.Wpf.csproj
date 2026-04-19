@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net48;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.ComponentHost.Wpf</PackageId>
+    <AssemblyName>PhialeTech.ComponentHost.Wpf</AssemblyName>
+    <RootNamespace>PhialeTech.ComponentHost.Wpf</RootNamespace>
+    <Description>Thin WPF host for reusable modal and overlay surfaces driven by PhialeTech.ComponentHost.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="3.119.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\PhialeTech.ComponentHost.Abstractions\PhialeTech.ComponentHost.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\PhialeTech.ComponentHost\PhialeTech.ComponentHost.csproj" />
+    <ProjectReference Include="..\..\..\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\PhialeTech.Styles.Wpf\PhialeTech.Styles.Wpf.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\..\..\PhialeTech.Styles.Wpf\Themes.Linked\ComponentHost\Generic.xaml" Link="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+</Project>

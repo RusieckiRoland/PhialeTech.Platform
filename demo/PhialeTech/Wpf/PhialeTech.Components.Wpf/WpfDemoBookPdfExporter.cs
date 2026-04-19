@@ -32,7 +32,7 @@ namespace PhialeTech.Components.Wpf
 
             using (var document = new PdfDocument())
             {
-                document.Info.Title = string.IsNullOrWhiteSpace(documentTitle) ? "PhialeTech Demo" : documentTitle;
+                document.Info.Title = string.IsNullOrWhiteSpace(documentTitle) ? "PhialeTech Store book" : documentTitle;
 
                 foreach (var chapter in chapters)
                 {

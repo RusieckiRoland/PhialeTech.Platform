@@ -231,6 +231,56 @@ namespace PhialeGis.Library.Tests.Demo
         }
 
         [Test]
+        public void MainWindow_Overview_ShouldUseDeterministicSectionRows_InsteadOfWrapPanelLayout()
+        {
+            var xaml = File.ReadAllText(GetMainWindowPath());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(xaml, Does.Contain("ItemsSource=\"{Binding Rows}\""));
+                Assert.That(xaml, Does.Contain("StackPanel Orientation=\"Horizontal\""));
+                Assert.That(xaml, Does.Not.Contain("<WrapPanel ItemWidth=\"330\" ItemHeight=\"168\" />"));
+            });
+        }
+
+        [Test]
+        public void MainWindow_Overview_ShouldStretchToViewportWidth_AndDisableHorizontalScrolling()
+        {
+            var xaml = File.ReadAllText(GetMainWindowPath());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(xaml, Does.Contain("HorizontalScrollBarVisibility=\"Disabled\""));
+                Assert.That(xaml, Does.Contain("AncestorType={x:Type ScrollContentPresenter}"));
+                Assert.That(xaml, Does.Contain("Path=ActualWidth"));
+            });
+        }
+
+        [Test]
+        public void ShellControl_ShouldCollapseNavigationRail_WhenNoNavigationItemsExist()
+        {
+            var shellControlCode = File.ReadAllText(Path.Combine(
+                GetRepoRoot(),
+                "src",
+                "PhialeTech",
+                "Shared",
+                "Platforms",
+                "Wpf",
+                "PhialeTech.Shell.Wpf",
+                "Controls",
+                "PhialeAppShell.cs"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(shellControlCode, Does.Contain("PartNavigationRailHost"));
+                Assert.That(shellControlCode, Does.Contain("PartNavigationRailColumn"));
+                Assert.That(shellControlCode, Does.Contain("ApplyNavigationRailVisibility"));
+                Assert.That(shellControlCode, Does.Contain("ShellState.NavigationItems.Count > 0"));
+                Assert.That(shellControlCode, Does.Contain("GridLength.Shell.NavigationRail.Collapsed"));
+            });
+        }
+
+        [Test]
         public void MainWindow_ShouldApplyDedicatedComboAndScrollStyles_AndAvoidGridMinHeightClipping()
         {
             var xaml = File.ReadAllText(GetMainWindowPath());

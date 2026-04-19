@@ -199,6 +199,90 @@ document:
 
         [Test]
         [Category("Unit")]
+        public void Compile_ShouldAllowDocumentWithoutFields_WhenItOnlyDefinesActions()
+        {
+            var yaml = @"
+namespace: application.forms
+
+document:
+  id: action-only-form
+  kind: Form
+  actionAreas:
+    - id: footerPrimary
+      placement: Bottom
+      horizontalAlignment: Right
+      shared: true
+      sticky: true
+  actions:
+    - id: save
+      semantic: Ok
+      caption: Save
+      area: footerPrimary
+      isPrimary: true
+";
+
+            var compiler = new YamlComposedDocumentCompiler();
+            var compiled = compiler.Compile(yaml, new[] { typeof(YamlLibraryMarker).Assembly }, "en");
+            var normalized = new YamlDocumentDefinitionNormalizer().Normalize(compiled.Definition);
+            var compiledForm = AsForm(compiled.Definition);
+            var normalizedForm = AsForm(normalized.Document);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(compiled.Success, Is.True, string.Join(Environment.NewLine, compiled.Diagnostics));
+                Assert.That(normalized.Success, Is.True, string.Join(Environment.NewLine, normalized.Diagnostics));
+                Assert.That(compiledForm.Fields, Is.Empty);
+                Assert.That(compiledForm.Actions.Select(a => a.Id), Is.EqualTo(new[] { "save" }));
+                Assert.That(normalizedForm.Fields, Is.Empty);
+                Assert.That(normalizedForm.Layout, Is.Null);
+            });
+        }
+
+        [Test]
+        [Category("Unit")]
+        public void Compile_ShouldResolveDocumentExtends_FromImportedYamlLibraryDocument()
+        {
+            var yaml = @"
+namespace: application.forms
+imports:
+  - domain.person
+  - application.forms.actionShells
+
+document:
+  id: review-request
+  kind: Form
+  extends: review-sticky-header-footer
+  fields:
+    - id: firstName
+      extends: firstName
+    - id: notes
+      extends: notes
+  layout:
+    type: Column
+    items:
+      - fieldRef: firstName
+      - fieldRef: notes
+";
+
+            var compiler = new YamlComposedDocumentCompiler();
+            var compiled = compiler.Compile(yaml, new[] { typeof(YamlLibraryMarker).Assembly }, "en");
+            var normalized = new YamlDocumentDefinitionNormalizer().Normalize(compiled.Definition);
+            var compiledForm = AsForm(compiled.Definition);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(compiled.Success, Is.True, string.Join(Environment.NewLine, compiled.Diagnostics));
+                Assert.That(normalized.Success, Is.True, string.Join(Environment.NewLine, normalized.Diagnostics));
+                Assert.That(compiledForm.Fields.Select(f => f.Id), Is.EqualTo(new[] { "firstName", "notes" }));
+                Assert.That(compiledForm.Actions.Any(a => string.Equals(a.Id, "save", StringComparison.OrdinalIgnoreCase)), Is.True);
+                Assert.That(compiledForm.Actions.Any(a => string.Equals(a.Id, "cancel", StringComparison.OrdinalIgnoreCase)), Is.True);
+                Assert.That(compiledForm.ActionAreas.Any(a => string.Equals(a.Id, "headerActions", StringComparison.OrdinalIgnoreCase)), Is.True);
+                Assert.That(compiledForm.ActionAreas.Any(a => string.Equals(a.Id, "footerPrimary", StringComparison.OrdinalIgnoreCase)), Is.True);
+            });
+        }
+
+        [Test]
+        [Category("Unit")]
         public void Compile_ShouldReturnDiagnostics_WhenDefinitionCannotBeResolved()
         {
             var yaml = @"
@@ -410,6 +494,7 @@ documents:
                 Assert.That(resourceNames.Any(name => name.EndsWith("Definitions.domain.person.yaml", StringComparison.OrdinalIgnoreCase)), Is.True);
                 Assert.That(resourceNames.Any(name => name.EndsWith("Definitions.medium.numeric.yaml", StringComparison.OrdinalIgnoreCase)), Is.True);
                 Assert.That(resourceNames.Any(name => name.EndsWith("Definitions.application.forms.generated-form.yaml", StringComparison.OrdinalIgnoreCase)), Is.True);
+                Assert.That(resourceNames.Any(name => name.EndsWith("Definitions.application.forms.actionShells.confirm-footer-right.yaml", StringComparison.OrdinalIgnoreCase)), Is.True);
                 Assert.That(resourceNames.Any(name => name.EndsWith("Localization.en.yaml", StringComparison.OrdinalIgnoreCase)), Is.True);
                 Assert.That(resourceNames.Any(name => name.EndsWith("Localization.pl.yaml", StringComparison.OrdinalIgnoreCase)), Is.True);
             });

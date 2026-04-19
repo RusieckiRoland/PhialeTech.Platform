@@ -28,6 +28,10 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             "densityMode",
             "fieldChromeMode",
             "captionPlacement",
+            "topRegionChrome",
+            "bottomRegionChrome",
+            "header",
+            "footer",
             "layout",
             "actionAreas",
             "actions"
@@ -97,7 +101,8 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
 
                 var visibleNamespaces = CollectVisibleNamespaces(entryModule, namespaceIndex, diagnostics);
                 var definitionIndex = BuildDefinitionIndex(visibleNamespaces, namespaceIndex, diagnostics);
-                var legacyRoot = BuildLegacyRoot(documentKey, documentNode, definitionIndex, repository.Localization, diagnostics);
+                var documentIndex = BuildDocumentIndex(visibleNamespaces, namespaceIndex, diagnostics);
+                var legacyRoot = BuildLegacyRoot(documentKey, documentNode, definitionIndex, documentIndex, repository.Localization, diagnostics);
                 if (legacyRoot == null)
                 {
                     return new YamlDefinitionImportResult<YamlDocumentDefinition>(null, diagnostics);
@@ -334,17 +339,53 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             return result;
         }
 
+        private static Dictionary<string, QualifiedDocumentNode> BuildDocumentIndex(
+            HashSet<string> visibleNamespaces,
+            IDictionary<string, ComposedYamlModule> namespaceIndex,
+            IList<string> diagnostics)
+        {
+            var result = new Dictionary<string, QualifiedDocumentNode>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var namespaceName in visibleNamespaces)
+            {
+                if (!namespaceIndex.TryGetValue(namespaceName, out var module))
+                {
+                    continue;
+                }
+
+                foreach (var pair in module.Documents)
+                {
+                    var fullName = namespaceName + "." + pair.Key;
+                    if (result.ContainsKey(fullName))
+                    {
+                        diagnostics.Add(string.Format(CultureInfo.InvariantCulture, "Duplicate document '{0}' was found.", fullName));
+                        continue;
+                    }
+
+                    result[fullName] = new QualifiedDocumentNode(namespaceName, pair.Key, pair.Value);
+                }
+            }
+
+            return result;
+        }
+
         private static YamlMappingNode BuildLegacyRoot(
             string documentKey,
             YamlMappingNode documentNode,
             IDictionary<string, QualifiedDefinitionNode> definitionIndex,
+            IDictionary<string, QualifiedDocumentNode> documentIndex,
             IDictionary<string, string> localization,
             IList<string> diagnostics)
         {
+            var resolvedDocumentNode = ResolveDocumentNode(
+                documentNode,
+                documentIndex,
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+                diagnostics);
             var root = new YamlMappingNode();
-            SetScalar(root, "id", ReadScalar(documentNode, "id") ?? documentKey);
+            SetScalar(root, "id", ReadScalar(resolvedDocumentNode, "id") ?? documentKey);
 
-            foreach (var child in documentNode.Children)
+            foreach (var child in resolvedDocumentNode.Children)
             {
                 if (!(child.Key is YamlScalarNode key) || string.IsNullOrWhiteSpace(key.Value))
                 {
@@ -379,15 +420,15 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 root.Children.Add(new YamlScalarNode(key.Value), LocalizeNode(DeepClone(child.Value), localization));
             }
 
-            var fieldsMapping = BuildLegacyFields(documentNode, definitionIndex, localization, diagnostics);
+            var fieldsMapping = BuildLegacyFields(resolvedDocumentNode, definitionIndex, localization, diagnostics);
             root.Children.Add(new YamlScalarNode("fields"), fieldsMapping);
-            var actionAreasSequence = BuildLegacyActionAreas(documentNode, definitionIndex, localization, diagnostics);
+            var actionAreasSequence = BuildLegacyActionAreas(resolvedDocumentNode, definitionIndex, localization, diagnostics);
             if (actionAreasSequence.Children.Count > 0)
             {
                 root.Children.Add(new YamlScalarNode("actionAreas"), actionAreasSequence);
             }
 
-            var actionsSequence = BuildLegacyActions(documentNode, definitionIndex, localization, diagnostics);
+            var actionsSequence = BuildLegacyActions(resolvedDocumentNode, definitionIndex, localization, diagnostics);
             if (actionsSequence.Children.Count > 0)
             {
                 root.Children.Add(new YamlScalarNode("actions"), actionsSequence);
@@ -405,7 +446,6 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
 
             if (!TryGetSequence(documentNode, "fields", out var fieldsNode))
             {
-                diagnostics.Add("Document is missing required property 'fields'.");
                 return result;
             }
 
@@ -464,6 +504,43 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             }
 
             return result;
+        }
+
+        private static YamlMappingNode ResolveDocumentNode(
+            YamlMappingNode documentNode,
+            IDictionary<string, QualifiedDocumentNode> documentIndex,
+            ISet<string> resolutionStack,
+            IList<string> diagnostics)
+        {
+            var current = DeepClone(documentNode) as YamlMappingNode ?? new YamlMappingNode();
+            var parentReference = ReadScalar(current, "extends");
+            if (string.IsNullOrWhiteSpace(parentReference))
+            {
+                return current;
+            }
+
+            var document = ResolveDocumentReference(parentReference, documentIndex, diagnostics);
+            if (document == null)
+            {
+                return current;
+            }
+
+            var fullName = document.FullName;
+            if (!resolutionStack.Add(fullName))
+            {
+                diagnostics.Add(string.Format(CultureInfo.InvariantCulture, "Cyclic document inheritance was detected for '{0}'.", fullName));
+                return current;
+            }
+
+            try
+            {
+                var parent = ResolveDocumentNode(document.Node, documentIndex, resolutionStack, diagnostics);
+                return MergeMappings(parent, current);
+            }
+            finally
+            {
+                resolutionStack.Remove(fullName);
+            }
         }
 
         private static YamlSequenceNode BuildLegacyActionAreas(
@@ -623,6 +700,46 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             return null;
         }
 
+        private static QualifiedDocumentNode ResolveDocumentReference(
+            string reference,
+            IDictionary<string, QualifiedDocumentNode> documentIndex,
+            IList<string> diagnostics)
+        {
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                return null;
+            }
+
+            if (documentIndex != null && documentIndex.TryGetValue(reference, out var fullyQualified))
+            {
+                return fullyQualified;
+            }
+
+            var matches = documentIndex == null
+                ? new List<QualifiedDocumentNode>()
+                : documentIndex.Values
+                    .Where(item => string.Equals(item.DocumentId, reference, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            if (matches.Count == 1)
+            {
+                return matches[0];
+            }
+
+            if (matches.Count > 1)
+            {
+                diagnostics?.Add(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Document reference '{0}' is ambiguous. Matches: {1}.",
+                    reference,
+                    string.Join(", ", matches.Select(item => item.FullName))));
+                return matches[0];
+            }
+
+            diagnostics?.Add(string.Format(CultureInfo.InvariantCulture, "Document '{0}' could not be resolved.", reference));
+            return null;
+        }
+
         private static YamlMappingNode MergeMappings(YamlMappingNode baseNode, YamlMappingNode overrideNode)
         {
             var result = DeepClone(baseNode) as YamlMappingNode ?? new YamlMappingNode();
@@ -635,6 +752,12 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             {
                 if (!(child.Key is YamlScalarNode key) || string.IsNullOrWhiteSpace(key.Value))
                 {
+                    continue;
+                }
+
+                if (TryGetMapping(result, key.Value, out var existingMapping) && child.Value is YamlMappingNode overrideMapping)
+                {
+                    SetNode(result, key.Value, MergeMappings(existingMapping, overrideMapping));
                     continue;
                 }
 
@@ -675,7 +798,14 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                     var keyValue = key == null ? null : key.Value;
                     if (!string.IsNullOrWhiteSpace(keyValue) &&
                         (string.Equals(keyValue, "captionKey", StringComparison.OrdinalIgnoreCase) ||
-                         string.Equals(keyValue, "placeholderKey", StringComparison.OrdinalIgnoreCase)))
+                         string.Equals(keyValue, "placeholderKey", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(keyValue, "titleKey", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(keyValue, "subtitleKey", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(keyValue, "descriptionKey", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(keyValue, "statusKey", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(keyValue, "contextKey", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(keyValue, "noteKey", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(keyValue, "sourceKey", StringComparison.OrdinalIgnoreCase)))
                     {
                         localized.Children.Add(new YamlScalarNode(keyValue), LocalizeScalarNode(child.Value, localization));
                         continue;
@@ -917,6 +1047,24 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             public string FullName => Namespace + "." + DefinitionId;
         }
 
+        private sealed class QualifiedDocumentNode
+        {
+            public QualifiedDocumentNode(string @namespace, string documentId, YamlMappingNode node)
+            {
+                Namespace = @namespace;
+                DocumentId = documentId;
+                Node = node;
+            }
+
+            public string Namespace { get; }
+
+            public string DocumentId { get; }
+
+            public YamlMappingNode Node { get; }
+
+            public string FullName => Namespace + "." + DocumentId;
+        }
+
         private sealed class EmbeddedYamlLibraryRepository
         {
             public Dictionary<string, ComposedYamlModule> Modules { get; } = new Dictionary<string, ComposedYamlModule>(StringComparer.OrdinalIgnoreCase);
@@ -958,6 +1106,12 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                         var module = ParseModule(content, diagnostics, resourceName);
                         if (module == null)
                         {
+                            continue;
+                        }
+
+                        if (repository.Modules.TryGetValue(module.Namespace, out var existingModule))
+                        {
+                            MergeModule(existingModule, module, diagnostics);
                             continue;
                         }
 
@@ -1005,6 +1159,52 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                     {
                         target[key.Value] = value.Value ?? string.Empty;
                     }
+                }
+            }
+
+            private static void MergeModule(ComposedYamlModule target, ComposedYamlModule source, IList<string> diagnostics)
+            {
+                if (target == null || source == null)
+                {
+                    return;
+                }
+
+                foreach (var import in source.Imports)
+                {
+                    if (!target.Imports.Contains(import, StringComparer.OrdinalIgnoreCase))
+                    {
+                        target.Imports.Add(import);
+                    }
+                }
+
+                foreach (var pair in source.Definitions)
+                {
+                    if (target.Definitions.ContainsKey(pair.Key))
+                    {
+                        diagnostics.Add(string.Format(
+                            CultureInfo.InvariantCulture,
+                            "Duplicate definition '{0}.{1}' was found.",
+                            target.Namespace,
+                            pair.Key));
+                        continue;
+                    }
+
+                    target.Definitions[pair.Key] = pair.Value;
+                }
+
+                foreach (var pair in source.Documents)
+                {
+                    if (target.Documents.ContainsKey(pair.Key))
+                    {
+                        diagnostics.Add(string.Format(
+                            CultureInfo.InvariantCulture,
+                            "Duplicate document '{0}.{1}' was found.",
+                            target.Namespace,
+                            pair.Key));
+                        continue;
+                    }
+
+                    target.Documents[pair.Key] = pair.Value;
                 }
             }
         }
