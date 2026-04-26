@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="PDFsharp-WPF" Version="6.2.2" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\ActiveLayerSelector\Platforms\Wpf\PhialeTech.ActiveLayerSelector.Wpf\PhialeTech.ActiveLayerSelector.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\DocumentEditor\Platforms\Wpf\PhialeTech.DocumentEditor.Wpf\PhialeTech.DocumentEditor.Wpf.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\Grid\Platforms\Wpf\PhialeGrid.Wpf\PhialeGrid.Wpf.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\MonacoEditor\Platforms\Wpf\PhialeTech.MonacoEditor.Wpf\PhialeTech.MonacoEditor.Wpf.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\PdfViewer\Platforms\Wpf\PhialeTech.PdfViewer.Wpf\PhialeTech.PdfViewer.Wpf.csproj" />

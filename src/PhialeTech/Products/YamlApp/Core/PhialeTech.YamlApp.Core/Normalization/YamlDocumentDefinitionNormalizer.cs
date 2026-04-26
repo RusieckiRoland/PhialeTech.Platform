@@ -711,6 +711,41 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 };
             }
 
+            var sourceDocumentEditorField = source as IDocumentEditorFieldDefinition;
+            if (sourceDocumentEditorField != null)
+            {
+                return new YamlDocumentEditorFieldDefinition
+                {
+                    Id = source.Id,
+                    Name = source.Name,
+                    Extends = source.Extends,
+                    CaptionKey = source.CaptionKey,
+                    PlaceholderKey = source.PlaceholderKey,
+                    Width = source.Width,
+                    WidthHint = source.WidthHint,
+                    Weight = source.Weight,
+                    Visible = source.Visible,
+                    Enabled = source.Enabled,
+                    ShowOldValueRestoreButton = source.ShowOldValueRestoreButton,
+                    ValidationTrigger = source.ValidationTrigger,
+                    InteractionMode = source.InteractionMode,
+                    DensityMode = source.DensityMode,
+                    FieldChromeMode = source.FieldChromeMode,
+                    CaptionPlacement = source.CaptionPlacement,
+                    IsRequired = source.IsRequired,
+                    ShowLabel = source.ShowLabel,
+                    ShowPlaceholder = source.ShowPlaceholder,
+                    IsTouched = source.IsTouched,
+                    IsPristine = source.IsPristine,
+                    IsDirty = source.IsDirty,
+                    IsValid = source.IsValid,
+                    ErrorCode = source.ErrorCode,
+                    ErrorMessage = source.ErrorMessage,
+                    Value = sourceDocumentEditorField.Value,
+                    OldValue = sourceDocumentEditorField.OldValue
+                };
+            }
+
             var sourceStringField = source as IStringFieldDefinition;
             var sourceValueField = source as IValueFieldDefinition<string>;
             if (sourceStringField != null || sourceValueField != null)
@@ -846,6 +881,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
             }
 
             var mergedIntegerField = merged as YamlIntegerFieldDefinition;
+            var mergedDocumentEditorField = merged as YamlDocumentEditorFieldDefinition;
             var mergedStringField = merged as YamlStringFieldDefinition;
             var derivedStringField = derivedField as IValueFieldDefinition<string>;
 
@@ -875,6 +911,12 @@ namespace PhialeTech.YamlApp.Core.Normalization
             merged.IsValid = derivedField.IsValid;
             merged.ErrorCode = FirstNonEmpty(derivedField.ErrorCode, baseField.ErrorCode);
             merged.ErrorMessage = FirstNonEmpty(derivedField.ErrorMessage, baseField.ErrorMessage);
+
+            if (mergedDocumentEditorField != null && derivedStringField != null)
+            {
+                mergedDocumentEditorField.Value = derivedStringField.Value ?? mergedDocumentEditorField.Value;
+                mergedDocumentEditorField.OldValue = derivedStringField.OldValue ?? mergedDocumentEditorField.OldValue;
+            }
 
             if (mergedStringField != null)
             {

@@ -15,6 +15,7 @@
     <PackageReference Include="SkiaSharp.Views.WPF" Version="3.119.1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\DocumentEditor\Platforms\Wpf\PhialeTech.DocumentEditor.Wpf\PhialeTech.DocumentEditor.Wpf.csproj" />
     <ProjectReference Include="..\..\..\Abstractions\PhialeTech.YamlApp.Abstractions\PhialeTech.YamlApp.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\Definitions\PhialeTech.YamlApp.Definitions\PhialeTech.YamlApp.Definitions.csproj" />
     <ProjectReference Include="..\..\..\Core\PhialeTech.YamlApp.Core\PhialeTech.YamlApp.Core.csproj" />

@@ -13,6 +13,8 @@
         <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="WindowStyle" Value="None" />
         <Setter Property="AllowsTransparency" Value="False" />
         <Setter Property="ResizeMode" Value="CanResize" />
@@ -22,8 +24,11 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:PhialeWindow}">
-                    <Border Style="{StaticResource Shell.WindowRootBorderStyle}">
-                        <Grid>
+                    <Border Style="{StaticResource Shell.WindowRootBorderStyle}"
+                            UseLayoutRounding="True"
+                            SnapsToDevicePixels="True">
+                        <Grid UseLayoutRounding="True"
+                              SnapsToDevicePixels="True">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />

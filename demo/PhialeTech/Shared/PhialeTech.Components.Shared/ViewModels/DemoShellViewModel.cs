@@ -1105,6 +1105,8 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public bool IsYamlActionsExample => SelectedExample != null && string.Equals(SelectedExample.Id, "yaml-actions", StringComparison.OrdinalIgnoreCase);
 
+        public bool IsYamlAdvancedControlsExample => SelectedExample != null && string.Equals(SelectedExample.Id, "yaml-advanced-controls", StringComparison.OrdinalIgnoreCase);
+
         public bool IsYamlDocumentSurfaceExample => IsYamlDocumentExample || IsYamlActionsExample;
 
         public bool IsWebComponentsExample => SelectedExample != null && string.Equals(SelectedExample.ComponentId, "web-components", StringComparison.OrdinalIgnoreCase);
@@ -1118,6 +1120,8 @@ namespace PhialeTech.Components.Shared.ViewModels
         public bool IsReportDesignerExample => SelectedExample != null && string.Equals(SelectedExample.Id, "report-designer", StringComparison.OrdinalIgnoreCase);
 
         public bool IsMonacoEditorExample => SelectedExample != null && string.Equals(SelectedExample.Id, "monaco-editor", StringComparison.OrdinalIgnoreCase);
+
+        public bool IsDocumentEditorExample => SelectedExample != null && string.Equals(SelectedExample.Id, "document-editor", StringComparison.OrdinalIgnoreCase);
 
         public bool IsWebComponentScrollHostExample => SelectedExample != null && string.Equals(SelectedExample.Id, "web-component-scroll-host", StringComparison.OrdinalIgnoreCase);
 
@@ -1137,7 +1141,7 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public bool ShowYamlUiSurface => IsYamlUiExample;
 
-        public bool ShowWebComponentsSurface => IsWebHostExample || IsPdfViewerExample || IsReportDesignerExample || IsMonacoEditorExample || IsWebComponentScrollHostExample;
+        public bool ShowWebComponentsSurface => IsWebHostExample || IsPdfViewerExample || IsReportDesignerExample || IsMonacoEditorExample || IsDocumentEditorExample || IsWebComponentScrollHostExample;
 
         public bool ShowWebComponentsExplanationTab => IsWebComponentsExample;
 
@@ -1148,6 +1152,8 @@ namespace PhialeTech.Components.Shared.ViewModels
         public bool ShowReportDesignerSurface => IsReportDesignerExample;
 
         public bool ShowMonacoEditorSurface => IsMonacoEditorExample;
+
+        public bool ShowDocumentEditorSurface => IsDocumentEditorExample;
 
         public bool ShowLicenseSurface => IsLicenseExample;
 
@@ -2470,12 +2476,14 @@ namespace PhialeTech.Components.Shared.ViewModels
             OnPropertyChanged(nameof(IsYamlPrimitivesExample));
             OnPropertyChanged(nameof(IsYamlDocumentExample));
             OnPropertyChanged(nameof(IsYamlActionsExample));
+            OnPropertyChanged(nameof(IsYamlAdvancedControlsExample));
             OnPropertyChanged(nameof(IsYamlDocumentSurfaceExample));
             OnPropertyChanged(nameof(IsLicenseExample));
             OnPropertyChanged(nameof(IsWebHostExample));
             OnPropertyChanged(nameof(IsPdfViewerExample));
             OnPropertyChanged(nameof(IsReportDesignerExample));
             OnPropertyChanged(nameof(IsMonacoEditorExample));
+            OnPropertyChanged(nameof(IsDocumentEditorExample));
             OnPropertyChanged(nameof(IsWebComponentScrollHostExample));
             OnPropertyChanged(nameof(IsMyLicenseExample));
             OnPropertyChanged(nameof(IsThirdPartyLicensesExample));
@@ -2499,6 +2507,7 @@ namespace PhialeTech.Components.Shared.ViewModels
             OnPropertyChanged(nameof(ShowPdfViewerSurface));
             OnPropertyChanged(nameof(ShowReportDesignerSurface));
             OnPropertyChanged(nameof(ShowMonacoEditorSurface));
+            OnPropertyChanged(nameof(ShowDocumentEditorSurface));
             OnPropertyChanged(nameof(ShowSearchTools));
             OnPropertyChanged(nameof(ShowPersonalizationTools));
             OnPropertyChanged(nameof(ShowTransferTools));

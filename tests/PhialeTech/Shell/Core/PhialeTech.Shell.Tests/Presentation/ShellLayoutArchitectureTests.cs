@@ -15,6 +15,8 @@ namespace PhialeTech.Shell.Tests.Presentation
             Assert.That(generic, Does.Contain("<Style TargetType=\"{x:Type controls:PhialeWindow}\">"));
             Assert.That(generic, Does.Contain("<Setter Property=\"HorizontalContentAlignment\" Value=\"Stretch\" />"));
             Assert.That(generic, Does.Contain("<Setter Property=\"VerticalContentAlignment\" Value=\"Stretch\" />"));
+            Assert.That(generic, Does.Contain("<Setter Property=\"UseLayoutRounding\" Value=\"True\" />"));
+            Assert.That(generic, Does.Contain("<Setter Property=\"SnapsToDevicePixels\" Value=\"True\" />"));
         }
 
         [Test]

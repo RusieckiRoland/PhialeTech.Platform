@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;1573;1587</NoWarn>
+    <PackageId>PhialeTech.DocumentEditor.Abstractions</PackageId>
+    <AssemblyName>PhialeTech.DocumentEditor.Abstractions</AssemblyName>
+    <RootNamespace>PhialeTech.DocumentEditor.Abstractions</RootNamespace>
+    <Description>Shared abstractions for the PhialeTech DocumentEditor component.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Shared\PhialeTech.WebHost.Abstractions\PhialeTech.WebHost.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

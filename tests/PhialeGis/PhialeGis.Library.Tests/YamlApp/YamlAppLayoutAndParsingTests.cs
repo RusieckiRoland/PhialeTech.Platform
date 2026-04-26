@@ -604,6 +604,59 @@ layout:
         }
 
         [Test]
+        public void Import_ShouldParse_DocumentEditorField_FromControlAlias()
+        {
+            var yaml = @"
+id: DocumentEditorForm
+fields:
+  Notes:
+    control: YamlDocumentEditor
+    caption: notes.caption
+    placeholder: notes.placeholder
+layout:
+  type: Column
+  items:
+    - fieldRef: Notes
+";
+
+            var imported = Import(yaml);
+            var field = AsForm(imported.Definition).Fields.Single(item => item.Id == "Notes");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(imported.Success, Is.True, string.Join("\n", imported.Diagnostics));
+                Assert.That(field.GetType().Name, Is.EqualTo("YamlDocumentEditorFieldDefinition"));
+                Assert.That(field.PlaceholderKey, Is.EqualTo("notes.placeholder"));
+            });
+        }
+
+        [Test]
+        public void Import_ShouldParse_DocumentEditorField_FromValueTypeAlias()
+        {
+            var yaml = @"
+id: DocumentEditorForm
+fields:
+  Description:
+    valueType: richText
+    caption: description.caption
+layout:
+  type: Column
+  items:
+    - fieldRef: Description
+";
+
+            var imported = Import(yaml);
+            var field = AsForm(imported.Definition).Fields.Single(item => item.Id == "Description");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(imported.Success, Is.True, string.Join("\n", imported.Diagnostics));
+                Assert.That(field.GetType().Name, Is.EqualTo("YamlDocumentEditorFieldDefinition"));
+                Assert.That(field.CaptionKey, Is.EqualTo("description.caption"));
+            });
+        }
+
+        [Test]
         public void Import_ShouldFail_WhenFieldMaxLengthIsInvalid()
         {
             var yaml = @"

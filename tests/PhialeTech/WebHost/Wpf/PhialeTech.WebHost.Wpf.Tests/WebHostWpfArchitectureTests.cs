@@ -25,6 +25,7 @@ namespace PhialeTech.WebHost.Wpf.Tests
             Assert.That(code, Does.Not.Contain("Keyboard.Focus(_webView);"));
             Assert.That(code, Does.Contain("UseLayoutRounding = true"));
             Assert.That(code, Does.Contain("SnapsToDevicePixels = true"));
+            Assert.That(code, Does.Contain("ZoomFactor = 1d"));
             Assert.That(code, Does.Not.Contain("RenderOptions.SetBitmapScalingMode"));
         }
 

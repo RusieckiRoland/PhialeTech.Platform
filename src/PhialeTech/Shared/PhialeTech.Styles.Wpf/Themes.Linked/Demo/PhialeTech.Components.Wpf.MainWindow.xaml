@@ -9,6 +9,7 @@
         xmlns:grid="clr-namespace:PhialeTech.PhialeGrid.Wpf.Controls;assembly=PhialeTech.Grid.Wpf"
         xmlns:selector="clr-namespace:PhialeTech.ActiveLayerSelector.Wpf.Controls;assembly=PhialeTech.ActiveLayerSelector.Wpf"
         xmlns:yamlDocument="clr-namespace:PhialeTech.YamlApp.Wpf.Document;assembly=PhialeTech.YamlApp.Wpf"
+        xmlns:yamlDocumentEditor="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.DocumentEditor;assembly=PhialeTech.YamlApp.Wpf"
         xmlns:yaml="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.TextBox;assembly=PhialeTech.YamlApp.Wpf"
         xmlns:yamlInteger="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.IntegerBox;assembly=PhialeTech.YamlApp.Wpf"
         xmlns:yamlBadge="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Badges;assembly=PhialeTech.YamlApp.Wpf"
@@ -24,6 +25,8 @@
         MinWidth="1280"
         MinHeight="760"
         Background="{DynamicResource DemoWindowBackgroundBrush}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
         FontFamily="Segoe UI">
     <Window.Resources>
         <ResourceDictionary>
@@ -3099,6 +3102,76 @@
                                                     </Grid>
                                                 </StackPanel>
                                             </Border>
+
+                                            <Border Margin="0,16,0,0"
+                                                    Style="{StaticResource FoundationsSectionBorderStyle}"
+                                                    Visibility="{Binding IsYamlAdvancedControlsExample, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <StackPanel Visibility="{Binding IsYamlAdvancedControlsExample, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <TextBlock Text="Advanced controls"
+                                                               Style="{StaticResource SectionHeadlineStyle}" />
+                                                    <TextBlock Margin="0,0,0,14"
+                                                               Text="DocumentEditor plugs the shared Tiptap-based web surface into YAML App field chrome. The same field runtime decides whether the chrome is inline or framed, while the editor capability set stays unchanged."
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                               TextWrapping="Wrap" />
+
+                                                    <Grid Margin="0,4,0,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          SnapsToDevicePixels="True"
+                                                          UseLayoutRounding="True">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="20" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel HorizontalAlignment="Stretch"
+                                                                    SnapsToDevicePixels="True"
+                                                                    UseLayoutRounding="True">
+                                                            <Border HorizontalAlignment="Left"
+                                                                    Style="{StaticResource GridCommandStripBadgeBorderStyle}">
+                                                                <TextBlock Text="Inline"
+                                                                           Style="{StaticResource GridCommandStripBadgeTextStyle}" />
+                                                            </Border>
+                                                            <TextBlock Margin="0,10,0,0"
+                                                                       Text="Lightweight field chrome"
+                                                                       Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                            <TextBlock Margin="0,0,0,10"
+                                                                       Text="Uses the inline hint treatment, bottom divider, and compact caption rhythm for dense generated forms."
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                            <yamlDocumentEditor:YamlDocumentEditor x:Name="YamlAdvancedInlineDocumentEditorControl"
+                                                                                                   MinHeight="260"
+                                                                                                   HorizontalAlignment="Stretch"
+                                                                                                   RuntimeFieldState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlAdvancedInlineDocumentEditorState}" />
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="2"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    SnapsToDevicePixels="True"
+                                                                    UseLayoutRounding="True">
+                                                            <Border HorizontalAlignment="Left"
+                                                                    Style="{StaticResource GridCommandStripBadgeBorderStyle}">
+                                                                <TextBlock Text="Framed"
+                                                                           Style="{StaticResource GridCommandStripBadgeTextStyle}" />
+                                                            </Border>
+                                                            <TextBlock Margin="0,10,0,0"
+                                                                       Text="Card-style field chrome"
+                                                                       Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                            <TextBlock Margin="0,0,0,10"
+                                                                       Text="Uses the framed container for larger editing areas, explicit grouping, and more prominent form composition."
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                            <yamlDocumentEditor:YamlDocumentEditor x:Name="YamlAdvancedFramedDocumentEditorControl"
+                                                                                                   MinHeight="260"
+                                                                                                   HorizontalAlignment="Stretch"
+                                                                                                   RuntimeFieldState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlAdvancedFramedDocumentEditorState}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Border>
                                         </StackPanel>
                                         </webHost:PhialeWebComponentScrollHost.HostedContent>
                                     </webHost:PhialeWebComponentScrollHost>
@@ -3229,7 +3302,8 @@
                     <TabItem Header="{Binding ExplanationTabText}"
                              Visibility="{Binding ShowWebComponentsExplanationTab, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid Margin="0,20,0,0">
-                            <Border Style="{StaticResource FoundationsSectionBorderStyle}">
+                            <Border Style="{StaticResource FoundationsSectionBorderStyle}"
+                                    Visibility="{Binding IsWebComponentScrollHostExample, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <StackPanel>
                                     <TextBlock Text="{Binding WebComponentsScrollHostTitle}"
                                                Style="{StaticResource SectionHeadlineStyle}" />
@@ -3262,6 +3336,18 @@
                                                        TextWrapping="Wrap" />
                                         </StackPanel>
                                     </Border>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource FoundationsSectionBorderStyle}"
+                                    Visibility="{Binding IsDocumentEditorExample, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="DocumentEditor architecture"
+                                               Style="{StaticResource SectionHeadlineStyle}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="The web showcase mounts PhialeTech.DocumentEditor on top of the neutral WebHost. YAML App then reuses the same browser surface behind a platform-specific field wrapper, while JSON remains the native persistence format and HTML/Markdown stay interchange formats."
+                                               FontSize="13"
+                                               Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                               TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
                         </Grid>

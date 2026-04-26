@@ -61,6 +61,18 @@ namespace PhialeTech.Components.Shared.Services
                         "src/PhialeTech/Shared/PhialeTech.WebAssets/Assets/Monaco/ThirdPartyNotices.txt",
                         "src/PhialeTech/Shared/PhialeTech.WebAssets/Assets/Monaco/min/vs/loader.js"
                     }),
+                new DemoThirdPartyLicenseEntryViewModel(
+                    "Tiptap OSS DocumentEditor",
+                    "DocumentEditor browser-hosted rich text surface with HTML, Markdown, and JSON persistence",
+                    "MIT",
+                    "Copyright (c) Tiptap, ueberdosis and other OSS contributors",
+                    "Keep the MIT license text and third-party notices with the bundled DocumentEditor assets. Markdown support is provided by the OSS @tiptap/markdown package only, without paid conversion/import services.",
+                    new[]
+                    {
+                        "src/PhialeTech/Shared/PhialeTech.WebAssets/Assets/DocumentEditor/ThirdPartyNotices.md",
+                        "src/PhialeTech/Shared/PhialeTech.WebAssets/Assets/DocumentEditor/phiale-document-editor-host.js",
+                        "src/PhialeTech/Shared/PhialeTech.WebAssets/Assets/DocumentEditor/index.html"
+                    }),
             };
         }
 

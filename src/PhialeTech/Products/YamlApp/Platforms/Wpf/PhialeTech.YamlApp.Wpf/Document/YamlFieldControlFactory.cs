@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using PhialeTech.YamlApp.Abstractions.Interfaces;
 using PhialeTech.YamlApp.Runtime.Model;
+using PhialeTech.YamlApp.Wpf.Controls.DocumentEditor;
 using PhialeTech.YamlApp.Wpf.Controls.IntegerBox;
 using PhialeTech.YamlApp.Wpf.Controls.TextBox;
 
@@ -30,6 +31,15 @@ namespace PhialeTech.YamlApp.Wpf.Document
             if (runtimeField.Field != null && runtimeField.Field.Definition is IStringFieldDefinition)
             {
                 return new YamlTextBox
+                {
+                    RuntimeFieldState = runtimeField,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                };
+            }
+
+            if (runtimeField.Field != null && runtimeField.Field.Definition is IDocumentEditorFieldDefinition)
+            {
+                return new YamlDocumentEditor
                 {
                     RuntimeFieldState = runtimeField,
                     HorizontalAlignment = HorizontalAlignment.Stretch,

@@ -27,6 +27,7 @@ using PhialeTech.Components.Shared.Services;
 using PhialeTech.Yaml.Library;
 using PhialeTech.Components.Shared.ViewModels;
 using PhialeTech.Components.Wpf.Hosting;
+using PhialeTech.DocumentEditor.Abstractions;
 using PhialeTech.MonacoEditor.Abstractions;
 using PhialeTech.MonacoEditor.Wpf.Controls;
 using PhialeTech.PhialeGrid.Wpf.Controls;
@@ -48,6 +49,7 @@ using PhialeTech.YamlApp.Infrastructure.Loading;
 using PhialeTech.YamlApp.Runtime.Model;
 using PhialeTech.YamlApp.Wpf.Controls.Buttons;
 using PhialeTech.YamlApp.Runtime.Services;
+using PhialeTech.YamlApp.Wpf.Controls.DocumentEditor;
 using PhialeTech.YamlApp.Wpf.Document;
 
 namespace PhialeTech.Components.Wpf
@@ -154,6 +156,7 @@ namespace PhialeTech.Components.Wpf
         private PdfViewerShowcaseView _pdfViewerShowcaseView;
         private ReportDesignerShowcaseView _reportDesignerShowcaseView;
         private MonacoEditorShowcaseView _monacoEditorShowcaseView;
+        private DocumentEditorShowcaseView _documentEditorShowcaseView;
         private PhialeMonacoEditor _yamlActionsMonacoEditor;
         private PhialeMonacoEditor _yamlDocumentMonacoEditor;
         private IWebDemoFocusModeSource _activeWebDemoFocusModeSource;
@@ -234,6 +237,10 @@ namespace PhialeTech.Components.Wpf
             set => SetValue(HasYamlGeneratedFormDiagnosticsProperty, value);
         }
 
+        public RuntimeFieldState YamlAdvancedInlineDocumentEditorState { get; }
+
+        public RuntimeFieldState YamlAdvancedFramedDocumentEditorState { get; }
+
         public WpfHostedSurfaceService HostedSurfaceService { get; }
 
         public MainWindow()
@@ -246,6 +253,8 @@ namespace PhialeTech.Components.Wpf
             InitializeComponent();
             _yamlLibraryFormTemplates = LoadYamlLibraryFormTemplates();
             _yamlDocumentInheritanceOptions = BuildYamlDocumentInheritanceOptions();
+            YamlAdvancedInlineDocumentEditorState = CreateDocumentEditorDemoFieldState("yaml-advanced-inline-document-editor", "Inline document", FieldChromeMode.InlineHint, "Inline YAML App presentation keeps the field visually lightweight while preserving the same editor capabilities.");
+            YamlAdvancedFramedDocumentEditorState = CreateDocumentEditorDemoFieldState("yaml-advanced-framed-document-editor", "Framed document", FieldChromeMode.Framed, "Framed YAML App presentation uses the full card chrome for a larger, form-centric editing surface.");
             _applicationServices = applicationServices ?? throw new ArgumentNullException(nameof(applicationServices));
             _ownsApplicationServices = ownsApplicationServices;
             PhialeWebHostDiagnostics.Sink = (source, message) => MonacoInputTrace.Write("webhost", source, message);
@@ -275,6 +284,7 @@ namespace PhialeTech.Components.Wpf
             ApplicationStateDemoGrid.LanguageDirectory = gridLanguageDirectory;
             DemoActiveLayerSelector.LanguageDirectory = Path.Combine(AppContext.BaseDirectory, "PhialeTech.ActiveLayerSelector", "Languages");
             ApplySelectedTheme();
+            _ = ApplyYamlAdvancedDocumentEditorThemeAsync();
             UpdateApplicationShellState();
             InitializeYamlActionTemplatePicker();
             InitializeYamlDocumentInheritancePicker();
@@ -312,6 +322,8 @@ namespace PhialeTech.Components.Wpf
             _reportDesignerShowcaseView = null;
             _monacoEditorShowcaseView?.Dispose();
             _monacoEditorShowcaseView = null;
+            _documentEditorShowcaseView?.Dispose();
+            _documentEditorShowcaseView = null;
             DisposeYamlGeneratedFormMonacoEditor(ref _yamlActionsMonacoEditor);
             DisposeYamlGeneratedFormMonacoEditor(ref _yamlDocumentMonacoEditor);
             if (ExampleTabControl != null)
@@ -1126,6 +1138,7 @@ namespace PhialeTech.Components.Wpf
             if (e.PropertyName == nameof(DemoShellViewModel.SelectedThemeCode))
             {
                 ApplySelectedTheme();
+                await ApplyYamlAdvancedDocumentEditorThemeAsync().ConfigureAwait(true);
                 if (_reportDesignerShowcaseView != null)
                 {
                     await _reportDesignerShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme()).ConfigureAwait(true);
@@ -1133,6 +1146,10 @@ namespace PhialeTech.Components.Wpf
                 if (_monacoEditorShowcaseView != null)
                 {
                     await _monacoEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme()).ConfigureAwait(true);
+                }
+                if (_documentEditorShowcaseView != null)
+                {
+                    await _documentEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme()).ConfigureAwait(true);
                 }
                 if (_yamlActionsMonacoEditor != null)
                 {
@@ -1147,6 +1164,7 @@ namespace PhialeTech.Components.Wpf
 
             if (e.PropertyName == nameof(DemoShellViewModel.LanguageCode))
             {
+                await ApplyYamlAdvancedDocumentEditorThemeAsync().ConfigureAwait(true);
                 if (_reportDesignerShowcaseView != null)
                 {
                     await _reportDesignerShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme()).ConfigureAwait(true);
@@ -1154,6 +1172,10 @@ namespace PhialeTech.Components.Wpf
                 if (_monacoEditorShowcaseView != null)
                 {
                     await _monacoEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme()).ConfigureAwait(true);
+                }
+                if (_documentEditorShowcaseView != null)
+                {
+                    await _documentEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme()).ConfigureAwait(true);
                 }
                 return;
             }
@@ -1486,6 +1508,23 @@ namespace PhialeTech.Components.Wpf
 
                 _ = _monacoEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme());
                 AttachWebDemoFocusModeSource(_monacoEditorShowcaseView);
+                return;
+            }
+
+            if (_viewModel.ShowDocumentEditorSurface)
+            {
+                if (_documentEditorShowcaseView == null)
+                {
+                    _documentEditorShowcaseView = new DocumentEditorShowcaseView(ResolveReportDesignerTheme());
+                }
+
+                if (!ReferenceEquals(WebHostSamplePresenter.Content, _documentEditorShowcaseView))
+                {
+                    WebHostSamplePresenter.Content = _documentEditorShowcaseView;
+                }
+
+                _ = _documentEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme());
+                AttachWebDemoFocusModeSource(_documentEditorShowcaseView);
                 return;
             }
 
@@ -2014,6 +2053,28 @@ namespace PhialeTech.Components.Wpf
         private string ResolveReportDesignerTheme()
         {
             return ResolveNightMode(_viewModel.SelectedThemeCode) ? "dark" : "light";
+        }
+
+        private async Task ApplyYamlAdvancedDocumentEditorThemeAsync()
+        {
+            var theme = ResolveReportDesignerTheme();
+            var languageCode = _viewModel?.LanguageCode ?? "en";
+
+            if (YamlAdvancedInlineDocumentEditorControl != null)
+            {
+                YamlAdvancedInlineDocumentEditorControl.Theme = theme;
+                YamlAdvancedInlineDocumentEditorControl.LanguageCode = languageCode;
+                await YamlAdvancedInlineDocumentEditorControl.ApplyExternalThemeAsync(theme).ConfigureAwait(true);
+                await YamlAdvancedInlineDocumentEditorControl.ApplyExternalLanguageAsync(languageCode).ConfigureAwait(true);
+            }
+
+            if (YamlAdvancedFramedDocumentEditorControl != null)
+            {
+                YamlAdvancedFramedDocumentEditorControl.Theme = theme;
+                YamlAdvancedFramedDocumentEditorControl.LanguageCode = languageCode;
+                await YamlAdvancedFramedDocumentEditorControl.ApplyExternalThemeAsync(theme).ConfigureAwait(true);
+                await YamlAdvancedFramedDocumentEditorControl.ApplyExternalLanguageAsync(languageCode).ConfigureAwait(true);
+            }
         }
 
         private void UpdateApplicationShellState()
@@ -3299,6 +3360,56 @@ namespace PhialeTech.Components.Wpf
             public string SampleDocumentId { get; }
 
             public string SampleDisplayName { get; }
+        }
+
+        private static RuntimeFieldState CreateDocumentEditorDemoFieldState(string id, string caption, FieldChromeMode chromeMode, string sampleText)
+        {
+            var definition = new YamlDocumentEditorFieldDefinition
+            {
+                Id = id,
+                Name = id,
+                CaptionKey = caption,
+                PlaceholderKey = "Start typing document content",
+                ShowLabel = true,
+                ShowPlaceholder = true,
+                ShowOldValueRestoreButton = true,
+                IsRequired = true,
+            };
+
+            var resolved = new ResolvedFieldDefinition(
+                definition,
+                null,
+                FieldWidthHint.Fill,
+                true,
+                true,
+                true,
+                ValidationTrigger.OnChange,
+                InteractionMode.Classic,
+                DensityMode.Normal,
+                chromeMode,
+                CaptionPlacement.Top);
+
+            var state = new RuntimeFieldState(resolved);
+            state.LoadValue(CreateDocumentEditorSampleJson(sampleText));
+            state.SetValidation(string.Empty, string.Empty);
+            return state;
+        }
+
+        private static string CreateDocumentEditorSampleJson(string text)
+        {
+            return "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"" + EscapeDocumentEditorJsonText(text) + "\"}]}]}";
+        }
+
+        private static string EscapeDocumentEditorJsonText(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            return value
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"");
         }
     }
 }

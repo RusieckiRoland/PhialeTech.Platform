@@ -278,6 +278,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             var definitionId = FirstNonEmpty(ReadScalar(fieldNode, "id"), defaultId) ?? "<unknown>";
             var fieldScope = string.Format(CultureInfo.InvariantCulture, "Field '{0}'", definitionId);
             var isIntegerField = IsIntegerField(fieldNode);
+            var isDocumentEditorField = IsDocumentEditorField(fieldNode);
 
             ValidateAllowedKeys(
                 fieldNode,
@@ -312,7 +313,32 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 "value",
                 "oldValue");
 
-            IFieldDefinition field = isIntegerField
+            IFieldDefinition field = isDocumentEditorField
+                ? (IFieldDefinition)new YamlDocumentEditorFieldDefinition
+                {
+                    Id = definitionId,
+                    Name = ReadScalar(fieldNode, "name"),
+                    Extends = ReadScalar(fieldNode, "extends"),
+                    CaptionKey = FirstNonEmpty(ReadScalar(fieldNode, "captionKey"), ReadScalar(fieldNode, "caption")),
+                    PlaceholderKey = FirstNonEmpty(ReadScalar(fieldNode, "placeholderKey"), ReadScalar(fieldNode, "placeholder")),
+                    Width = ReadNullableDouble(fieldNode, "width"),
+                    WidthHint = ReadNullableEnum<FieldWidthHint>(fieldNode, "widthHint"),
+                    Weight = ReadNullableDouble(fieldNode, "weight"),
+                    Visible = ReadNullableBoolean(fieldNode, "visible"),
+                    Enabled = ReadNullableBoolean(fieldNode, "enabled"),
+                    ShowOldValueRestoreButton = ReadNullableBoolean(fieldNode, "showOldValueRestoreButton"),
+                    IsRequired = ReadBoolean(fieldNode, "required"),
+                    ShowLabel = ReadBoolean(fieldNode, "showLabel", true),
+                    ShowPlaceholder = ReadBoolean(fieldNode, "showPlaceholder"),
+                    ValidationTrigger = ReadNullableEnum<ValidationTrigger>(fieldNode, "validationTrigger"),
+                    InteractionMode = ReadNullableEnum<InteractionMode>(fieldNode, "interactionMode"),
+                    DensityMode = ReadNullableEnum<DensityMode>(fieldNode, "densityMode"),
+                    FieldChromeMode = ReadNullableEnum<FieldChromeMode>(fieldNode, "fieldChromeMode"),
+                    CaptionPlacement = ReadNullableEnum<CaptionPlacement>(fieldNode, "captionPlacement"),
+                    Value = ReadScalar(fieldNode, "value"),
+                    OldValue = ReadScalar(fieldNode, "oldValue")
+                }
+                : isIntegerField
                 ? (IFieldDefinition)new YamlIntegerFieldDefinition
                 {
                     Id = definitionId,
@@ -371,7 +397,33 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             ValidateNullableEnumValue<CaptionPlacement>(fieldNode, "captionPlacement", fieldScope, diagnostics);
             ValidateExclusiveWidth(fieldScope, field.Width, field.WidthHint, diagnostics);
 
-            if (isIntegerField)
+            if (isDocumentEditorField)
+            {
+                if (HasScalar(fieldNode, "maxLength"))
+                {
+                    diagnostics.Add(string.Format(
+                        CultureInfo.InvariantCulture,
+                        "{0} uses unsupported property 'maxLength' for document editor fields.",
+                        fieldScope));
+                }
+
+                if (HasScalar(fieldNode, "minValue"))
+                {
+                    diagnostics.Add(string.Format(
+                        CultureInfo.InvariantCulture,
+                        "{0} uses unsupported property 'minValue' for document editor fields.",
+                        fieldScope));
+                }
+
+                if (HasScalar(fieldNode, "maxValue"))
+                {
+                    diagnostics.Add(string.Format(
+                        CultureInfo.InvariantCulture,
+                        "{0} uses unsupported property 'maxValue' for document editor fields.",
+                        fieldScope));
+                }
+            }
+            else if (isIntegerField)
             {
                 ValidateNullableInteger(fieldNode, "minValue", fieldScope, diagnostics);
                 ValidateNullableInteger(fieldNode, "maxValue", fieldScope, diagnostics);
@@ -1223,6 +1275,20 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             var valueType = ReadScalar(node, "valueType");
             return string.Equals(valueType, "int", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(valueType, "integer", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsDocumentEditorField(YamlMappingNode node)
+        {
+            var control = ReadScalar(node, "control");
+            if (string.Equals(control, "YamlDocumentEditor", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var valueType = ReadScalar(node, "valueType");
+            return string.Equals(valueType, "richText", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(valueType, "document", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(valueType, "documentEditor", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool HasScalar(YamlMappingNode node, string key)

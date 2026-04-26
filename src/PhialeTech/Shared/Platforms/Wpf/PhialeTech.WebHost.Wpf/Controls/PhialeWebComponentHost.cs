@@ -37,6 +37,10 @@ namespace PhialeTech.WebHost.Wpf.Controls
             Focusable = false;
             UseLayoutRounding = true;
             SnapsToDevicePixels = true;
+            HorizontalAlignment = HorizontalAlignment.Stretch;
+            VerticalAlignment = VerticalAlignment.Stretch;
+            _root.HorizontalAlignment = HorizontalAlignment.Stretch;
+            _root.VerticalAlignment = VerticalAlignment.Stretch;
 
             _bridge = new WpfWebComponentPlatformBridge(_root, Dispatcher);
             _bridge.WarmUp();
@@ -162,6 +166,10 @@ namespace PhialeTech.WebHost.Wpf.Controls
                     PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "webview attached type=" + _webView.GetType().Name);
 
                     await _webView.EnsureCoreWebView2Async(environment).ConfigureAwait(true);
+#if DEBUG
+                    _webView.CoreWebView2.OpenDevToolsWindow();
+#endif
+
                     PhialeWebHostDiagnostics.Write("WpfWebComponentPlatformBridge", "EnsureCoreWebView2Async completed");
                     _webView.CoreWebView2.Settings.IsScriptEnabled = true;
                     DisableBrowserZoom(_webView.CoreWebView2.Settings);
@@ -319,6 +327,7 @@ namespace PhialeTech.WebHost.Wpf.Controls
                 {
                     UseLayoutRounding = true,
                     SnapsToDevicePixels = true,
+                    ZoomFactor = 1d,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                     VerticalAlignment = VerticalAlignment.Stretch
                 };

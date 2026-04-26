@@ -212,6 +212,10 @@ namespace PhialeTech.Components.Shared.Localization
         public const string ExampleYamlDocumentDescription = "Example.YamlDocument.Description";
         public const string ExampleYamlActionsTitle = "Example.YamlActions.Title";
         public const string ExampleYamlActionsDescription = "Example.YamlActions.Description";
+        public const string ExampleYamlAdvancedControlsTitle = "Example.YamlAdvancedControls.Title";
+        public const string ExampleYamlAdvancedControlsDescription = "Example.YamlAdvancedControls.Description";
+        public const string ExampleDocumentEditorTitle = "Example.DocumentEditor.Title";
+        public const string ExampleDocumentEditorDescription = "Example.DocumentEditor.Description";
         public const string ExampleYamlGenerateFormTitle = "Example.YamlGenerateForm.Title";
         public const string ExampleYamlGenerateFormDescription = "Example.YamlGenerateForm.Description";
         public const string ExampleAggregatesTitle = "Example.Aggregates.Title";

@@ -1,80 +1,56 @@
 {
   "version": 3,
   "targets": {
-    ".NETFramework,Version=v4.8": {
+    ".NETStandard,Version=v2.0": {
       "Microsoft.Bcl.AsyncInterfaces/8.0.0": {
         "type": "package",
         "dependencies": {
           "System.Threading.Tasks.Extensions": "4.5.4"
         },
         "compile": {
-          "lib/net462/Microsoft.Bcl.AsyncInterfaces.dll": {
+          "lib/netstandard2.0/Microsoft.Bcl.AsyncInterfaces.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net462/Microsoft.Bcl.AsyncInterfaces.dll": {
+          "lib/netstandard2.0/Microsoft.Bcl.AsyncInterfaces.dll": {
             "related": ".xml"
           }
-        },
-        "build": {
-          "buildTransitive/net462/_._": {}
         }
       },
-      "Microsoft.Web.WebView2/1.0.3856.49": {
+      "Microsoft.NETCore.Platforms/1.1.0": {
         "type": "package",
         "compile": {
-          "lib/net462/Microsoft.Web.WebView2.Core.dll": {
-            "related": ".xml"
-          },
-          "lib/net462/Microsoft.Web.WebView2.WinForms.dll": {
-            "related": ".xml"
-          },
-          "lib/net462/Microsoft.Web.WebView2.Wpf.dll": {
-            "related": ".xml"
-          }
+          "lib/netstandard1.0/_._": {}
         },
         "runtime": {
-          "lib/net462/Microsoft.Web.WebView2.Core.dll": {
-            "related": ".xml"
-          },
-          "lib/net462/Microsoft.Web.WebView2.WinForms.dll": {
-            "related": ".xml"
-          },
-          "lib/net462/Microsoft.Web.WebView2.Wpf.dll": {
-            "related": ".xml"
-          }
+          "lib/netstandard1.0/_._": {}
+        }
+      },
+      "NETStandard.Library/2.0.3": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "1.1.0"
+        },
+        "compile": {
+          "lib/netstandard1.0/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/_._": {}
         },
         "build": {
-          "buildTransitive/Microsoft.Web.WebView2.targets": {}
-        },
-        "runtimeTargets": {
-          "runtimes/win-arm64/native/WebView2Loader.dll": {
-            "assetType": "native",
-            "rid": "win-arm64"
-          },
-          "runtimes/win-x64/native/WebView2Loader.dll": {
-            "assetType": "native",
-            "rid": "win-x64"
-          },
-          "runtimes/win-x86/native/WebView2Loader.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          }
+          "build/netstandard2.0/NETStandard.Library.targets": {}
         }
       },
       "System.Buffers/4.5.1": {
         "type": "package",
-        "frameworkAssemblies": [
-          "mscorlib"
-        ],
         "compile": {
-          "ref/net45/System.Buffers.dll": {
+          "ref/netstandard2.0/System.Buffers.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net461/System.Buffers.dll": {
+          "lib/netstandard2.0/System.Buffers.dll": {
             "related": ".xml"
           }
         }
@@ -83,53 +59,42 @@
         "type": "package",
         "dependencies": {
           "System.Buffers": "4.5.1",
-          "System.Numerics.Vectors": "4.5.0",
+          "System.Numerics.Vectors": "4.4.0",
           "System.Runtime.CompilerServices.Unsafe": "4.5.3"
         },
-        "frameworkAssemblies": [
-          "System",
-          "mscorlib"
-        ],
         "compile": {
-          "lib/net461/System.Memory.dll": {
+          "lib/netstandard2.0/System.Memory.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net461/System.Memory.dll": {
+          "lib/netstandard2.0/System.Memory.dll": {
             "related": ".xml"
           }
         }
       },
-      "System.Numerics.Vectors/4.5.0": {
+      "System.Numerics.Vectors/4.4.0": {
         "type": "package",
-        "frameworkAssemblies": [
-          "System.Numerics",
-          "mscorlib"
-        ],
         "compile": {
-          "ref/net46/System.Numerics.Vectors.dll": {
+          "ref/netstandard2.0/System.Numerics.Vectors.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net46/System.Numerics.Vectors.dll": {
+          "lib/netstandard2.0/System.Numerics.Vectors.dll": {
             "related": ".xml"
           }
         }
       },
       "System.Runtime.CompilerServices.Unsafe/6.0.0": {
         "type": "package",
-        "frameworkAssemblies": [
-          "mscorlib"
-        ],
         "compile": {
-          "lib/net461/System.Runtime.CompilerServices.Unsafe.dll": {
+          "lib/netstandard2.0/System.Runtime.CompilerServices.Unsafe.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net461/System.Runtime.CompilerServices.Unsafe.dll": {
+          "lib/netstandard2.0/System.Runtime.CompilerServices.Unsafe.dll": {
             "related": ".xml"
           }
         }
@@ -142,17 +107,14 @@
           "System.Runtime.CompilerServices.Unsafe": "6.0.0"
         },
         "compile": {
-          "lib/net462/System.Text.Encodings.Web.dll": {
+          "lib/netstandard2.0/System.Text.Encodings.Web.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net462/System.Text.Encodings.Web.dll": {
+          "lib/netstandard2.0/System.Text.Encodings.Web.dll": {
             "related": ".xml"
           }
-        },
-        "build": {
-          "buildTransitive/net462/_._": {}
         }
       },
       "System.Text.Json/8.0.5": {
@@ -163,21 +125,20 @@
           "System.Memory": "4.5.5",
           "System.Runtime.CompilerServices.Unsafe": "6.0.0",
           "System.Text.Encodings.Web": "8.0.0",
-          "System.Threading.Tasks.Extensions": "4.5.4",
-          "System.ValueTuple": "4.5.0"
+          "System.Threading.Tasks.Extensions": "4.5.4"
         },
         "compile": {
-          "lib/net462/System.Text.Json.dll": {
+          "lib/netstandard2.0/System.Text.Json.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net462/System.Text.Json.dll": {
+          "lib/netstandard2.0/System.Text.Json.dll": {
             "related": ".xml"
           }
         },
         "build": {
-          "buildTransitive/net462/System.Text.Json.targets": {}
+          "buildTransitive/netstandard2.0/System.Text.Json.targets": {}
         }
       },
       "System.Threading.Tasks.Extensions/4.5.4": {
@@ -185,118 +146,63 @@
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "4.5.3"
         },
-        "frameworkAssemblies": [
-          "mscorlib"
-        ],
         "compile": {
-          "lib/net461/System.Threading.Tasks.Extensions.dll": {
+          "lib/netstandard2.0/System.Threading.Tasks.Extensions.dll": {
             "related": ".xml"
           }
         },
         "runtime": {
-          "lib/net461/System.Threading.Tasks.Extensions.dll": {
+          "lib/netstandard2.0/System.Threading.Tasks.Extensions.dll": {
             "related": ".xml"
           }
         }
       },
-      "System.ValueTuple/4.5.0": {
-        "type": "package",
-        "frameworkAssemblies": [
-          "mscorlib"
-        ],
+      "PhialeTech.YamlApp.Abstractions/1.0.0": {
+        "type": "project",
+        "framework": ".NETStandard,Version=v2.0",
         "compile": {
-          "ref/net47/System.ValueTuple.dll": {}
+          "bin/placeholder/PhialeTech.YamlApp.Abstractions.dll": {}
         },
         "runtime": {
-          "lib/net47/System.ValueTuple.dll": {
-            "related": ".xml"
-          }
+          "bin/placeholder/PhialeTech.YamlApp.Abstractions.dll": {}
         }
       },
-      "PhialeTech.WebHost/1.0.0": {
+      "PhialeTech.YamlApp.Core/1.0.0": {
         "type": "project",
         "framework": ".NETStandard,Version=v2.0",
         "dependencies": {
-          "PhialeTech.WebHost.Abstractions": "1.0.0",
-          "System.Text.Json": "8.0.5"
+          "PhialeTech.YamlApp.Abstractions": "1.0.0",
+          "PhialeTech.YamlApp.Definitions": "1.0.0",
+          "UniversalInput.Contracts": "1.0.0"
         },
         "compile": {
-          "bin/placeholder/PhialeTech.WebHost.dll": {}
+          "bin/placeholder/PhialeTech.YamlApp.Core.dll": {}
         },
         "runtime": {
-          "bin/placeholder/PhialeTech.WebHost.dll": {}
+          "bin/placeholder/PhialeTech.YamlApp.Core.dll": {}
         }
       },
-      "PhialeTech.WebHost.Abstractions/1.0.0": {
-        "type": "project",
-        "framework": ".NETStandard,Version=v2.0",
-        "compile": {
-          "bin/placeholder/PhialeTech.WebHost.Abstractions.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/PhialeTech.WebHost.Abstractions.dll": {}
-        }
-      }
-    },
-    "net8.0-windows10.0.19041": {
-      "Microsoft.Web.WebView2/1.0.3856.49": {
-        "type": "package",
-        "build": {
-          "buildTransitive/Microsoft.Web.WebView2.targets": {}
-        },
-        "runtimeTargets": {
-          "runtimes/win-arm64/native/WebView2Loader.dll": {
-            "assetType": "native",
-            "rid": "win-arm64"
-          },
-          "runtimes/win-x64/native/WebView2Loader.dll": {
-            "assetType": "native",
-            "rid": "win-x64"
-          },
-          "runtimes/win-x86/native/WebView2Loader.dll": {
-            "assetType": "native",
-            "rid": "win-x86"
-          }
-        }
-      },
-      "System.Text.Json/8.0.5": {
-        "type": "package",
-        "compile": {
-          "lib/net8.0/System.Text.Json.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net8.0/System.Text.Json.dll": {
-            "related": ".xml"
-          }
-        },
-        "build": {
-          "buildTransitive/net6.0/System.Text.Json.targets": {}
-        }
-      },
-      "PhialeTech.WebHost/1.0.0": {
+      "PhialeTech.YamlApp.Definitions/1.0.0": {
         "type": "project",
         "framework": ".NETStandard,Version=v2.0",
         "dependencies": {
-          "PhialeTech.WebHost.Abstractions": "1.0.0",
-          "System.Text.Json": "8.0.5"
+          "PhialeTech.YamlApp.Abstractions": "1.0.0"
         },
         "compile": {
-          "bin/placeholder/PhialeTech.WebHost.dll": {}
+          "bin/placeholder/PhialeTech.YamlApp.Definitions.dll": {}
         },
         "runtime": {
-          "bin/placeholder/PhialeTech.WebHost.dll": {}
+          "bin/placeholder/PhialeTech.YamlApp.Definitions.dll": {}
         }
       },
-      "PhialeTech.WebHost.Abstractions/1.0.0": {
+      "UniversalInput.Contracts/1.0.0": {
         "type": "project",
         "framework": ".NETStandard,Version=v2.0",
         "compile": {
-          "bin/placeholder/PhialeTech.WebHost.Abstractions.dll": {}
+          "bin/placeholder/UniversalInput.Contracts.dll": {}
         },
         "runtime": {
-          "bin/placeholder/PhialeTech.WebHost.Abstractions.dll": {}
+          "bin/placeholder/UniversalInput.Contracts.dll": {}
         }
       }
     }
@@ -326,101 +232,148 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "Microsoft.Web.WebView2/1.0.3856.49": {
-      "sha512": "OOBKvFgK0pUKcndvTK6/jUsbrPRwce62Wt/0hkJWDsK2AcsJ2ylOS/mLa4xAcNUTOs96YIjpPN4AHMADXJcrgQ==",
+    "Microsoft.NETCore.Platforms/1.1.0": {
+      "sha512": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A==",
       "type": "package",
-      "path": "microsoft.web.webview2/1.0.3856.49",
-      "hasTools": true,
+      "path": "microsoft.netcore.platforms/1.1.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
-        "LICENSE.txt",
-        "NOTICE.txt",
-        "WebView2.idl",
-        "WebView2.tlb",
-        "build/Common.targets",
-        "build/Microsoft.Web.WebView2.targets",
-        "build/WebView2Rules.Project.xml",
-        "build/native/Microsoft.Web.WebView2.targets",
-        "build/native/arm64/WebView2Loader.dll",
-        "build/native/arm64/WebView2Loader.dll.lib",
-        "build/native/arm64/WebView2LoaderStatic.lib",
-        "build/native/include-winrt/WebView2Interop.h",
-        "build/native/include-winrt/WebView2Interop.idl",
-        "build/native/include-winrt/WebView2Interop.tlb",
-        "build/native/include/WebView2.h",
-        "build/native/include/WebView2EnvironmentOptions.h",
-        "build/native/x64/WebView2Loader.dll",
-        "build/native/x64/WebView2Loader.dll.lib",
-        "build/native/x64/WebView2LoaderStatic.lib",
-        "build/native/x86/WebView2Loader.dll",
-        "build/native/x86/WebView2Loader.dll.lib",
-        "build/native/x86/WebView2LoaderStatic.lib",
-        "build/wv2winrt.targets",
-        "buildTransitive/Microsoft.Web.WebView2.targets",
-        "lib/Microsoft.Web.WebView2.Core.winmd",
-        "lib/net462/Microsoft.Web.WebView2.Core.dll",
-        "lib/net462/Microsoft.Web.WebView2.Core.xml",
-        "lib/net462/Microsoft.Web.WebView2.WinForms.dll",
-        "lib/net462/Microsoft.Web.WebView2.WinForms.xml",
-        "lib/net462/Microsoft.Web.WebView2.Wpf.dll",
-        "lib/net462/Microsoft.Web.WebView2.Wpf.xml",
-        "lib_manual/net5.0-windows10.0.17763.0/Microsoft.Web.WebView2.Wpf.dll",
-        "lib_manual/net5.0-windows10.0.17763.0/Microsoft.Web.WebView2.Wpf.xml",
-        "lib_manual/net6.0-windows10.0.17763.0/Microsoft.Web.WebView2.Core.Projection.dll",
-        "lib_manual/net8.0-windows10.0.17763.0/Microsoft.Web.WebView2.Core.Projection.dll",
-        "lib_manual/netcoreapp3.0/Microsoft.Web.WebView2.Core.dll",
-        "lib_manual/netcoreapp3.0/Microsoft.Web.WebView2.Core.xml",
-        "lib_manual/netcoreapp3.0/Microsoft.Web.WebView2.WinForms.dll",
-        "lib_manual/netcoreapp3.0/Microsoft.Web.WebView2.WinForms.xml",
-        "lib_manual/netcoreapp3.0/Microsoft.Web.WebView2.Wpf.dll",
-        "lib_manual/netcoreapp3.0/Microsoft.Web.WebView2.Wpf.xml",
-        "microsoft.web.webview2.1.0.3856.49.nupkg.sha512",
-        "microsoft.web.webview2.nuspec",
-        "runtimes/win-arm64/native/WebView2Loader.dll",
-        "runtimes/win-arm64/native_uap/Microsoft.Web.WebView2.Core.dll",
-        "runtimes/win-x64/native/WebView2Loader.dll",
-        "runtimes/win-x64/native_uap/Microsoft.Web.WebView2.Core.dll",
-        "runtimes/win-x86/native/WebView2Loader.dll",
-        "runtimes/win-x86/native_uap/Microsoft.Web.WebView2.Core.dll",
-        "tools/VisualStudioToolsManifest.xml",
-        "tools/wv2winrt/Antlr3.Runtime.dll",
-        "tools/wv2winrt/Antlr4.StringTemplate.dll",
-        "tools/wv2winrt/System.Buffers.dll",
-        "tools/wv2winrt/System.CommandLine.DragonFruit.dll",
-        "tools/wv2winrt/System.CommandLine.Rendering.dll",
-        "tools/wv2winrt/System.CommandLine.dll",
-        "tools/wv2winrt/System.Memory.dll",
-        "tools/wv2winrt/System.Numerics.Vectors.dll",
-        "tools/wv2winrt/System.Runtime.CompilerServices.Unsafe.dll",
-        "tools/wv2winrt/codegen_util.dll",
-        "tools/wv2winrt/concrt140_app.dll",
-        "tools/wv2winrt/cs/System.CommandLine.resources.dll",
-        "tools/wv2winrt/de/System.CommandLine.resources.dll",
-        "tools/wv2winrt/es/System.CommandLine.resources.dll",
-        "tools/wv2winrt/fr/System.CommandLine.resources.dll",
-        "tools/wv2winrt/it/System.CommandLine.resources.dll",
-        "tools/wv2winrt/ja/System.CommandLine.resources.dll",
-        "tools/wv2winrt/ko/System.CommandLine.resources.dll",
-        "tools/wv2winrt/msvcp140_1_app.dll",
-        "tools/wv2winrt/msvcp140_2_app.dll",
-        "tools/wv2winrt/msvcp140_app.dll",
-        "tools/wv2winrt/pl/System.CommandLine.resources.dll",
-        "tools/wv2winrt/pt-BR/System.CommandLine.resources.dll",
-        "tools/wv2winrt/ru/System.CommandLine.resources.dll",
-        "tools/wv2winrt/tr/System.CommandLine.resources.dll",
-        "tools/wv2winrt/type_hierarchy.dll",
-        "tools/wv2winrt/vcamp140_app.dll",
-        "tools/wv2winrt/vccorlib140_app.dll",
-        "tools/wv2winrt/vcomp140_app.dll",
-        "tools/wv2winrt/vcruntime140_app.dll",
-        "tools/wv2winrt/winrt_winmd.dll",
-        "tools/wv2winrt/winrt_winmd.winmd",
-        "tools/wv2winrt/wv2winrt.exe",
-        "tools/wv2winrt/wv2winrt.exe.config",
-        "tools/wv2winrt/wv2winrt.xml",
-        "tools/wv2winrt/zh-Hans/System.CommandLine.resources.dll",
-        "tools/wv2winrt/zh-Hant/System.CommandLine.resources.dll"
+        "ThirdPartyNotices.txt",
+        "dotnet_library_license.txt",
+        "lib/netstandard1.0/_._",
+        "microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+        "microsoft.netcore.platforms.nuspec",
+        "runtime.json"
+      ]
+    },
+    "NETStandard.Library/2.0.3": {
+      "sha512": "st47PosZSHrjECdjeIzZQbzivYBJFv6P2nv4cj2ypdI204DO+vZ7l5raGMiX4eXMJ53RfOIg+/s4DHVZ54Nu2A==",
+      "type": "package",
+      "path": "netstandard.library/2.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "build/netstandard2.0/NETStandard.Library.targets",
+        "build/netstandard2.0/ref/Microsoft.Win32.Primitives.dll",
+        "build/netstandard2.0/ref/System.AppContext.dll",
+        "build/netstandard2.0/ref/System.Collections.Concurrent.dll",
+        "build/netstandard2.0/ref/System.Collections.NonGeneric.dll",
+        "build/netstandard2.0/ref/System.Collections.Specialized.dll",
+        "build/netstandard2.0/ref/System.Collections.dll",
+        "build/netstandard2.0/ref/System.ComponentModel.Composition.dll",
+        "build/netstandard2.0/ref/System.ComponentModel.EventBasedAsync.dll",
+        "build/netstandard2.0/ref/System.ComponentModel.Primitives.dll",
+        "build/netstandard2.0/ref/System.ComponentModel.TypeConverter.dll",
+        "build/netstandard2.0/ref/System.ComponentModel.dll",
+        "build/netstandard2.0/ref/System.Console.dll",
+        "build/netstandard2.0/ref/System.Core.dll",
+        "build/netstandard2.0/ref/System.Data.Common.dll",
+        "build/netstandard2.0/ref/System.Data.dll",
+        "build/netstandard2.0/ref/System.Diagnostics.Contracts.dll",
+        "build/netstandard2.0/ref/System.Diagnostics.Debug.dll",
+        "build/netstandard2.0/ref/System.Diagnostics.FileVersionInfo.dll",
+        "build/netstandard2.0/ref/System.Diagnostics.Process.dll",
+        "build/netstandard2.0/ref/System.Diagnostics.StackTrace.dll",
+        "build/netstandard2.0/ref/System.Diagnostics.TextWriterTraceListener.dll",
+        "build/netstandard2.0/ref/System.Diagnostics.Tools.dll",
+        "build/netstandard2.0/ref/System.Diagnostics.TraceSource.dll",
+        "build/netstandard2.0/ref/System.Diagnostics.Tracing.dll",
+        "build/netstandard2.0/ref/System.Drawing.Primitives.dll",
+        "build/netstandard2.0/ref/System.Drawing.dll",
+        "build/netstandard2.0/ref/System.Dynamic.Runtime.dll",
+        "build/netstandard2.0/ref/System.Globalization.Calendars.dll",
+        "build/netstandard2.0/ref/System.Globalization.Extensions.dll",
+        "build/netstandard2.0/ref/System.Globalization.dll",
+        "build/netstandard2.0/ref/System.IO.Compression.FileSystem.dll",
+        "build/netstandard2.0/ref/System.IO.Compression.ZipFile.dll",
+        "build/netstandard2.0/ref/System.IO.Compression.dll",
+        "build/netstandard2.0/ref/System.IO.FileSystem.DriveInfo.dll",
+        "build/netstandard2.0/ref/System.IO.FileSystem.Primitives.dll",
+        "build/netstandard2.0/ref/System.IO.FileSystem.Watcher.dll",
+        "build/netstandard2.0/ref/System.IO.FileSystem.dll",
+        "build/netstandard2.0/ref/System.IO.IsolatedStorage.dll",
+        "build/netstandard2.0/ref/System.IO.MemoryMappedFiles.dll",
+        "build/netstandard2.0/ref/System.IO.Pipes.dll",
+        "build/netstandard2.0/ref/System.IO.UnmanagedMemoryStream.dll",
+        "build/netstandard2.0/ref/System.IO.dll",
+        "build/netstandard2.0/ref/System.Linq.Expressions.dll",
+        "build/netstandard2.0/ref/System.Linq.Parallel.dll",
+        "build/netstandard2.0/ref/System.Linq.Queryable.dll",
+        "build/netstandard2.0/ref/System.Linq.dll",
+        "build/netstandard2.0/ref/System.Net.Http.dll",
+        "build/netstandard2.0/ref/System.Net.NameResolution.dll",
+        "build/netstandard2.0/ref/System.Net.NetworkInformation.dll",
+        "build/netstandard2.0/ref/System.Net.Ping.dll",
+        "build/netstandard2.0/ref/System.Net.Primitives.dll",
+        "build/netstandard2.0/ref/System.Net.Requests.dll",
+        "build/netstandard2.0/ref/System.Net.Security.dll",
+        "build/netstandard2.0/ref/System.Net.Sockets.dll",
+        "build/netstandard2.0/ref/System.Net.WebHeaderCollection.dll",
+        "build/netstandard2.0/ref/System.Net.WebSockets.Client.dll",
+        "build/netstandard2.0/ref/System.Net.WebSockets.dll",
+        "build/netstandard2.0/ref/System.Net.dll",
+        "build/netstandard2.0/ref/System.Numerics.dll",
+        "build/netstandard2.0/ref/System.ObjectModel.dll",
+        "build/netstandard2.0/ref/System.Reflection.Extensions.dll",
+        "build/netstandard2.0/ref/System.Reflection.Primitives.dll",
+        "build/netstandard2.0/ref/System.Reflection.dll",
+        "build/netstandard2.0/ref/System.Resources.Reader.dll",
+        "build/netstandard2.0/ref/System.Resources.ResourceManager.dll",
+        "build/netstandard2.0/ref/System.Resources.Writer.dll",
+        "build/netstandard2.0/ref/System.Runtime.CompilerServices.VisualC.dll",
+        "build/netstandard2.0/ref/System.Runtime.Extensions.dll",
+        "build/netstandard2.0/ref/System.Runtime.Handles.dll",
+        "build/netstandard2.0/ref/System.Runtime.InteropServices.RuntimeInformation.dll",
+        "build/netstandard2.0/ref/System.Runtime.InteropServices.dll",
+        "build/netstandard2.0/ref/System.Runtime.Numerics.dll",
+        "build/netstandard2.0/ref/System.Runtime.Serialization.Formatters.dll",
+        "build/netstandard2.0/ref/System.Runtime.Serialization.Json.dll",
+        "build/netstandard2.0/ref/System.Runtime.Serialization.Primitives.dll",
+        "build/netstandard2.0/ref/System.Runtime.Serialization.Xml.dll",
+        "build/netstandard2.0/ref/System.Runtime.Serialization.dll",
+        "build/netstandard2.0/ref/System.Runtime.dll",
+        "build/netstandard2.0/ref/System.Security.Claims.dll",
+        "build/netstandard2.0/ref/System.Security.Cryptography.Algorithms.dll",
+        "build/netstandard2.0/ref/System.Security.Cryptography.Csp.dll",
+        "build/netstandard2.0/ref/System.Security.Cryptography.Encoding.dll",
+        "build/netstandard2.0/ref/System.Security.Cryptography.Primitives.dll",
+        "build/netstandard2.0/ref/System.Security.Cryptography.X509Certificates.dll",
+        "build/netstandard2.0/ref/System.Security.Principal.dll",
+        "build/netstandard2.0/ref/System.Security.SecureString.dll",
+        "build/netstandard2.0/ref/System.ServiceModel.Web.dll",
+        "build/netstandard2.0/ref/System.Text.Encoding.Extensions.dll",
+        "build/netstandard2.0/ref/System.Text.Encoding.dll",
+        "build/netstandard2.0/ref/System.Text.RegularExpressions.dll",
+        "build/netstandard2.0/ref/System.Threading.Overlapped.dll",
+        "build/netstandard2.0/ref/System.Threading.Tasks.Parallel.dll",
+        "build/netstandard2.0/ref/System.Threading.Tasks.dll",
+        "build/netstandard2.0/ref/System.Threading.Thread.dll",
+        "build/netstandard2.0/ref/System.Threading.ThreadPool.dll",
+        "build/netstandard2.0/ref/System.Threading.Timer.dll",
+        "build/netstandard2.0/ref/System.Threading.dll",
+        "build/netstandard2.0/ref/System.Transactions.dll",
+        "build/netstandard2.0/ref/System.ValueTuple.dll",
+        "build/netstandard2.0/ref/System.Web.dll",
+        "build/netstandard2.0/ref/System.Windows.dll",
+        "build/netstandard2.0/ref/System.Xml.Linq.dll",
+        "build/netstandard2.0/ref/System.Xml.ReaderWriter.dll",
+        "build/netstandard2.0/ref/System.Xml.Serialization.dll",
+        "build/netstandard2.0/ref/System.Xml.XDocument.dll",
+        "build/netstandard2.0/ref/System.Xml.XPath.XDocument.dll",
+        "build/netstandard2.0/ref/System.Xml.XPath.dll",
+        "build/netstandard2.0/ref/System.Xml.XmlDocument.dll",
+        "build/netstandard2.0/ref/System.Xml.XmlSerializer.dll",
+        "build/netstandard2.0/ref/System.Xml.dll",
+        "build/netstandard2.0/ref/System.dll",
+        "build/netstandard2.0/ref/mscorlib.dll",
+        "build/netstandard2.0/ref/netstandard.dll",
+        "build/netstandard2.0/ref/netstandard.xml",
+        "lib/netstandard1.0/_._",
+        "netstandard.library.2.0.3.nupkg.sha512",
+        "netstandard.library.nuspec"
       ]
     },
     "System.Buffers/4.5.1": {
@@ -477,10 +430,10 @@
         "version.txt"
       ]
     },
-    "System.Numerics.Vectors/4.5.0": {
-      "sha512": "QQTlPTl06J/iiDbJCiepZ4H//BVraReU4O4EoRw1U02H5TLUIT7xn3GnDp9AXPSlJUDyFs4uWjWafNX6WrAojQ==",
+    "System.Numerics.Vectors/4.4.0": {
+      "sha512": "UiLzLW+Lw6HLed1Hcg+8jSRttrbuXv7DANVj0DkL9g6EnnzbL75EB7EWsw5uRbhxd/4YdG8li5XizGWepmG3PQ==",
       "type": "package",
-      "path": "system.numerics.vectors/4.5.0",
+      "path": "system.numerics.vectors/4.4.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -497,15 +450,12 @@
         "lib/netstandard2.0/System.Numerics.Vectors.xml",
         "lib/portable-net45+win8+wp8+wpa81/System.Numerics.Vectors.dll",
         "lib/portable-net45+win8+wp8+wpa81/System.Numerics.Vectors.xml",
-        "lib/uap10.0.16299/_._",
         "lib/xamarinios10/_._",
         "lib/xamarinmac20/_._",
         "lib/xamarintvos10/_._",
         "lib/xamarinwatchos10/_._",
         "ref/MonoAndroid10/_._",
         "ref/MonoTouch10/_._",
-        "ref/net45/System.Numerics.Vectors.dll",
-        "ref/net45/System.Numerics.Vectors.xml",
         "ref/net46/System.Numerics.Vectors.dll",
         "ref/net46/System.Numerics.Vectors.xml",
         "ref/netcoreapp2.0/_._",
@@ -513,12 +463,11 @@
         "ref/netstandard1.0/System.Numerics.Vectors.xml",
         "ref/netstandard2.0/System.Numerics.Vectors.dll",
         "ref/netstandard2.0/System.Numerics.Vectors.xml",
-        "ref/uap10.0.16299/_._",
         "ref/xamarinios10/_._",
         "ref/xamarinmac20/_._",
         "ref/xamarintvos10/_._",
         "ref/xamarinwatchos10/_._",
-        "system.numerics.vectors.4.5.0.nupkg.sha512",
+        "system.numerics.vectors.4.4.0.nupkg.sha512",
         "system.numerics.vectors.nuspec",
         "useSharedDesignerContext.txt",
         "version.txt"
@@ -694,71 +643,34 @@
         "version.txt"
       ]
     },
-    "System.ValueTuple/4.5.0": {
-      "sha512": "okurQJO6NRE/apDIP23ajJ0hpiNmJ+f0BwOlB/cSqTLQlw5upkf+5+96+iG2Jw40G1fCVCyPz/FhIABUjMR+RQ==",
-      "type": "package",
-      "path": "system.valuetuple/4.5.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "LICENSE.TXT",
-        "THIRD-PARTY-NOTICES.TXT",
-        "lib/MonoAndroid10/_._",
-        "lib/MonoTouch10/_._",
-        "lib/net461/System.ValueTuple.dll",
-        "lib/net461/System.ValueTuple.xml",
-        "lib/net47/System.ValueTuple.dll",
-        "lib/net47/System.ValueTuple.xml",
-        "lib/netcoreapp2.0/_._",
-        "lib/netstandard1.0/System.ValueTuple.dll",
-        "lib/netstandard1.0/System.ValueTuple.xml",
-        "lib/netstandard2.0/_._",
-        "lib/portable-net40+sl4+win8+wp8/System.ValueTuple.dll",
-        "lib/portable-net40+sl4+win8+wp8/System.ValueTuple.xml",
-        "lib/uap10.0.16299/_._",
-        "lib/xamarinios10/_._",
-        "lib/xamarinmac20/_._",
-        "lib/xamarintvos10/_._",
-        "lib/xamarinwatchos10/_._",
-        "ref/MonoAndroid10/_._",
-        "ref/MonoTouch10/_._",
-        "ref/net461/System.ValueTuple.dll",
-        "ref/net47/System.ValueTuple.dll",
-        "ref/netcoreapp2.0/_._",
-        "ref/netstandard2.0/_._",
-        "ref/portable-net40+sl4+win8+wp8/System.ValueTuple.dll",
-        "ref/uap10.0.16299/_._",
-        "ref/xamarinios10/_._",
-        "ref/xamarinmac20/_._",
-        "ref/xamarintvos10/_._",
-        "ref/xamarinwatchos10/_._",
-        "system.valuetuple.4.5.0.nupkg.sha512",
-        "system.valuetuple.nuspec",
-        "useSharedDesignerContext.txt",
-        "version.txt"
-      ]
-    },
-    "PhialeTech.WebHost/1.0.0": {
+    "PhialeTech.YamlApp.Abstractions/1.0.0": {
       "type": "project",
-      "path": "../../../PhialeTech.WebHost/PhialeTech.WebHost.csproj",
-      "msbuildProject": "../../../PhialeTech.WebHost/PhialeTech.WebHost.csproj"
+      "path": "../../Abstractions/PhialeTech.YamlApp.Abstractions/PhialeTech.YamlApp.Abstractions.csproj",
+      "msbuildProject": "../../Abstractions/PhialeTech.YamlApp.Abstractions/PhialeTech.YamlApp.Abstractions.csproj"
     },
-    "PhialeTech.WebHost.Abstractions/1.0.0": {
+    "PhialeTech.YamlApp.Core/1.0.0": {
       "type": "project",
-      "path": "../../../PhialeTech.WebHost.Abstractions/PhialeTech.WebHost.Abstractions.csproj",
-      "msbuildProject": "../../../PhialeTech.WebHost.Abstractions/PhialeTech.WebHost.Abstractions.csproj"
+      "path": "../../Core/PhialeTech.YamlApp.Core/PhialeTech.YamlApp.Core.csproj",
+      "msbuildProject": "../../Core/PhialeTech.YamlApp.Core/PhialeTech.YamlApp.Core.csproj"
+    },
+    "PhialeTech.YamlApp.Definitions/1.0.0": {
+      "type": "project",
+      "path": "../../Definitions/PhialeTech.YamlApp.Definitions/PhialeTech.YamlApp.Definitions.csproj",
+      "msbuildProject": "../../Definitions/PhialeTech.YamlApp.Definitions/PhialeTech.YamlApp.Definitions.csproj"
+    },
+    "UniversalInput.Contracts/1.0.0": {
+      "type": "project",
+      "path": "../../../../Shared/UniversalInput.Contracts/UniversalInput.Contracts.csproj",
+      "msbuildProject": "../../../../Shared/UniversalInput.Contracts/UniversalInput.Contracts.csproj"
     }
   },
   "projectFileDependencyGroups": {
-    ".NETFramework,Version=v4.8": [
-      "Microsoft.Web.WebView2 >= *",
-      "PhialeTech.WebHost >= 1.0.0",
-      "PhialeTech.WebHost.Abstractions >= 1.0.0"
-    ],
-    "net8.0-windows10.0.19041": [
-      "Microsoft.Web.WebView2 >= *",
-      "PhialeTech.WebHost >= 1.0.0",
-      "PhialeTech.WebHost.Abstractions >= 1.0.0"
+    ".NETStandard,Version=v2.0": [
+      "NETStandard.Library >= 2.0.3",
+      "PhialeTech.YamlApp.Abstractions >= 1.0.0",
+      "PhialeTech.YamlApp.Core >= 1.0.0",
+      "PhialeTech.YamlApp.Definitions >= 1.0.0",
+      "System.Text.Json >= 8.0.5"
     ]
   },
   "packageFolders": {
@@ -767,13 +679,12 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\Platforms\\Wpf\\PhialeTech.WebHost.Wpf\\PhialeTech.WebHost.Wpf.csproj",
-      "projectName": "PhialeTech.WebHost.Wpf",
-      "projectPath": "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\Platforms\\Wpf\\PhialeTech.WebHost.Wpf\\PhialeTech.WebHost.Wpf.csproj",
+      "projectUniqueName": "D:\\PhialeGis.Library\\src\\PhialeTech\\Products\\YamlApp\\Runtime\\PhialeTech.YamlApp.Runtime\\PhialeTech.YamlApp.Runtime.csproj",
+      "projectName": "PhialeTech.YamlApp.Runtime",
+      "projectPath": "D:\\PhialeGis.Library\\src\\PhialeTech\\Products\\YamlApp\\Runtime\\PhialeTech.YamlApp.Runtime\\PhialeTech.YamlApp.Runtime.csproj",
       "packagesPath": "C:\\Users\\rolan\\.nuget\\packages\\",
-      "outputPath": "d:\\PhialeGis.Library\\artifacts-temp\\verify-obj\\",
+      "outputPath": "D:\\PhialeGis.Library\\artifacts-temp\\verify-obj\\",
       "projectStyle": "PackageReference",
-      "crossTargeting": true,
       "configFilePaths": [
         "D:\\PhialeGis.Library\\NuGet.Config",
         "C:\\Users\\rolan\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -782,33 +693,24 @@
         "C:\\Program Files (x86)\\NuGet\\Config\\Syncfusion Toolbox for WPF.config"
       ],
       "originalTargetFrameworks": [
-        "net48",
-        "net8.0-windows10.0.19041.0"
+        "netstandard2.0"
       ],
       "sources": {
         "D:\\PhialeGis.Library\\.nuget\\local-feed": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net8.0-windows10.0.19041": {
-          "targetAlias": "net8.0-windows10.0.19041.0",
+        "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
           "projectReferences": {
-            "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\PhialeTech.WebHost.Abstractions\\PhialeTech.WebHost.Abstractions.csproj": {
-              "projectPath": "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\PhialeTech.WebHost.Abstractions\\PhialeTech.WebHost.Abstractions.csproj"
+            "D:\\PhialeGis.Library\\src\\PhialeTech\\Products\\YamlApp\\Abstractions\\PhialeTech.YamlApp.Abstractions\\PhialeTech.YamlApp.Abstractions.csproj": {
+              "projectPath": "D:\\PhialeGis.Library\\src\\PhialeTech\\Products\\YamlApp\\Abstractions\\PhialeTech.YamlApp.Abstractions\\PhialeTech.YamlApp.Abstractions.csproj"
             },
-            "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\PhialeTech.WebHost\\PhialeTech.WebHost.csproj": {
-              "projectPath": "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\PhialeTech.WebHost\\PhialeTech.WebHost.csproj"
-            }
-          }
-        },
-        "net48": {
-          "targetAlias": "net48",
-          "projectReferences": {
-            "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\PhialeTech.WebHost.Abstractions\\PhialeTech.WebHost.Abstractions.csproj": {
-              "projectPath": "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\PhialeTech.WebHost.Abstractions\\PhialeTech.WebHost.Abstractions.csproj"
+            "D:\\PhialeGis.Library\\src\\PhialeTech\\Products\\YamlApp\\Core\\PhialeTech.YamlApp.Core\\PhialeTech.YamlApp.Core.csproj": {
+              "projectPath": "D:\\PhialeGis.Library\\src\\PhialeTech\\Products\\YamlApp\\Core\\PhialeTech.YamlApp.Core\\PhialeTech.YamlApp.Core.csproj"
             },
-            "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\PhialeTech.WebHost\\PhialeTech.WebHost.csproj": {
-              "projectPath": "D:\\PhialeGis.Library\\src\\PhialeTech\\Shared\\PhialeTech.WebHost\\PhialeTech.WebHost.csproj"
+            "D:\\PhialeGis.Library\\src\\PhialeTech\\Products\\YamlApp\\Definitions\\PhialeTech.YamlApp.Definitions\\PhialeTech.YamlApp.Definitions.csproj": {
+              "projectPath": "D:\\PhialeGis.Library\\src\\PhialeTech\\Products\\YamlApp\\Definitions\\PhialeTech.YamlApp.Definitions\\PhialeTech.YamlApp.Definitions.csproj"
             }
           }
         }
@@ -826,12 +728,18 @@
       "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
-      "net8.0-windows10.0.19041": {
-        "targetAlias": "net8.0-windows10.0.19041.0",
+      "netstandard2.0": {
+        "targetAlias": "netstandard2.0",
         "dependencies": {
-          "Microsoft.Web.WebView2": {
+          "NETStandard.Library": {
+            "suppressParent": "All",
             "target": "Package",
-            "version": "[*, )"
+            "version": "[2.0.3, )",
+            "autoReferenced": true
+          },
+          "System.Text.Json": {
+            "target": "Package",
+            "version": "[8.0.5, )"
           }
         },
         "imports": [
@@ -845,33 +753,6 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.Windows.SDK.NET.Ref",
-            "version": "[10.0.19041.57, 10.0.19041.57]"
-          }
-        ],
-        "frameworkReferences": {
-          "Microsoft.NETCore.App": {
-            "privateAssets": "all"
-          },
-          "Microsoft.Windows.SDK.NET.Ref.Windows": {
-            "privateAssets": "all"
-          },
-          "Microsoft.WindowsDesktop.App.WPF": {
-            "privateAssets": "none"
-          }
-        },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.310/PortableRuntimeIdentifierGraph.json"
-      },
-      "net48": {
-        "targetAlias": "net48",
-        "dependencies": {
-          "Microsoft.Web.WebView2": {
-            "target": "Package",
-            "version": "[*, )"
-          }
-        },
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.310\\RuntimeIdentifierGraph.json"
       }
     }
