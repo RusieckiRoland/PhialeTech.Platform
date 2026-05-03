@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using PhialeGrid.Core.Commit;
 using PhialeGrid.Core.Editing;
+using PhialeGrid.Core.Layout;
 using PhialeGrid.Core.Presentation;
 using PhialeGrid.Core.Query;
 using PhialeGrid.Core.Surface;
@@ -230,7 +231,7 @@ namespace PhialeGrid.Core.Rendering
             IReadOnlyList<GridColumnSurfaceItem> columns)
         {
             var headers = new List<GridHeaderSurfaceItem>();
-            var rowNumberLookup = BuildRowNumberLookup(context);
+            IReadOnlyDictionary<string, int> rowNumberLookup = null;
 
             // Column headers
             foreach (var col in columns)
@@ -315,6 +316,11 @@ namespace PhialeGrid.Core.Rendering
 
                 if (rowNumbersWidth > 0d)
                 {
+                    if (rowNumberLookup == null)
+                    {
+                        rowNumberLookup = BuildRowNumberLookup(context);
+                    }
+
                     headers.Add(new GridHeaderSurfaceItem(
                         row.RowKey,
                         GridHeaderKind.RowNumberHeader,
@@ -842,21 +848,28 @@ namespace PhialeGrid.Core.Rendering
                 return Array.Empty<GridViewportTrackMarker>();
             }
 
+            if (!HasAnyVerticalTrackMarkerState(context))
+            {
+                return Array.Empty<GridViewportTrackMarker>();
+            }
+
             var contentHeight = Math.Max(1d, context.RowLayouts[context.RowLayouts.Count - 1].Bottom - frozenDataHeight);
             var markers = new List<GridViewportTrackMarker>();
+            var rowDefinitionLookup = BuildRowDefinitionLookup(context);
+            var modifiedRowsFromCells = BuildModifiedRowsFromCellProjection(context);
 
             foreach (var rowLayout in context.RowLayouts)
             {
-                var rowDefinition = context.RowDefinitions.FirstOrDefault(candidate =>
-                    string.Equals(candidate.RowKey, rowLayout.RowKey, StringComparison.OrdinalIgnoreCase));
                 var recordState = ResolveRecordRenderState(context, rowLayout.RowKey);
                 var isInvalid = IsRecordValidationError(context, rowLayout.RowKey, recordState);
-                var isEdited = HasRecordPendingChanges(context, rowLayout.RowKey, recordState);
+                var isEdited = HasRecordPendingChanges(context, rowLayout.RowKey, recordState, modifiedRowsFromCells);
                 if (!isInvalid && !isEdited)
                 {
                     continue;
                 }
 
+                GridRowDefinition rowDefinition;
+                rowDefinitionLookup.TryGetValue(rowLayout.RowKey, out rowDefinition);
                 if (rowDefinition == null)
                 {
                     continue;
@@ -882,6 +895,100 @@ namespace PhialeGrid.Core.Rendering
             }
 
             return markers;
+        }
+
+        private static IReadOnlyDictionary<string, GridRowDefinition> BuildRowDefinitionLookup(GridSurfaceBuildContext context)
+        {
+            var lookup = new Dictionary<string, GridRowDefinition>(StringComparer.OrdinalIgnoreCase);
+            if (context?.RowDefinitions == null)
+            {
+                return lookup;
+            }
+
+            foreach (var rowDefinition in context.RowDefinitions)
+            {
+                if (rowDefinition == null || string.IsNullOrWhiteSpace(rowDefinition.RowKey))
+                {
+                    continue;
+                }
+
+                lookup[rowDefinition.RowKey] = rowDefinition;
+            }
+
+            return lookup;
+        }
+
+        private static ISet<string> BuildModifiedRowsFromCellProjection(GridSurfaceBuildContext context)
+        {
+            var modifiedRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (context?.StateProjection?.CellStates == null || context.StateProjection.CellStates.Count == 0)
+            {
+                return modifiedRows;
+            }
+
+            foreach (var cell in context.StateProjection.CellStates.Values)
+            {
+                if (cell == null ||
+                    string.IsNullOrWhiteSpace(cell.RecordKey) ||
+                    cell.ChangeState != CellChangeState.Modified)
+                {
+                    continue;
+                }
+
+                modifiedRows.Add(cell.RecordKey);
+            }
+
+            return modifiedRows;
+        }
+
+        private static bool HasAnyVerticalTrackMarkerState(GridSurfaceBuildContext context)
+        {
+            if (context == null)
+            {
+                return false;
+            }
+
+            if (context.InvalidRowKeys != null && context.InvalidRowKeys.Count > 0)
+            {
+                return true;
+            }
+
+            if (context.EditedRowKeys != null && context.EditedRowKeys.Count > 0)
+            {
+                return true;
+            }
+
+            if (context.StateProjection?.RecordStates != null)
+            {
+                foreach (var recordState in context.StateProjection.RecordStates.Values)
+                {
+                    if (recordState == null)
+                    {
+                        continue;
+                    }
+
+                    if (recordState.ValidationState == RecordValidationState.Invalid ||
+                        recordState.EditState == RecordEditState.Modified ||
+                        recordState.EditState == RecordEditState.New ||
+                        recordState.EditState == RecordEditState.MarkedForDelete)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (context.StateProjection?.CellStates != null)
+            {
+                foreach (var cellState in context.StateProjection.CellStates.Values)
+                {
+                    if (cellState?.ChangeState == CellChangeState.Modified)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private string GetCellDisplayText(GridSurfaceBuildContext context, string rowKey, string columnKey, object rawValue)
@@ -938,18 +1045,37 @@ namespace PhialeGrid.Core.Rendering
             string rowKey,
             GridRecordRenderState recordState)
         {
+            return HasRecordPendingChanges(context, rowKey, recordState, null);
+        }
+
+        private static bool HasRecordPendingChanges(
+            GridSurfaceBuildContext context,
+            string rowKey,
+            GridRecordRenderState recordState,
+            ISet<string> modifiedRowsFromCells)
+        {
             var editState = recordState?.EditState ?? ResolveFallbackEditState(context, rowKey);
             return editState == RecordEditState.Modified ||
                    editState == RecordEditState.New ||
                    editState == RecordEditState.MarkedForDelete ||
-                   HasProjectedCellChanges(context, rowKey);
+                   HasProjectedCellChanges(context, rowKey, modifiedRowsFromCells);
         }
 
         private static bool HasProjectedCellChanges(GridSurfaceBuildContext context, string rowKey)
         {
+            return HasProjectedCellChanges(context, rowKey, null);
+        }
+
+        private static bool HasProjectedCellChanges(GridSurfaceBuildContext context, string rowKey, ISet<string> modifiedRowsFromCells)
+        {
             if (context?.StateProjection?.CellStates == null || string.IsNullOrWhiteSpace(rowKey))
             {
                 return false;
+            }
+
+            if (modifiedRowsFromCells != null)
+            {
+                return modifiedRowsFromCells.Contains(rowKey);
             }
 
             return context.StateProjection.CellStates.Values.Any(cell =>

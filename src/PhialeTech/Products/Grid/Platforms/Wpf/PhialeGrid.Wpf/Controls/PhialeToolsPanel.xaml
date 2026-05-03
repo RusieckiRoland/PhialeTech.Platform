@@ -1,0 +1,24 @@
+<UserControl x:Class="PhialeTech.PhialeGrid.Wpf.Controls.PhialeToolsPanel"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:grid="clr-namespace:PhialeTech.PhialeGrid.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="72"
+             d:DesignWidth="280">
+    <StackPanel>
+        <TextBlock Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                   Text="Density" />
+
+        <ComboBox Margin="{DynamicResource PgToolsPanelDensityInputMargin}"
+                  Style="{DynamicResource PgGridToolsComboBoxStyle}"
+                  SelectedValue="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=Density, Mode=TwoWay}"
+                  SelectedValuePath="Tag">
+            <ComboBoxItem Tag="{x:Static grid:GridDensity.Compact}" Content="Compact" />
+            <ComboBoxItem Tag="{x:Static grid:GridDensity.Normal}" Content="Normal" />
+            <ComboBoxItem Tag="{x:Static grid:GridDensity.Comfortable}" Content="Comfortable" />
+        </ComboBox>
+    </StackPanel>
+</UserControl>

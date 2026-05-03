@@ -5,6 +5,7 @@ using NUnit.Framework;
 using PhialeGrid.Core.Editing;
 using PhialeGrid.Core.Interaction;
 using PhialeGrid.Core.Layout;
+using PhialeGrid.Core.Query;
 using PhialeGrid.Core.Rendering;
 using PhialeGrid.Core.Surface;
 using GridColumnEditorKind = PhialeGrid.Core.Columns.GridColumnEditorKind;
@@ -926,6 +927,64 @@ namespace PhialeGrid.Core.Tests
                 });
 
             Assert.That(coordinator.GetCurrentSnapshot().CurrentCell, Is.Null);
+        }
+
+        [Test]
+        public void BeginSnapshotUpdateBatch_WhenSurfaceModelIsHydrated_PublishesSingleSnapshot()
+        {
+            var accessor = new TestCellAccessor();
+            accessor.Add("row-1", "col-1", "Alpha")
+                .Add("row-2", "col-1", "Beta");
+
+            var coordinator = new GridSurfaceCoordinator
+            {
+                CellValueProvider = accessor,
+            };
+
+            var snapshotCount = 0;
+            coordinator.SnapshotChanged += (sender, args) => snapshotCount++;
+
+            using (coordinator.BeginSnapshotUpdateBatch("surface-model-hydration"))
+            {
+                coordinator.ColumnHeaderHeight = 30;
+                coordinator.FilterRowHeight = 20;
+                coordinator.RowHeaderWidth = 28;
+                coordinator.RowIndicatorWidth = 12;
+                coordinator.FrozenColumnCount = 0;
+                coordinator.FrozenRowCount = 0;
+                coordinator.SelectionMode = GridSelectionMode.Cell;
+                coordinator.ShowCurrentRecordIndicator = true;
+                coordinator.ShowRowNumbers = false;
+                coordinator.Initialize(
+                    new[]
+                    {
+                        new GridColumnDefinition { ColumnKey = "col-1", Header = "Col 1", Width = 100 },
+                    },
+                    new[]
+                    {
+                        new GridRowDefinition { RowKey = "row-1", Height = 20 },
+                        new GridRowDefinition { RowKey = "row-2", Height = 20 },
+                    });
+                coordinator.Sorts = new[] { new GridSortDescriptor("col-1", GridSortDirection.Ascending) };
+                coordinator.SetStateProjection(GridSurfaceStateProjection.Empty);
+                coordinator.SetEditedRows(new[] { "row-1" });
+                coordinator.SetInvalidRows(new[] { "row-2" });
+                coordinator.SetRowIndicatorToolTips(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    { "row-2", "Invalid row" },
+                });
+            }
+
+            var snapshot = coordinator.GetCurrentSnapshot();
+            Assert.Multiple(() =>
+            {
+                Assert.That(snapshotCount, Is.EqualTo(1));
+                Assert.That(snapshot, Is.Not.Null);
+                Assert.That(snapshot.Columns.Single().ColumnKey, Is.EqualTo("col-1"));
+                Assert.That(snapshot.Rows.Count, Is.EqualTo(2));
+                Assert.That(snapshot.Headers.Any(header => header.HeaderKey == "row-1" && header.RowIndicatorState == GridRowIndicatorState.Edited), Is.True);
+                Assert.That(snapshot.Headers.Any(header => header.HeaderKey == "row-2" && header.RowIndicatorState == GridRowIndicatorState.Invalid), Is.True);
+            });
         }
 
         private static GridSurfaceCoordinator CreateCoordinator()

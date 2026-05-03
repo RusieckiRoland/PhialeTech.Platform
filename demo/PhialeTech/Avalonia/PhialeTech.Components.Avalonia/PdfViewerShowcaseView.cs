@@ -173,7 +173,7 @@ namespace PhialeTech.Components.Avalonia
         {
             try
             {
-                string samplePath = WebAssetLocationResolver.ResolveAssetPath("PdfViewer/Samples/phialetech-sample.pdf");
+                string samplePath = WebAssetLocationResolver.ResolveAssetPath("PdfViewer/Samples/esto-annual-report-2025-preview.pdf");
                 await _viewer.OpenAsync(PdfDocumentSource.FromFilePath(samplePath)).ConfigureAwait(true);
             }
             catch (Exception ex)

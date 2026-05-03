@@ -9,6 +9,9 @@ namespace PhialeTech.ComponentHost.State
     public sealed class JsonApplicationStateStore : IApplicationStateStore
     {
         private readonly string _rootDirectory;
+        private readonly object _payloadCacheLock = new object();
+        private readonly System.Collections.Generic.Dictionary<string, CachedPayload> _payloadCache =
+            new System.Collections.Generic.Dictionary<string, CachedPayload>(StringComparer.Ordinal);
 
         public JsonApplicationStateStore(string applicationName, string rootDirectory = null)
         {
@@ -35,13 +38,34 @@ namespace PhialeTech.ComponentHost.State
                 Directory.CreateDirectory(directory);
             }
 
-            File.WriteAllText(filePath, payload ?? string.Empty);
+            var normalizedPayload = payload ?? string.Empty;
+            File.WriteAllText(filePath, normalizedPayload);
+            UpdatePayloadCache(filePath, normalizedPayload);
         }
 
         public string Load(string stateKey)
         {
             var filePath = GetFilePath(stateKey);
-            return File.Exists(filePath) ? File.ReadAllText(filePath) : null;
+            var fileInfo = new FileInfo(filePath);
+            if (!fileInfo.Exists)
+            {
+                RemovePayloadCache(filePath);
+                return null;
+            }
+
+            lock (_payloadCacheLock)
+            {
+                if (_payloadCache.TryGetValue(filePath, out var cachedPayload) &&
+                    cachedPayload.Length == fileInfo.Length &&
+                    cachedPayload.LastWriteTimeUtcTicks == fileInfo.LastWriteTimeUtc.Ticks)
+                {
+                    return cachedPayload.Payload;
+                }
+            }
+
+            var payload = File.ReadAllText(filePath);
+            CachePayload(filePath, payload, fileInfo.Length, fileInfo.LastWriteTimeUtc.Ticks);
+            return payload;
         }
 
         public void Delete(string stateKey)
@@ -51,6 +75,8 @@ namespace PhialeTech.ComponentHost.State
             {
                 File.Delete(filePath);
             }
+
+            RemovePayloadCache(filePath);
         }
 
         public string GetFilePath(string stateKey)
@@ -109,6 +135,50 @@ namespace PhialeTech.ComponentHost.State
 
             segment = segment.Replace(':', '-');
             return string.IsNullOrWhiteSpace(segment) ? "state" : segment;
+        }
+
+        private void UpdatePayloadCache(string filePath, string payload)
+        {
+            var fileInfo = new FileInfo(filePath);
+            if (!fileInfo.Exists)
+            {
+                RemovePayloadCache(filePath);
+                return;
+            }
+
+            CachePayload(filePath, payload, fileInfo.Length, fileInfo.LastWriteTimeUtc.Ticks);
+        }
+
+        private void CachePayload(string filePath, string payload, long length, long lastWriteTimeUtcTicks)
+        {
+            lock (_payloadCacheLock)
+            {
+                _payloadCache[filePath] = new CachedPayload(payload, length, lastWriteTimeUtcTicks);
+            }
+        }
+
+        private void RemovePayloadCache(string filePath)
+        {
+            lock (_payloadCacheLock)
+            {
+                _payloadCache.Remove(filePath);
+            }
+        }
+
+        private sealed class CachedPayload
+        {
+            public CachedPayload(string payload, long length, long lastWriteTimeUtcTicks)
+            {
+                Payload = payload;
+                Length = length;
+                LastWriteTimeUtcTicks = lastWriteTimeUtcTicks;
+            }
+
+            public string Payload { get; }
+
+            public long Length { get; }
+
+            public long LastWriteTimeUtcTicks { get; }
         }
     }
 }

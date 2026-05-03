@@ -22,7 +22,10 @@ namespace PhialeGis.Library.Tests.Grid
             Assert.That(code, Does.Not.Contain("GridGroupRowFlattener"));
             Assert.That(code, Does.Not.Contain("BuildGroupedView(filteredRows"));
             Assert.That(code, Does.Contain("RowsView = CreateRowsView(_virtualizedRows);"));
-            Assert.That(code, Does.Contain("RowsView = CreateRowsView(_virtualizedGroupedRows);"));
+            Assert.That(code, Does.Contain("BuildGroupedSurfaceResult(sourceRows"));
+            Assert.That(code, Does.Contain("CreateGroupedDisplayRows(groupedSurfaceResult.Rows)"));
+            Assert.That(code, Does.Contain("RowsView = CreateRowsView(groupedDisplayRows);"));
+            Assert.That(code, Does.Not.Contain("RowsView = CreateRowsView(_virtualizedGroupedRows);"));
         }
 
         [Test]
@@ -37,28 +40,32 @@ namespace PhialeGis.Library.Tests.Grid
         }
 
         [Test]
-        public void WpfHost_CancelAndCommitEdits_ResolveChangesFromSnapshots()
+        public void WpfHost_CancelAndCommitEdits_ResolveChangesThroughCoreEditSession()
         {
             var code = File.ReadAllText(GetCodePath());
 
             Assert.That(code, Does.Contain("ResolveChangedRowIds()"));
-            Assert.That(code, Does.Contain("GridEditSnapshotUtility.ResolveChangedRowIds"));
-            Assert.That(code, Does.Contain("TrackEditedRow(row);"));
+            Assert.That(code, Does.Contain("_editSessionContext.HasRecordChanges(rowId)"));
+            Assert.That(code, Does.Contain("_editSessionContext.CompleteRecordEdit(rowId, hasChanges);"));
+            Assert.That(code, Does.Contain("_editSessionContext.EditedRecordIds.ToArray()"));
+            Assert.That(code, Does.Contain("private void TrackEditedRow("));
             Assert.That(code, Does.Not.Contain("Dispatcher.BeginInvoke(new Action(() => TrackEditedRow(row))"));
         }
 
         [Test]
-        public void WpfHost_UsesCoreControllers_ForSortHeaderDragAndCurrentCellDescription()
+        public void WpfHost_UsesCoreControllers_ForSortHeaderInteractionsAndCurrentCellDescription()
         {
             var code = File.ReadAllText(GetCodePath());
+            var coreCoordinatorCode = File.ReadAllText(GetCoreSurfaceCoordinatorCodePath());
 
             Assert.Multiple(() =>
             {
-                Assert.That(code, Does.Contain("GridHeaderDragController"));
+                Assert.That(coreCoordinatorCode, Does.Contain("HeaderDragThreshold"));
+                Assert.That(coreCoordinatorCode, Does.Contain("HasExceededColumnHeaderDragThreshold"));
                 Assert.That(code, Does.Contain("GridSortInteractionController"));
                 Assert.That(code, Does.Contain("GridCurrentCellDescriptionBuilder"));
                 Assert.That(code, Does.Contain("SurfaceHost.Initialize(_surfaceCoordinator);"));
-                Assert.That(code, Does.Not.Contain("WpfUniversalInputAdapter."));
+                Assert.That(code, Does.Contain("GridSurfaceUniversalInputAdapter"));
                 Assert.That(code, Does.Not.Contain("var keepExisting = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;"));
                 Assert.That(code, Does.Not.Contain("_dragStartPoint"));
                 Assert.That(code, Does.Not.Contain("_dragColumn"));
@@ -69,6 +76,11 @@ namespace PhialeGis.Library.Tests.Grid
         private static string GetCodePath()
         {
             return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Platforms", "Wpf", "PhialeGrid.Wpf", "PhialeGrid.cs");
+        }
+
+        private static string GetCoreSurfaceCoordinatorCodePath()
+        {
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Core", "PhialeGrid.Core", "GridSurfaceCoordinator.cs");
         }
 
         private static string GetRepoRoot()

@@ -53,6 +53,61 @@ namespace PhialeGrid.Core.Tests.HitTesting
         }
 
         [Test]
+        public void HitTest_OnDataSurface_WhenColumnHeaderAndFirstRowShareOrigin_ReturnsCell()
+        {
+            var sut = new GridHitTestingService();
+            var snapshot = CreateSnapshot(dataTop: 0d);
+
+            var result = sut.HitTest(60, 12, snapshot, GridHitTestSurfaceScope.DataSurface);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.TargetKind, Is.EqualTo(GridHitTargetKind.Cell));
+                Assert.That(result.RowKey, Is.EqualTo("row-1"));
+                Assert.That(result.ColumnKey, Is.EqualTo("col-1"));
+            });
+        }
+
+        [Test]
+        public void HitTest_OnFullSurface_WhenColumnHeaderAndFirstRowShareOrigin_ReturnsColumnHeader()
+        {
+            var sut = new GridHitTestingService();
+            var snapshot = CreateSnapshot(dataTop: 0d);
+
+            var result = sut.HitTest(60, 12, snapshot, GridHitTestSurfaceScope.FullSurface);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.TargetKind, Is.EqualTo(GridHitTargetKind.Header));
+                Assert.That(result.HeaderKind, Is.EqualTo(GridHeaderKind.ColumnHeader));
+                Assert.That(result.HeaderKey, Is.EqualTo("col-1"));
+            });
+        }
+
+        [Test]
+        public void HitTest_OnColumnHeaderSurface_WhenHeadersAndRowsShareOrigin_ReturnsOnlyColumnHeader()
+        {
+            var sut = new GridHitTestingService();
+            var snapshot = CreateSnapshot(dataTop: 0d);
+
+            var result = sut.HitTest(8, 12, snapshot, GridHitTestSurfaceScope.ColumnHeaderSurface);
+
+            Assert.That(result, Is.Null);
+
+            result = sut.HitTest(60, 12, snapshot, GridHitTestSurfaceScope.ColumnHeaderSurface);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.TargetKind, Is.EqualTo(GridHitTargetKind.Header));
+                Assert.That(result.HeaderKind, Is.EqualTo(GridHeaderKind.ColumnHeader));
+                Assert.That(result.HeaderKey, Is.EqualTo("col-1"));
+            });
+        }
+
+        [Test]
         public void HitTest_OnRowHeaderDetailsToggle_ReturnsDetails()
         {
             var sut = new GridHitTestingService();
@@ -212,7 +267,8 @@ namespace PhialeGrid.Core.Tests.HitTesting
             double rowMarkerWidth = 0d,
             double selectionCheckboxWidth = 0d,
             GridCurrentCellMarker currentCell = null,
-            System.Collections.Generic.IReadOnlyList<GridOverlaySurfaceItem> overlays = null)
+            System.Collections.Generic.IReadOnlyList<GridOverlaySurfaceItem> overlays = null,
+            double dataTop = 30d)
         {
             return new GridSurfaceSnapshot(
                 revision: 1,
@@ -229,7 +285,7 @@ namespace PhialeGrid.Core.Tests.HitTesting
                 {
                     new GridRowSurfaceItem("row-1")
                     {
-                        Bounds = new GridBounds(0, 30, 40, 20),
+                        Bounds = new GridBounds(0, dataTop, 40, 20),
                         SnapshotRevision = 1,
                         HasDetailsExpanded = hasDetails,
                         HasHierarchyChildren = hasHierarchyChildren,
@@ -240,7 +296,7 @@ namespace PhialeGrid.Core.Tests.HitTesting
                 {
                     new GridCellSurfaceItem("row-1", "col-1")
                     {
-                        Bounds = new GridBounds(40, 30, 100, 20),
+                        Bounds = new GridBounds(40, dataTop, 100, 20),
                         SnapshotRevision = 1,
                     },
                 },
@@ -254,7 +310,7 @@ namespace PhialeGrid.Core.Tests.HitTesting
                     },
                     new GridHeaderSurfaceItem("row-1", GridHeaderKind.RowHeader)
                     {
-                        Bounds = new GridBounds(0, 30, 40, 20),
+                        Bounds = new GridBounds(0, dataTop, 40, 20),
                         ShowRowIndicator = showRowIndicator,
                         ShowSelectionCheckbox = showSelectionCheckbox,
                         RowIndicatorWidth = rowIndicatorWidth,

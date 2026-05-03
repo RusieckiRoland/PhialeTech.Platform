@@ -75,6 +75,10 @@
       height: 100%;
       background: var(--de-editor-gradient);
       position: relative;
+      box-sizing: border-box;
+      border: 1px solid var(--de-border);
+      border-radius: 12px;
+      overflow: hidden;
     }
 
     #editor-shell.is-overlay {
@@ -83,34 +87,36 @@
 
     #editor-shell-actions {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 8px;
+      right: 8px;
       z-index: 30;
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
     }
 
     .editor-shell-action {
       appearance: none;
       border: 1px solid var(--de-border);
-      background: var(--de-panel-elevated);
+      background: color-mix(in srgb, var(--de-panel-elevated) 72%, transparent);
       color: var(--de-muted);
       border-radius: 8px;
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       padding: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 1px 6px rgba(15, 23, 42, 0.08);
+      opacity: 0.84;
     }
 
     .editor-shell-action:hover {
       border-color: var(--de-border-strong);
       color: var(--de-accent);
       background: var(--de-toolbar-hover);
+      opacity: 1;
     }
 
     .editor-shell-action svg {
@@ -129,7 +135,7 @@
       flex-wrap: wrap;
       gap: 8px;
       align-items: flex-start;
-      padding: 18px 84px 12px 12px;
+      padding: 16px 10px 8px 10px;
       border-bottom: 1px solid var(--de-border);
       background: var(--de-panel-elevated);
       overflow-y: auto;
@@ -138,7 +144,7 @@
     }
 
     #toolbar.is-tabs {
-      padding-top: 14px;
+      padding-top: 12px;
     }
 
     .toolbar-tab-rail {
@@ -150,7 +156,7 @@
       flex-wrap: wrap;
       gap: 6px;
       align-items: center;
-      max-width: calc(100% - 96px);
+      max-width: calc(100% - 20px);
     }
 
     .toolbar-caption-button {
@@ -190,7 +196,7 @@
       align-self: flex-start;
       gap: 8px;
       min-width: 0;
-      padding: 8px 8px 10px;
+      padding: 7px 7px 8px;
       border: 1px solid color-mix(in srgb, var(--de-border) 74%, transparent);
       border-radius: 10px;
       background: color-mix(in srgb, var(--de-panel) 82%, transparent);

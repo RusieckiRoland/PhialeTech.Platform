@@ -39,6 +39,8 @@
     <Color x:Key="Color.Badge.Text">{DynamicResource {x:Static SystemColors.ControlTextColorKey}}</Color>
     <Color x:Key="Color.Grid.Filter.Background">{DynamicResource {x:Static SystemColors.ControlColorKey}}</Color>
     <Color x:Key="Color.Grid.Filter.Border">{DynamicResource {x:Static SystemColors.WindowTextColorKey}}</Color>
+    <Color x:Key="Color.Grid.RegionSurface.Background">{DynamicResource {x:Static SystemColors.ControlColorKey}}</Color>
+    <Color x:Key="Color.Grid.RegionHeader.Background">{DynamicResource {x:Static SystemColors.ControlDarkColorKey}}</Color>
     <Color x:Key="Color.Grid.Header.Background">{DynamicResource {x:Static SystemColors.ControlDarkColorKey}}</Color>
     <Color x:Key="Color.Grid.Header.Border">{DynamicResource {x:Static SystemColors.WindowTextColorKey}}</Color>
     <Color x:Key="Color.Grid.Header.Separator">{DynamicResource {x:Static SystemColors.WindowTextColorKey}}</Color>
@@ -164,6 +166,8 @@
     <Thickness x:Key="Thickness.FormShell.ErrorPadding">16</Thickness>
     <Thickness x:Key="Thickness.FormShell.RootBorderThickness">1</Thickness>
     <CornerRadius x:Key="CornerRadius.FormShell.Root">18</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Grid.RegionSurface">12</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Grid.RegionHeader">8</CornerRadius>
     <sys:Double x:Key="Size.FormShell.ActionButton.VerticalMinWidth">132</sys:Double>
     <SolidColorBrush x:Key="Brush.ComponentHost.Overlay.Scrim" Color="#99000000" />
     <SolidColorBrush x:Key="Brush.ComponentHost.Overlay.Highlight" Color="#33FFFFFF" />

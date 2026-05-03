@@ -110,14 +110,51 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
             HandlePointerPressed(args);
         }
 
+        internal bool HandleExternalPointerPressed(UniversalPointerRoutedEventArgs args)
+        {
+            return HandlePointerPressed(args, GridHitTestSurfaceScope.ColumnHeaderSurface);
+        }
+
+        internal void BeginExternalMousePointerCapture(Point position)
+        {
+            BeginMousePointerCapture(position);
+        }
+
         internal void HandlePointerMovedForTesting(UniversalPointerRoutedEventArgs args)
         {
             HandlePointerMoved(args);
         }
 
+        internal bool HandleExternalPointerMoved(UniversalPointerRoutedEventArgs args)
+        {
+            if (args?.Pointer?.Position != null)
+            {
+                UpdatePointerCursor(
+                    new Point(args.Pointer.Position.X, args.Pointer.Position.Y),
+                    GridHitTestSurfaceScope.ColumnHeaderSurface);
+            }
+
+            return HandlePointerMoved(args);
+        }
+
+        internal void UpdateExternalPointerPosition(Point position)
+        {
+            UpdateCapturedPointerPosition(position);
+        }
+
         internal void HandlePointerReleasedForTesting(UniversalPointerRoutedEventArgs args)
         {
             HandlePointerReleased(args);
+        }
+
+        internal bool HandleExternalPointerReleased(UniversalPointerRoutedEventArgs args)
+        {
+            return HandlePointerReleased(args);
+        }
+
+        internal void EndExternalPointerCapture()
+        {
+            EndPointerCaptureSession();
         }
 
         internal void HandleKeyForTesting(UniversalKeyEventArgs args)
@@ -677,6 +714,11 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
 
         private void UpdatePointerCursor(Point position)
         {
+            UpdatePointerCursor(position, GridHitTestSurfaceScope.DataSurface);
+        }
+
+        private void UpdatePointerCursor(Point position, GridHitTestSurfaceScope surfaceScope)
+        {
             if (_activePointerCapture != null)
             {
                 return;
@@ -689,7 +731,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
                 return;
             }
 
-            var hit = _hitTesting.HitTest(position.X, position.Y, snapshot);
+            var hit = _hitTesting.HitTest(position.X, position.Y, snapshot, surfaceScope);
             if (hit?.TargetKind == GridHitTargetKind.ColumnResizeHandle)
             {
                 Cursor = Cursors.SizeWE;
@@ -990,7 +1032,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
                 return false;
             }
 
-            var hit = _hitTesting.HitTest(point.X, point.Y, snapshot);
+            var hit = _hitTesting.HitTest(point.X, point.Y, snapshot, GridHitTestSurfaceScope.DataSurface);
             if (hit?.TargetKind != GridHitTargetKind.SelectionCheckbox || string.IsNullOrWhiteSpace(hit.RowKey))
             {
                 return false;
@@ -1146,12 +1188,17 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
 
         private bool HandlePointerPressed(UniversalPointerRoutedEventArgs args)
         {
+            return HandlePointerPressed(args, GridHitTestSurfaceScope.DataSurface);
+        }
+
+        private bool HandlePointerPressed(UniversalPointerRoutedEventArgs args, GridHitTestSurfaceScope surfaceScope)
+        {
             if (_coordinator == null)
             {
                 return false;
             }
 
-            _coordinator.ProcessInput(_coreInputAdapter.CreatePointerPressedInput(args, DateTime.UtcNow));
+            _coordinator.ProcessInput(_coreInputAdapter.CreatePointerPressedInput(args, DateTime.UtcNow), surfaceScope);
             return true;
         }
 

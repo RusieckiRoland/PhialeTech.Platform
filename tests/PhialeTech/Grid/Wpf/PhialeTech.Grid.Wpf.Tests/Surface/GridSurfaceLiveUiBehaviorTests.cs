@@ -328,17 +328,25 @@ namespace PhialeGrid.Wpf.Tests.Surface
                 window.Show();
                 GridSurfaceTestHost.FlushDispatcher(grid);
 
-                var surfaceHost = GridSurfaceTestHost.FindSurfaceHost(grid);
-                var nameHeader = surfaceHost.CurrentSnapshot.Headers.Single(header => header.Kind == GridHeaderKind.ColumnHeader && header.HeaderKey == "Name");
-                var cityHeader = surfaceHost.CurrentSnapshot.Headers.Single(header => header.Kind == GridHeaderKind.ColumnHeader && header.HeaderKey == "City");
+                var headerBand = (FrameworkElement)grid.FindName("SurfaceColumnHeaderBand");
+                Assert.That(headerBand, Is.Not.Null);
 
-                var sourceX = nameHeader.Bounds.X + (nameHeader.Bounds.Width / 2d);
-                var sourceY = nameHeader.Bounds.Y + (nameHeader.Bounds.Height / 2d);
-                var targetX = cityHeader.Bounds.X + (cityHeader.Bounds.Width / 2d);
-                var targetY = cityHeader.Bounds.Y + (cityHeader.Bounds.Height / 2d);
+                var namePresenter = GridSurfaceTestHost.FindVisualChildren<GridColumnHeaderPresenter>(headerBand)
+                    .FirstOrDefault(candidate => string.Equals(candidate.HeaderData?.HeaderKey, "Name", StringComparison.Ordinal));
+                var cityPresenter = GridSurfaceTestHost.FindVisualChildren<GridColumnHeaderPresenter>(headerBand)
+                    .FirstOrDefault(candidate => string.Equals(candidate.HeaderData?.HeaderKey, "City", StringComparison.Ordinal));
+                Assert.That(namePresenter, Is.Not.Null);
+                Assert.That(cityPresenter, Is.Not.Null);
 
-                var hitPresenter = GridSurfaceTestHost.FindVisibleAncestorAtPoint<GridColumnHeaderPresenter>(surfaceHost, sourceX, sourceY);
-                GridSurfaceTestHost.DragPointViaRoutedUi(surfaceHost, sourceX, sourceY, targetX, targetY);
+                var sourcePoint = namePresenter.TranslatePoint(
+                    new Point(namePresenter.ActualWidth / 2d, namePresenter.ActualHeight / 2d),
+                    headerBand);
+                var targetPoint = cityPresenter.TranslatePoint(
+                    new Point(cityPresenter.ActualWidth / 2d, cityPresenter.ActualHeight / 2d),
+                    headerBand);
+
+                var hitPresenter = GridSurfaceTestHost.FindVisibleAncestorAtPoint<GridColumnHeaderPresenter>(headerBand, sourcePoint.X, sourcePoint.Y);
+                GridSurfaceTestHost.DragPointViaRoutedUi(headerBand, sourcePoint.X, sourcePoint.Y, targetPoint.X, targetPoint.Y);
                 GridSurfaceTestHost.FlushDispatcher(grid);
 
                 Assert.Multiple(() =>

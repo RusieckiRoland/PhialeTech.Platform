@@ -52,6 +52,7 @@ document:
       - type: Container
         caption: Review notes
         showBorder: true
+        overlayScope: true
         items:
           - fieldRef: notes
   actions:

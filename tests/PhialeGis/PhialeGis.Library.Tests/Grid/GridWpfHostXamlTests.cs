@@ -69,10 +69,11 @@ namespace PhialeGis.Library.Tests.Grid
         public void WpfHostXaml_DefaultsGroupsToCollapsedAndExposesGroupToggleActions()
         {
             var xaml = File.ReadAllText(GetXamlPath());
+            var groupingBandXaml = File.ReadAllText(GetGroupingBandXamlPath());
 
             Assert.That(xaml, Does.Contain("HandleExpandAllGroupsClick"));
             Assert.That(xaml, Does.Contain("HandleCollapseAllGroupsClick"));
-            Assert.That(xaml, Does.Contain("Visibility=\"{Binding ElementName=Root, Path=HasGroups"));
+            Assert.That(groupingBandXaml, Does.Contain("Visibility=\"{Binding ElementName=Root, Path=HasGroups"));
             Assert.That(xaml, Does.Contain("x:Name=\"SurfaceHost\""));
             Assert.That(xaml, Does.Not.Contain("<DataGrid.GroupStyle>"));
         }
@@ -107,7 +108,7 @@ namespace PhialeGis.Library.Tests.Grid
                 Assert.That(xaml, Does.Contain("x:Name=\"SummaryBottomRegionHost\""));
                 Assert.That(xaml, Does.Contain("x:Name=\"SideToolRegionHost\""));
                 Assert.That(xaml, Does.Not.Contain("x:Name=\"TopCommandRegionSplitter\""));
-                Assert.That(xaml, Does.Contain("x:Name=\"GroupingRegionSplitter\""));
+                Assert.That(xaml, Does.Not.Contain("<GridSplitter x:Name=\"GroupingRegionSplitter\""));
                 Assert.That(xaml, Does.Contain("x:Name=\"SummaryBottomRegionSplitter\""));
                 Assert.That(xaml, Does.Contain("x:Name=\"SideToolRegionSplitter\""));
                 Assert.That(xaml, Does.Contain("TopCommandContent"));
@@ -122,6 +123,7 @@ namespace PhialeGis.Library.Tests.Grid
 
             Assert.Multiple(() =>
             {
+                Assert.That(xaml, Does.Contain("<controls:PhialeWorkspaceBand x:Name=\"TopCommandBand\""));
                 Assert.That(xaml, Does.Contain("x:Name=\"TopCommandStripToggleButton\""));
                 Assert.That(xaml, Does.Contain("x:Name=\"TopCommandStripCloseButton\""));
                 Assert.That(xaml, Does.Not.Contain("Path=TopCommandRegionToggleText"));
@@ -131,6 +133,186 @@ namespace PhialeGis.Library.Tests.Grid
                 Assert.That(xaml, Does.Not.Contain("Content=\"+\""));
                 Assert.That(xaml, Does.Contain("HorizontalScrollBarVisibility=\"Auto\""));
                 Assert.That(xaml, Does.Contain("BorderThickness=\"0,0,0,1\""));
+            });
+        }
+
+        [Test]
+        public void WpfHostXaml_UsesWorkspaceBandForGroupingInsteadOfResizableTwoRowPanel()
+        {
+            var xaml = File.ReadAllText(GetXamlPath());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(xaml, Does.Contain("<controls:PhialeWorkspaceBand x:Name=\"GroupingBand\""));
+                Assert.That(xaml, Does.Contain("<controls:PhialeGroupingBand x:Name=\"GroupingBandContentHost\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"GroupingRegionDragGrip\""));
+                Assert.That(xaml, Does.Contain("Tag=\"GroupingRegion\""));
+                Assert.That(xaml, Does.Contain("PreviewMouseLeftButtonDown=\"HandleRegionDragMouseLeftButtonDown\""));
+                Assert.That(xaml, Does.Contain("PreviewMouseMove=\"HandleRegionDragMouseMove\""));
+                Assert.That(xaml, Does.Contain("PreviewMouseLeftButtonUp=\"HandleRegionDragMouseLeftButtonUp\""));
+                Assert.That(xaml, Does.Not.Contain("x:Name=\"GroupingRegionSplitter\""));
+                Assert.That(xaml, Does.Not.Contain("x:Name=\"GroupingRegionContentScrollViewer\""));
+                Assert.That(xaml, Does.Not.Contain("x:Name=\"GroupingPanelHost\""));
+            });
+        }
+
+        [Test]
+        public void WpfHostXaml_WorkspaceBandsExposeVerticalDragGripsAndDockPreview()
+        {
+            var xaml = File.ReadAllText(GetXamlPath());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(xaml, Does.Contain("x:Name=\"TopCommandStripDragGrip\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"GroupingRegionDragGrip\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"SummaryBottomRegionDragGrip\""));
+                Assert.That(xaml, Does.Contain("x:Key=\"PgGridWorkspaceBandDragGripStyle\""));
+                Assert.That(xaml, Does.Contain("LostMouseCapture=\"HandleRegionDragLostMouseCapture\""));
+                Assert.That(xaml, Does.Contain("x:Key=\"PgGridRegionDockPreviewBandZoneStyle\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"WorkspaceBandDockPreviewOverlay\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"RegionDockPreviewTop\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"RegionDockPreviewBottom\""));
+            });
+        }
+
+        [Test]
+        public void GroupingBandUserControlXaml_OwnsBusinessGroupingContentWithoutWorkspaceCloseChrome()
+        {
+            var xaml = File.ReadAllText(GetGroupingBandXamlPath());
+            var code = File.ReadAllText(GetGroupingBandCodePath());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(xaml, Does.Contain("x:Class=\"PhialeTech.PhialeGrid.Wpf.Controls.PhialeGroupingBand\""));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding ElementName=Root, Path=BandLabelText}\""));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding ElementName=Root, Path=DropText}\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"GroupingDropZone\""));
+                Assert.That(xaml, Does.Contain("CornerRadius=\"{DynamicResource CornerRadius.Grid.RegionHeader}\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"DirectionGlyph\""));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding DirectionGlyph}\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"HierarchyArrow\""));
+                Assert.That(xaml, Does.Contain("C 24 8 24 12 32 12"));
+                Assert.That(xaml, Does.Not.Contain("AppendDropText"));
+                Assert.That(code, Does.Contain("ExpandAllGroupsRequestedEvent"));
+                Assert.That(code, Does.Contain("CollapseAllGroupsRequestedEvent"));
+                Assert.That(xaml, Does.Not.Contain("GroupingRegionCloseButton"));
+                Assert.That(xaml, Does.Not.Contain("HandleRegionCloseButtonClick"));
+                Assert.That(xaml, Does.Not.Contain("PhialeWorkspaceBand"));
+            });
+        }
+
+        [Test]
+        public void WpfHostXaml_UsesWorkspacePanelForSideTools()
+        {
+            var xaml = File.ReadAllText(GetXamlPath());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(xaml, Does.Contain("<controls:PhialeWorkspacePanel x:Name=\"ToolsPanel\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"SideToolRegionSplitter\""));
+                Assert.That(xaml, Does.Contain("x:Name=\"SideToolRegionContentPresenter\""));
+            });
+        }
+
+        [Test]
+        public void ToolsPanelUserControlXaml_ContainsOnlyDensityContentWithoutWorkspaceChrome()
+        {
+            var toolsPanelXaml = File.ReadAllText(GetToolsPanelXamlPath());
+            var demoXaml = File.ReadAllText(GetDemoMainWindowXamlPath());
+            var gridControlsXaml = File.ReadAllText(GetSharedGridControlsXamlPath());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(toolsPanelXaml, Does.Contain("x:Class=\"PhialeTech.PhialeGrid.Wpf.Controls.PhialeToolsPanel\""));
+                Assert.That(toolsPanelXaml, Does.Contain("Text=\"Density\""));
+                Assert.That(toolsPanelXaml, Does.Contain("Style=\"{DynamicResource PgGridToolsPanelLabelTextStyle}\""));
+                Assert.That(toolsPanelXaml, Does.Contain("Style=\"{DynamicResource PgGridToolsComboBoxStyle}\""));
+                Assert.That(toolsPanelXaml, Does.Contain("GridDensity.Compact"));
+                Assert.That(toolsPanelXaml, Does.Contain("GridDensity.Normal"));
+                Assert.That(toolsPanelXaml, Does.Contain("GridDensity.Comfortable"));
+                Assert.That(toolsPanelXaml, Does.Not.Contain("Interaction"));
+                Assert.That(toolsPanelXaml, Does.Not.Contain("Editing scenarios"));
+                Assert.That(toolsPanelXaml, Does.Not.Contain("HandleRegionDrag"));
+                Assert.That(toolsPanelXaml, Does.Not.Contain("SideToolRegionToggle"));
+                Assert.That(toolsPanelXaml, Does.Not.Contain("SideToolRegionClose"));
+                Assert.That(demoXaml, Does.Contain("<grid:PhialeToolsPanel"));
+                Assert.That(demoXaml, Does.Not.Contain("Show row-state baseline"));
+                Assert.That(demoXaml, Does.Not.Contain("Show current + edited"));
+                Assert.That(demoXaml, Does.Not.Contain("Show current + error"));
+                Assert.That(demoXaml, Does.Not.Contain("Reset row-state demo"));
+                Assert.That(demoXaml, Does.Not.Contain("Scroll to edited row"));
+                Assert.That(demoXaml, Does.Not.Contain("Scroll to error cell"));
+                Assert.That(demoXaml, Does.Not.Contain("Scroll to last column"));
+                Assert.That(gridControlsXaml, Does.Contain("x:Key=\"PgGridToolsComboBoxStyle\""));
+                Assert.That(gridControlsXaml, Does.Contain("ItemContainerStyle\" Value=\"{StaticResource PgGridToolsComboBoxItemStyle}\""));
+                Assert.That(gridControlsXaml, Does.Contain("x:Name=\"PgGridToolsComboBoxDropDownToggle\""));
+                Assert.That(gridControlsXaml, Does.Contain("Grid.ColumnSpan=\"2\""));
+                Assert.That(gridControlsXaml, Does.Contain("ClickMode=\"Press\""));
+                Assert.That(gridControlsXaml, Does.Contain("x:Name=\"PgGridToolsComboBoxChevron\""));
+                Assert.That(gridControlsXaml, Does.Contain("IsHitTestVisible=\"False\""));
+                Assert.That(gridControlsXaml, Does.Contain("PgGridToolsComboBoxDropDownBorder"));
+                Assert.That(gridControlsXaml, Does.Not.Contain("SystemColors.HighlightBrushKey"));
+            });
+        }
+
+        [Test]
+        public void WorkspacePanels_HostToolsChangesAndValidationAsSeparatePanelsFromStatusBadges()
+        {
+            var demoXaml = File.ReadAllText(GetDemoMainWindowXamlPath());
+            var projectFile = File.ReadAllText(GetGridWpfProjectPath());
+            var changePanelXaml = File.ReadAllText(GetChangePanelXamlPath());
+            var validationPanelXaml = File.ReadAllText(GetValidationPanelXamlPath());
+            var gridControlsXaml = File.ReadAllText(GetSharedGridControlsXamlPath());
+            var gridXaml = File.ReadAllText(GetXamlPath());
+            var gridCode = File.ReadAllText(GetGridWpfCodePath());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(demoXaml, Does.Contain("<grid:PhialeToolsPanel"));
+                Assert.That(demoXaml, Does.Contain("<grid:PhialeGrid.ChangePanelContent>"));
+                Assert.That(demoXaml, Does.Contain("<grid:PhialeGrid.ValidationPanelContent>"));
+                Assert.That(demoXaml, Does.Contain("<grid:PhialeChangePanel"));
+                Assert.That(demoXaml, Does.Contain("<grid:PhialeValidationPanel"));
+                Assert.That(demoXaml, Does.Contain("Click=\"HandleOpenChangesPanelClick\""));
+                Assert.That(demoXaml, Does.Contain("Click=\"HandleOpenValidationPanelClick\""));
+                Assert.That(demoXaml, Does.Not.Contain("GridWorkspacePanelTabs"));
+                Assert.That(projectFile, Does.Contain("Controls\\PhialeChangePanel.xaml"));
+                Assert.That(projectFile, Does.Contain("Controls\\PhialeValidationPanel.xaml"));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"ChangePanelRegionHost\""));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"ValidationPanelRegionHost\""));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"LeftWorkspacePanelColumn\""));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"SideToolRegionColumn\""));
+                Assert.That(gridXaml, Does.Not.Contain("PgWorkspacePanelBottomTabButtonStyle"));
+                Assert.That(gridXaml, Does.Contain("Click=\"HandleOpenWorkspacePanelTabClick\""));
+                Assert.That(gridXaml, Does.Contain("Path=ToolsPanelValidationTabVisibility"));
+                Assert.That(gridXaml, Does.Contain("Path=ValidationPanelToolsTabVisibility"));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"ValidationRailChangesTabButton\""));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"ToolsRailValidationTabButton\""));
+                Assert.That(gridXaml, Does.Contain("PgWorkspacePanelExpandedTabStripStyle"));
+                Assert.That(gridXaml, Does.Contain("PgWorkspacePanelExpandedTabButtonStyle"));
+                Assert.That(gridXaml, Does.Contain("PgWorkspacePanelCollapsedRailBorderStyle"));
+                Assert.That(gridXaml, Does.Contain("PgWorkspacePanelCollapsedRailTabStackStyle"));
+                Assert.That(gridXaml, Does.Contain("PgWorkspacePanelCollapsedRailTabButtonStyle"));
+                Assert.That(gridCode, Does.Contain("public void OpenWorkspacePanel(GridRegionKind regionKind)"));
+                Assert.That(gridCode, Does.Contain("ResolveWorkspacePanelTabVisibility(GridRegionKind hostRegionKind, GridRegionKind targetRegionKind)"));
+                Assert.That(gridCode, Does.Contain("HideWorkspacePanelAndActivateNext(regionKind)"));
+                Assert.That(gridCode, Does.Contain("ResolveWorkspacePanelDragChrome(_regionDragPreviewKind.Value"));
+                Assert.That(gridCode, Does.Contain("HideWorkspacePanels()"));
+                Assert.That(gridControlsXaml, Does.Contain("PgWorkspacePanelBottomTabItemPadding"));
+                Assert.That(gridControlsXaml, Does.Contain("PgWorkspacePanelBottomTabItemMargin"));
+                Assert.That(gridControlsXaml, Does.Contain("x:Key=\"PgWorkspacePanelExpandedTabButtonStyle\""));
+                Assert.That(gridControlsXaml, Does.Contain("x:Key=\"PgWorkspacePanelCollapsedRailTabButtonStyle\""));
+                Assert.That(gridControlsXaml, Does.Contain("x:Key=\"PgWorkspacePanelCollapsedRailBorderStyle\""));
+                Assert.That(changePanelXaml, Does.Contain("x:Class=\"PhialeTech.PhialeGrid.Wpf.Controls.PhialeChangePanel\""));
+                Assert.That(changePanelXaml, Does.Contain("Path=PendingEditRowIds"));
+                Assert.That(changePanelXaml, Does.Contain("Click=\"HandleGoToRowClick\""));
+                Assert.That(changePanelXaml, Does.Not.Contain("SideToolRegionClose"));
+                Assert.That(validationPanelXaml, Does.Contain("x:Class=\"PhialeTech.PhialeGrid.Wpf.Controls.PhialeValidationPanel\""));
+                Assert.That(validationPanelXaml, Does.Contain("Path=ValidationIssueRowIds"));
+                Assert.That(validationPanelXaml, Does.Contain("Click=\"HandleGoToCellClick\""));
+                Assert.That(validationPanelXaml, Does.Not.Contain("SideToolRegionClose"));
+                Assert.That(gridControlsXaml, Does.Contain("x:Key=\"PgWorkspacePanelBottomTabButtonStyle\""));
+                Assert.That(gridControlsXaml, Does.Contain("x:Key=\"PgWorkspacePanelCardBorderStyle\""));
             });
         }
 
@@ -216,7 +398,42 @@ namespace PhialeGis.Library.Tests.Grid
 
         private static string GetXamlPath()
         {
-            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Platforms", "Wpf", "PhialeGrid.Wpf", "PhialeGrid.xaml");
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Shared", "PhialeTech.Styles.Wpf", "Themes.Linked", "Grid", "PhialeGrid.xaml");
+        }
+
+        private static string GetGroupingBandXamlPath()
+        {
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Platforms", "Wpf", "PhialeGrid.Wpf", "Controls", "PhialeGroupingBand.xaml");
+        }
+
+        private static string GetGroupingBandCodePath()
+        {
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Platforms", "Wpf", "PhialeGrid.Wpf", "Controls", "PhialeGroupingBand.xaml.cs");
+        }
+
+        private static string GetToolsPanelXamlPath()
+        {
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Platforms", "Wpf", "PhialeGrid.Wpf", "Controls", "PhialeToolsPanel.xaml");
+        }
+
+        private static string GetChangePanelXamlPath()
+        {
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Platforms", "Wpf", "PhialeGrid.Wpf", "Controls", "PhialeChangePanel.xaml");
+        }
+
+        private static string GetValidationPanelXamlPath()
+        {
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Platforms", "Wpf", "PhialeGrid.Wpf", "Controls", "PhialeValidationPanel.xaml");
+        }
+
+        private static string GetGridWpfProjectPath()
+        {
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Platforms", "Wpf", "PhialeGrid.Wpf", "PhialeGrid.Wpf.csproj");
+        }
+
+        private static string GetGridWpfCodePath()
+        {
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Products", "Grid", "Platforms", "Wpf", "PhialeGrid.Wpf", "PhialeGrid.cs");
         }
 
         private static string GetSharedGridControlsXamlPath()
@@ -226,7 +443,7 @@ namespace PhialeGis.Library.Tests.Grid
 
         private static string GetDemoMainWindowXamlPath()
         {
-            return Path.Combine(GetRepoRoot(), "demo", "PhialeTech", "Wpf", "PhialeTech.Components.Wpf", "MainWindow.xaml");
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Shared", "PhialeTech.Styles.Wpf", "Themes.Linked", "Demo", "PhialeTech.Components.Wpf.MainWindow.xaml");
         }
 
         private static string GetSharedGridSharedXamlPath()

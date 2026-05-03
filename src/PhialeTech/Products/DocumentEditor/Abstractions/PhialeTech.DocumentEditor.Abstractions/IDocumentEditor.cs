@@ -39,11 +39,11 @@ namespace PhialeTech.DocumentEditor.Abstractions
 
         Task SetLanguageAsync(string languageCode);
 
+        Task SetOverlayModeAsync(DocumentEditorOverlayMode overlayMode);
+
         Task SetReadOnlyAsync(bool isReadOnly);
 
         Task SetToolbarAsync(DocumentEditorToolbarConfig toolbar);
-
-        Task ClearAsync();
 
         void FocusEditor();
 

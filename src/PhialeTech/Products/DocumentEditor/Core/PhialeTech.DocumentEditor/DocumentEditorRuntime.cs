@@ -18,6 +18,7 @@ namespace PhialeTech.DocumentEditor
         private string _documentJson;
         private string _theme;
         private string _languageCode;
+        private DocumentEditorOverlayMode _overlayMode;
         private DocumentEditorState _state;
 
         public DocumentEditorRuntime(IWebComponentHost host, DocumentEditorWorkspace workspace, DocumentEditorOptions options)
@@ -30,6 +31,7 @@ namespace PhialeTech.DocumentEditor
             _documentJson = _options.InitialDocumentJson ?? string.Empty;
             _theme = NormalizeTheme(_options.InitialTheme);
             _languageCode = NormalizeLanguageCode(_options.InitialLanguageCode);
+            _overlayMode = _options.OverlayMode;
             _state = new DocumentEditorState
             {
                 IsReadOnly = _options.IsReadOnly,
@@ -123,6 +125,13 @@ namespace PhialeTech.DocumentEditor
             await _host.PostMessageAsync(new { type = "documentEditor.setLanguage", languageCode = _languageCode }).ConfigureAwait(false);
         }
 
+        public async Task SetOverlayModeAsync(DocumentEditorOverlayMode overlayMode)
+        {
+            _overlayMode = overlayMode;
+            await InitializeAsync().ConfigureAwait(false);
+            await _host.PostMessageAsync(new { type = "documentEditor.setOverlayMode", overlayMode = ToMessageOverlayMode(_overlayMode) }).ConfigureAwait(false);
+        }
+
         public async Task<string> GetDocumentJsonAsync()
         {
             await InitializeAsync().ConfigureAwait(false);
@@ -141,12 +150,6 @@ namespace PhialeTech.DocumentEditor
         {
             await InitializeAsync().ConfigureAwait(false);
             await _host.PostMessageAsync(new { type = "documentEditor.setToolbarConfig", toolbar = CreateToolbarPayload(toolbar) }).ConfigureAwait(false);
-        }
-
-        public async Task ClearAsync()
-        {
-            await InitializeAsync().ConfigureAwait(false);
-            await _host.PostMessageAsync(new { type = "documentEditor.clear" }).ConfigureAwait(false);
         }
 
         public void FocusEditor()
@@ -211,6 +214,7 @@ namespace PhialeTech.DocumentEditor
                 await _host.PostMessageAsync(new { type = "documentEditor.setReadOnly", isReadOnly = _state.IsReadOnly }).ConfigureAwait(false);
                 await _host.PostMessageAsync(new { type = "documentEditor.setTheme", theme = _theme }).ConfigureAwait(false);
                 await _host.PostMessageAsync(new { type = "documentEditor.setLanguage", languageCode = _languageCode }).ConfigureAwait(false);
+                await _host.PostMessageAsync(new { type = "documentEditor.setOverlayMode", overlayMode = ToMessageOverlayMode(_overlayMode) }).ConfigureAwait(false);
                 await _host.PostMessageAsync(new { type = "documentEditor.setToolbarConfig", toolbar = CreateToolbarPayload(_options.Toolbar) }).ConfigureAwait(false);
                 if (!string.IsNullOrWhiteSpace(_documentJson))
                 {
@@ -371,7 +375,6 @@ namespace PhialeTech.DocumentEditor
                 case DocumentEditorCommand.ToggleHeaderRow: return "toggleHeaderRow";
                 case DocumentEditorCommand.ToggleHeaderColumn: return "toggleHeaderColumn";
                 case DocumentEditorCommand.Focus: return "focus";
-                case DocumentEditorCommand.Clear: return "clear";
                 case DocumentEditorCommand.ExportHtml: return "exportHtml";
                 case DocumentEditorCommand.ExportMarkdown: return "exportMarkdown";
                 case DocumentEditorCommand.SaveJson: return "saveJson";
@@ -476,6 +479,21 @@ namespace PhialeTech.DocumentEditor
             {
                 items = payloadItems,
             };
+        }
+
+        private static string ToMessageOverlayMode(DocumentEditorOverlayMode overlayMode)
+        {
+            switch (overlayMode)
+            {
+                case DocumentEditorOverlayMode.Disabled:
+                    return "disabled";
+                case DocumentEditorOverlayMode.Container:
+                    return "container";
+                case DocumentEditorOverlayMode.Window:
+                    return "window";
+                default:
+                    throw new InvalidOperationException("Unsupported DocumentEditor overlay mode: " + overlayMode);
+            }
         }
     }
 }

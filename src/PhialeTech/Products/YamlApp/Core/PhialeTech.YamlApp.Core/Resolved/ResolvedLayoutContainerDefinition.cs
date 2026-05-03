@@ -10,6 +10,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
             string name,
             double? width,
             FieldWidthHint? widthHint,
+            bool isOverlayScope,
             bool visible,
             bool enabled,
             bool showOldValueRestoreButton,
@@ -19,7 +20,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
             FieldChromeMode fieldChromeMode,
             CaptionPlacement captionPlacement,
             IReadOnlyList<ResolvedLayoutItemDefinition> items)
-            : base(id, name, width, widthHint, visible, enabled, showOldValueRestoreButton, validationTrigger, interactionMode, densityMode, fieldChromeMode, captionPlacement)
+            : base(id, name, width, widthHint, isOverlayScope, visible, enabled, showOldValueRestoreButton, validationTrigger, interactionMode, densityMode, fieldChromeMode, captionPlacement)
         {
             Items = items;
         }

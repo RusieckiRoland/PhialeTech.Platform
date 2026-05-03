@@ -51,8 +51,8 @@ namespace PhialeGrid.Core.Regions.Tests
             Assert.That(
                 () => new GridRegionViewState(
                     GridRegionKind.SideToolRegion,
-                    GridRegionHostKind.Pane,
-                    GridRegionPlacement.Top,
+                    GridRegionHostKind.WorkspacePanel,
+                    GridRegionPlacement.Center,
                     GridRegionContentKind.ToolPane,
                     GridRegionState.Open,
                     isAvailable: true,
@@ -69,7 +69,7 @@ namespace PhialeGrid.Core.Regions.Tests
             Assert.That(
                 () => new GridRegionViewState(
                     GridRegionKind.SideToolRegion,
-                    GridRegionHostKind.Pane,
+                    GridRegionHostKind.WorkspacePanel,
                     GridRegionPlacement.Right,
                     GridRegionContentKind.ToolPane,
                     GridRegionState.Open,
@@ -87,7 +87,7 @@ namespace PhialeGrid.Core.Regions.Tests
             Assert.That(
                 () => new GridRegionViewState(
                     GridRegionKind.GroupingRegion,
-                    GridRegionHostKind.Strip,
+                    GridRegionHostKind.WorkspaceBand,
                     GridRegionPlacement.Top,
                     GridRegionContentKind.GroupingDropZone,
                     GridRegionState.Collapsed,
@@ -95,7 +95,7 @@ namespace PhialeGrid.Core.Regions.Tests
                     isActive: false,
                     canCollapse: false,
                     canClose: true,
-                    canResize: true,
+                    canResize: false,
                     canActivate: false,
                     size: 56d,
                     minSize: 56d,
@@ -105,7 +105,7 @@ namespace PhialeGrid.Core.Regions.Tests
             Assert.That(
                 () => new GridRegionViewState(
                     GridRegionKind.SideToolRegion,
-                    GridRegionHostKind.Pane,
+                    GridRegionHostKind.WorkspacePanel,
                     GridRegionPlacement.Right,
                     GridRegionContentKind.ToolPane,
                     GridRegionState.Open,
@@ -153,6 +153,21 @@ namespace PhialeGrid.Core.Regions.Tests
                     GridRegionKind.SideToolRegion,
                     requestedSize: -1d),
                 Throws.TypeOf<ArgumentOutOfRangeException>());
+
+            Assert.That(
+                () => new GridRegionCommandInput(
+                    new DateTime(2026, 4, 2, 14, 0, 4, DateTimeKind.Utc),
+                    GridRegionCommandKind.Move,
+                    GridRegionKind.SideToolRegion),
+                Throws.InvalidOperationException.With.Message.Contains("requested placement"));
+
+            Assert.That(
+                () => new GridRegionCommandInput(
+                    new DateTime(2026, 4, 2, 14, 0, 5, DateTimeKind.Utc),
+                    GridRegionCommandKind.Open,
+                    GridRegionKind.SideToolRegion,
+                    requestedPlacement: GridRegionPlacement.Left),
+                Throws.InvalidOperationException.With.Message.Contains("requested placement"));
         }
 
         [Test]

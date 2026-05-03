@@ -15,14 +15,14 @@ namespace PhialeGrid.Core.Regions.Tests
             Assert.That(
                 () => new GridRegionDefinition(
                     GridRegionKind.TopCommandRegion,
-                    GridRegionHostKind.Strip,
-                    GridRegionPlacement.Right,
+                    GridRegionHostKind.WorkspaceBand,
+                    GridRegionPlacement.Center,
                     GridRegionContentKind.CommandBar,
                     GridRegionState.Open,
-                    defaultSize: 44d,
+                    defaultSize: 52d,
                     minSize: 36d,
-                    maxSize: 44d,
-                    canCollapse: true,
+                    maxSize: 52d,
+                    canCollapse: false,
                     canClose: true,
                     canResize: false,
                     canActivate: false),
@@ -31,7 +31,7 @@ namespace PhialeGrid.Core.Regions.Tests
             Assert.That(
                 () => new GridRegionDefinition(
                     GridRegionKind.SideToolRegion,
-                    GridRegionHostKind.Pane,
+                    GridRegionHostKind.WorkspacePanel,
                     GridRegionPlacement.Right,
                     GridRegionContentKind.ToolPane,
                     GridRegionState.Collapsed,
@@ -47,7 +47,7 @@ namespace PhialeGrid.Core.Regions.Tests
             Assert.That(
                 () => new GridRegionDefinition(
                     GridRegionKind.SummaryBottomRegion,
-                    GridRegionHostKind.Strip,
+                    GridRegionHostKind.WorkspaceBand,
                     GridRegionPlacement.Bottom,
                     GridRegionContentKind.Summary,
                     GridRegionState.Open,
@@ -68,26 +68,69 @@ namespace PhialeGrid.Core.Regions.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(definitions[GridRegionKind.CoreGridSurface].HostKind, Is.EqualTo(GridRegionHostKind.Surface));
+                Assert.That(definitions[GridRegionKind.CoreGridSurface].HostKind, Is.EqualTo(GridRegionHostKind.CoreSurface));
                 Assert.That(definitions[GridRegionKind.CoreGridSurface].Placement, Is.EqualTo(GridRegionPlacement.Center));
                 Assert.That(definitions[GridRegionKind.CoreGridSurface].ContentKind, Is.EqualTo(GridRegionContentKind.GridSurface));
 
-                Assert.That(definitions[GridRegionKind.TopCommandRegion].HostKind, Is.EqualTo(GridRegionHostKind.Strip));
+                Assert.That(definitions[GridRegionKind.TopCommandRegion].HostKind, Is.EqualTo(GridRegionHostKind.WorkspaceBand));
                 Assert.That(definitions[GridRegionKind.TopCommandRegion].Placement, Is.EqualTo(GridRegionPlacement.Top));
                 Assert.That(definitions[GridRegionKind.TopCommandRegion].ContentKind, Is.EqualTo(GridRegionContentKind.CommandBar));
 
-                Assert.That(definitions[GridRegionKind.GroupingRegion].HostKind, Is.EqualTo(GridRegionHostKind.Strip));
+                Assert.That(definitions[GridRegionKind.GroupingRegion].HostKind, Is.EqualTo(GridRegionHostKind.WorkspaceBand));
                 Assert.That(definitions[GridRegionKind.GroupingRegion].Placement, Is.EqualTo(GridRegionPlacement.Top));
                 Assert.That(definitions[GridRegionKind.GroupingRegion].ContentKind, Is.EqualTo(GridRegionContentKind.GroupingDropZone));
 
-                Assert.That(definitions[GridRegionKind.SummaryBottomRegion].HostKind, Is.EqualTo(GridRegionHostKind.Strip));
+                Assert.That(definitions[GridRegionKind.SummaryBottomRegion].HostKind, Is.EqualTo(GridRegionHostKind.WorkspaceBand));
                 Assert.That(definitions[GridRegionKind.SummaryBottomRegion].Placement, Is.EqualTo(GridRegionPlacement.Bottom));
                 Assert.That(definitions[GridRegionKind.SummaryBottomRegion].ContentKind, Is.EqualTo(GridRegionContentKind.Summary));
 
-                Assert.That(definitions[GridRegionKind.SideToolRegion].HostKind, Is.EqualTo(GridRegionHostKind.Pane));
+                Assert.That(definitions[GridRegionKind.SideToolRegion].HostKind, Is.EqualTo(GridRegionHostKind.WorkspacePanel));
                 Assert.That(definitions[GridRegionKind.SideToolRegion].Placement, Is.EqualTo(GridRegionPlacement.Right));
                 Assert.That(definitions[GridRegionKind.SideToolRegion].ContentKind, Is.EqualTo(GridRegionContentKind.ToolPane));
             });
+        }
+
+        [Test]
+        public void DefaultCatalog_UsesOnlyWorkspaceBandAndWorkspacePanelPresentationAroundCoreSurface()
+        {
+            var definitions = GridRegionDefinitionCatalog.CreateDefault();
+
+            Assert.That(
+                definitions
+                    .Where(definition => definition.RegionKind != GridRegionKind.CoreGridSurface)
+                    .Select(definition => definition.HostKind)
+                    .Distinct(),
+                Is.EquivalentTo(new[] { GridRegionHostKind.WorkspaceBand, GridRegionHostKind.WorkspacePanel }));
+        }
+
+        [Test]
+        public void MoveRegion_AllowsWorkspaceBandsVerticallyAndWorkspacePanelsHorizontally_AndKeepsCoreSurfaceCentered()
+        {
+            var manager = new GridRegionLayoutManager(GridRegionDefinitionCatalog.CreateDefault());
+
+            manager.MoveRegion(GridRegionKind.TopCommandRegion, GridRegionPlacement.Bottom);
+            manager.OpenRegion(GridRegionKind.SideToolRegion);
+            manager.MoveRegion(GridRegionKind.SideToolRegion, GridRegionPlacement.Left);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(manager.Resolve(GridRegionKind.TopCommandRegion).Placement, Is.EqualTo(GridRegionPlacement.Bottom));
+                Assert.That(manager.Resolve(GridRegionKind.SideToolRegion).Placement, Is.EqualTo(GridRegionPlacement.Left));
+                Assert.That(manager.Resolve(GridRegionKind.CoreGridSurface).Placement, Is.EqualTo(GridRegionPlacement.Center));
+            });
+
+            Assert.That(
+                () => manager.MoveRegion(GridRegionKind.CoreGridSurface, GridRegionPlacement.Top),
+                Throws.InvalidOperationException.With.Message.Contains("CoreGridSurface"));
+            Assert.That(
+                () => manager.MoveRegion(GridRegionKind.SideToolRegion, GridRegionPlacement.Center),
+                Throws.ArgumentException.With.Message.Contains("Left or Right"));
+            Assert.That(
+                () => manager.MoveRegion(GridRegionKind.TopCommandRegion, GridRegionPlacement.Left),
+                Throws.ArgumentException.With.Message.Contains("Top or Bottom"));
+            Assert.That(
+                () => manager.MoveRegion(GridRegionKind.SideToolRegion, GridRegionPlacement.Bottom),
+                Throws.ArgumentException.With.Message.Contains("Left or Right"));
         }
 
         [Test]
@@ -97,27 +140,27 @@ namespace PhialeGrid.Core.Regions.Tests
             {
                 new GridRegionDefinition(
                     GridRegionKind.TopCommandRegion,
-                    GridRegionHostKind.Strip,
+                    GridRegionHostKind.WorkspaceBand,
                     GridRegionPlacement.Top,
                     GridRegionContentKind.CommandBar,
                     GridRegionState.Open,
-                    defaultSize: 44d,
+                    defaultSize: 52d,
                     minSize: 36d,
-                    maxSize: 44d,
-                    canCollapse: true,
+                    maxSize: 52d,
+                    canCollapse: false,
                     canClose: true,
                     canResize: false,
                     canActivate: false),
                 new GridRegionDefinition(
                     GridRegionKind.TopCommandRegion,
-                    GridRegionHostKind.Strip,
+                    GridRegionHostKind.WorkspaceBand,
                     GridRegionPlacement.Top,
                     GridRegionContentKind.CommandBar,
                     GridRegionState.Open,
-                    defaultSize: 44d,
+                    defaultSize: 52d,
                     minSize: 36d,
-                    maxSize: 44d,
-                    canCollapse: true,
+                    maxSize: 52d,
+                    canCollapse: false,
                     canClose: true,
                     canResize: false,
                     canActivate: false),
@@ -178,10 +221,12 @@ namespace PhialeGrid.Core.Regions.Tests
             var snapshot = new GridRegionLayoutSnapshot(new[]
             {
                 new GridRegionLayoutState(GridRegionKind.CoreGridSurface, GridRegionState.Open, null, false ),
-                new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false ),
-                new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Collapsed, 92d, false ),
+                new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
+                new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                 new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false ),
                 new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 360d, true),
+                new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
+                new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
             });
 
             manager.RestoreLayout(snapshot);
@@ -189,8 +234,8 @@ namespace PhialeGrid.Core.Regions.Tests
             var exported = manager.ExportLayout();
             Assert.Multiple(() =>
             {
-                Assert.That(exported.Regions.Single(region => region.RegionKind == GridRegionKind.GroupingRegion).State, Is.EqualTo(GridRegionState.Collapsed));
-                Assert.That(exported.Regions.Single(region => region.RegionKind == GridRegionKind.GroupingRegion).Size, Is.EqualTo(92d));
+                Assert.That(exported.Regions.Single(region => region.RegionKind == GridRegionKind.GroupingRegion).State, Is.EqualTo(GridRegionState.Open));
+                Assert.That(exported.Regions.Single(region => region.RegionKind == GridRegionKind.GroupingRegion).Size, Is.EqualTo(56d));
                 Assert.That(exported.Regions.Single(region => region.RegionKind == GridRegionKind.SideToolRegion).IsActive, Is.True);
                 Assert.That(manager.Resolve(GridRegionKind.SideToolRegion).IsActive, Is.True);
             });
@@ -205,7 +250,7 @@ namespace PhialeGrid.Core.Regions.Tests
                 () => manager.RestoreLayout(
                     new GridRegionLayoutSnapshot(new[]
                     {
-                        new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false),
+                        new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false),
                     })),
                 Throws.ArgumentException.With.Message.Contains("complete"));
 
@@ -214,10 +259,13 @@ namespace PhialeGrid.Core.Regions.Tests
                     new GridRegionLayoutSnapshot(new[]
                     {
                     new GridRegionLayoutState(GridRegionKind.CoreGridSurface, GridRegionState.Open, null, false ),
-                    new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false ),
-                    new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false ),
+                    new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
+                    new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
                     new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                     new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false),
+                    new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Closed, 320d, false),
+                    new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
+                    new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
                     })),
                 Throws.ArgumentException.With.Message.Contains("Duplicate"));
 
@@ -226,10 +274,12 @@ namespace PhialeGrid.Core.Regions.Tests
                     new GridRegionLayoutSnapshot(new[]
                     {
                         new GridRegionLayoutState(GridRegionKind.CoreGridSurface, GridRegionState.Open, null, false ),
-                        new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false ),
+                        new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
                         new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                         new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Collapsed, 56d, false ),
                         new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 320d, false),
+                        new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
+                        new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
                     })),
                 Throws.InvalidOperationException.With.Message.Contains("SummaryBottomRegion"));
         }
@@ -254,11 +304,11 @@ namespace PhialeGrid.Core.Regions.Tests
         {
             var manager = new GridRegionLayoutManager(new[]
             {
-                new GridRegionDefinition(GridRegionKind.CoreGridSurface, GridRegionHostKind.Surface, GridRegionPlacement.Center, GridRegionContentKind.GridSurface, GridRegionState.Open, null, null, null, false, false, false, false),
-                new GridRegionDefinition(GridRegionKind.TopCommandRegion, GridRegionHostKind.Strip, GridRegionPlacement.Top, GridRegionContentKind.CommandBar, GridRegionState.Open, 44d, 36d, 44d, true, true, false, false),
-                new GridRegionDefinition(GridRegionKind.GroupingRegion, GridRegionHostKind.Strip, GridRegionPlacement.Top, GridRegionContentKind.GroupingDropZone, GridRegionState.Open, 56d, 56d, 220d, true, true, true, false),
-                new GridRegionDefinition(GridRegionKind.SummaryBottomRegion, GridRegionHostKind.Strip, GridRegionPlacement.Bottom, GridRegionContentKind.Summary, GridRegionState.Open, 56d, 56d, 180d, false, true, false, false),
-                new GridRegionDefinition(GridRegionKind.SideToolRegion, GridRegionHostKind.Pane, GridRegionPlacement.Right, GridRegionContentKind.ToolPane, GridRegionState.Open, 320d, 220d, 520d, true, true, true, true),
+                new GridRegionDefinition(GridRegionKind.CoreGridSurface, GridRegionHostKind.CoreSurface, GridRegionPlacement.Center, GridRegionContentKind.GridSurface, GridRegionState.Open, null, null, null, false, false, false, false),
+                new GridRegionDefinition(GridRegionKind.TopCommandRegion, GridRegionHostKind.WorkspaceBand, GridRegionPlacement.Top, GridRegionContentKind.CommandBar, GridRegionState.Open, 52d, 52d, 52d, false, true, false, false),
+                new GridRegionDefinition(GridRegionKind.GroupingRegion, GridRegionHostKind.WorkspaceBand, GridRegionPlacement.Top, GridRegionContentKind.GroupingDropZone, GridRegionState.Open, 56d, 56d, 56d, false, true, false, false),
+                new GridRegionDefinition(GridRegionKind.SummaryBottomRegion, GridRegionHostKind.WorkspaceBand, GridRegionPlacement.Bottom, GridRegionContentKind.Summary, GridRegionState.Open, 56d, 56d, 56d, false, true, false, false),
+                new GridRegionDefinition(GridRegionKind.SideToolRegion, GridRegionHostKind.WorkspacePanel, GridRegionPlacement.Right, GridRegionContentKind.ToolPane, GridRegionState.Open, 320d, 220d, 520d, true, true, true, true),
             });
 
             manager.ActivateRegion(GridRegionKind.SideToolRegion);
@@ -283,10 +333,12 @@ namespace PhialeGrid.Core.Regions.Tests
             manager.RestoreLayout(new GridRegionLayoutSnapshot(new[]
             {
                 new GridRegionLayoutState(GridRegionKind.CoreGridSurface, GridRegionState.Open, null, false ),
-                new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false ),
+                new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
                 new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                 new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false ),
                 new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 420d, true),
+                new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
+                new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
             }));
 
             var resolved = manager.Resolve(GridRegionKind.SideToolRegion);
@@ -324,11 +376,17 @@ namespace PhialeGrid.Core.Regions.Tests
                 new DateTime(2026, 4, 2, 12, 0, 3, DateTimeKind.Utc),
                 Interaction.GridRegionCommandKind.Close,
                 GridRegionKind.SideToolRegion));
+            manager.Process(new Interaction.GridRegionCommandInput(
+                new DateTime(2026, 4, 2, 12, 0, 4, DateTimeKind.Utc),
+                Interaction.GridRegionCommandKind.Move,
+                GridRegionKind.TopCommandRegion,
+                requestedPlacement: GridRegionPlacement.Bottom));
 
             Assert.That(manager.Resolve(GridRegionKind.SideToolRegion).State, Is.EqualTo(GridRegionState.Closed));
+            Assert.That(manager.Resolve(GridRegionKind.TopCommandRegion).Placement, Is.EqualTo(GridRegionPlacement.Bottom));
             Assert.That(
                 () => manager.Process(new Interaction.GridRegionCommandInput(
-                    new DateTime(2026, 4, 2, 12, 0, 4, DateTimeKind.Utc),
+                    new DateTime(2026, 4, 2, 12, 0, 5, DateTimeKind.Utc),
                     Interaction.GridRegionCommandKind.ToggleCollapse,
                     GridRegionKind.SideToolRegion)),
                 Throws.InvalidOperationException.With.Message.Contains("closed"));

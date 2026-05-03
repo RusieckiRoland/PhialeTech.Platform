@@ -57,6 +57,8 @@ namespace PhialeGrid.Core.Editing
 
         bool TrySetFieldValue(string targetId, string fieldId, object value, string editingText = null);
 
+        IDisposable BeginStateChangeBatch(string reason);
+
         bool BeginFieldEdit(string targetId, string fieldId, string targetPath = null);
 
         bool PostActiveEdit();

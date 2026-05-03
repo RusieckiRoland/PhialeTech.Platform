@@ -39,7 +39,7 @@ namespace PhialeGrid.Core.Regions
             }
 
             ValidatePlacement(hostKind, placement);
-            ValidateDefaultState(regionKind, hostKind, defaultState, canCollapse, canClose);
+            ValidateDefaultState(regionKind, hostKind, defaultState, canCollapse, canClose, canResize);
 
             RegionKind = regionKind;
             HostKind = hostKind;
@@ -85,24 +85,24 @@ namespace PhialeGrid.Core.Regions
         {
             switch (hostKind)
             {
-                case GridRegionHostKind.Surface:
+                case GridRegionHostKind.CoreSurface:
                     if (placement != GridRegionPlacement.Center)
                     {
-                        throw new ArgumentException("Surface regions must use the Center placement.", nameof(placement));
+                        throw new ArgumentException("Core surface regions must use the Center placement.", nameof(placement));
                     }
 
                     break;
-                case GridRegionHostKind.Strip:
+                case GridRegionHostKind.WorkspaceBand:
                     if (placement != GridRegionPlacement.Top && placement != GridRegionPlacement.Bottom)
                     {
-                        throw new ArgumentException("Strip regions must use the Top or Bottom placement.", nameof(placement));
+                        throw new ArgumentException("Workspace band regions must use the Top or Bottom placement.", nameof(placement));
                     }
 
                     break;
-                case GridRegionHostKind.Pane:
+                case GridRegionHostKind.WorkspacePanel:
                     if (placement != GridRegionPlacement.Left && placement != GridRegionPlacement.Right)
                     {
-                        throw new ArgumentException("Pane regions must use the Left or Right placement.", nameof(placement));
+                        throw new ArgumentException("Workspace panel regions must use the Left or Right placement.", nameof(placement));
                     }
 
                     break;
@@ -111,14 +111,55 @@ namespace PhialeGrid.Core.Regions
             }
         }
 
+        internal static void ValidateRelocatedPlacement(GridRegionDefinition definition, GridRegionPlacement placement)
+        {
+            if (definition == null)
+            {
+                throw new ArgumentNullException(nameof(definition));
+            }
+
+            if (!Enum.IsDefined(typeof(GridRegionPlacement), placement))
+            {
+                throw new ArgumentOutOfRangeException(nameof(placement), placement, "Unknown grid region placement.");
+            }
+
+            switch (definition.HostKind)
+            {
+                case GridRegionHostKind.CoreSurface:
+                    if (placement != GridRegionPlacement.Center)
+                    {
+                        throw new InvalidOperationException(definition.RegionKind + " must stay in the Center placement.");
+                    }
+
+                    break;
+                case GridRegionHostKind.WorkspaceBand:
+                    if (placement != GridRegionPlacement.Top && placement != GridRegionPlacement.Bottom)
+                    {
+                        throw new ArgumentException("Workspace band regions must use the Top or Bottom placement.", nameof(placement));
+                    }
+
+                    break;
+                case GridRegionHostKind.WorkspacePanel:
+                    if (placement != GridRegionPlacement.Left && placement != GridRegionPlacement.Right)
+                    {
+                        throw new ArgumentException("Workspace panel regions must use the Left or Right placement.", nameof(placement));
+                    }
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(definition.HostKind), definition.HostKind, "Unsupported region host kind.");
+            }
+        }
+
         private static void ValidateDefaultState(
             GridRegionKind regionKind,
             GridRegionHostKind hostKind,
             GridRegionState defaultState,
             bool canCollapse,
-            bool canClose)
+            bool canClose,
+            bool canResize)
         {
-            if (regionKind == GridRegionKind.CoreGridSurface || hostKind == GridRegionHostKind.Surface)
+            if (regionKind == GridRegionKind.CoreGridSurface || hostKind == GridRegionHostKind.CoreSurface)
             {
                 if (defaultState != GridRegionState.Open)
                 {
@@ -131,6 +172,16 @@ namespace PhialeGrid.Core.Regions
                 }
 
                 return;
+            }
+
+            if (hostKind == GridRegionHostKind.WorkspaceBand && (canCollapse || canResize))
+            {
+                throw new ArgumentException("Workspace bands can only close and move vertically; they cannot collapse or resize.");
+            }
+
+            if (hostKind == GridRegionHostKind.WorkspacePanel && !canResize)
+            {
+                throw new ArgumentException("Workspace panels must support resize.", nameof(canResize));
             }
 
             if (defaultState == GridRegionState.Collapsed && !canCollapse)

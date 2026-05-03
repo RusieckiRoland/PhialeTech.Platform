@@ -9,17 +9,17 @@ namespace PhialeTech.PhialeGrid.Wpf.Regions
         internal WpfGridRegionRenderSnapshot(
             IReadOnlyDictionary<GridRegionKind, bool> contentAvailability,
             IReadOnlyDictionary<GridRegionKind, WpfGridRegionRenderDirectives> directives,
-            bool usePaneDrawerChrome)
+            bool useWorkspacePanelDrawerChrome)
         {
             ContentAvailability = contentAvailability ?? throw new ArgumentNullException(nameof(contentAvailability));
             Directives = directives ?? throw new ArgumentNullException(nameof(directives));
-            UsePaneDrawerChrome = usePaneDrawerChrome;
+            UseWorkspacePanelDrawerChrome = useWorkspacePanelDrawerChrome;
         }
 
         internal IReadOnlyDictionary<GridRegionKind, bool> ContentAvailability { get; }
 
         internal IReadOnlyDictionary<GridRegionKind, WpfGridRegionRenderDirectives> Directives { get; }
 
-        internal bool UsePaneDrawerChrome { get; }
+        internal bool UseWorkspacePanelDrawerChrome { get; }
     }
 }

@@ -36,11 +36,12 @@
                             <controls:PhialeTitleBar Grid.Row="0"
                                                      Height="{TemplateBinding CaptionHeight}"
                                                      ShellState="{TemplateBinding ShellState}" />
-                            <ContentPresenter Grid.Row="1"
-                                              Content="{TemplateBinding Content}"
-                                              ContentTemplate="{TemplateBinding ContentTemplate}"
-                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            <AdornerDecorator Grid.Row="1">
+                                <ContentPresenter Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            </AdornerDecorator>
                         </Grid>
                     </Border>
                 </ControlTemplate>

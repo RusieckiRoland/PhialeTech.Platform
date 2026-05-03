@@ -18,6 +18,8 @@ namespace PhialeTech.YamlApp.Definitions.Layouts
 
         public double? Weight { get; set; }
 
+        public bool IsOverlayScope { get; set; }
+
         public bool? Visible { get; set; }
 
         public bool? Enabled { get; set; }

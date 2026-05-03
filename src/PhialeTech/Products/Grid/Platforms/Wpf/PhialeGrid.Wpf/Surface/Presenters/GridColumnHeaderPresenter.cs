@@ -56,7 +56,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
 
             AutomationProperties.SetAutomationId(presenter, "surface.column-header." + headerData.HeaderKey);
             AutomationProperties.SetName(presenter, BuildAutomationName(headerData));
-            presenter.Content = BuildHeaderContent(headerData);
+            presenter.Content = BuildHeaderContent(presenter, headerData);
 
             if (headerData.IsSelected)
             {
@@ -95,10 +95,10 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
             presenter.Height = bounds.Height;
         }
 
-        private static FrameworkElement BuildHeaderContent(GridHeaderSurfaceItem headerData)
+        private static FrameworkElement BuildHeaderContent(GridColumnHeaderPresenter presenter, GridHeaderSurfaceItem headerData)
         {
             var glyph = GetGlyph(headerData.IconKey);
-            var headerPadding = ResolveHeaderPadding();
+            var headerPadding = ResolveHeaderPadding(presenter);
             var container = new Grid();
             container.IsHitTestVisible = false;
             container.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -117,7 +117,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
             };
-            titleText.Style = TryFindStyle("PgGridHeaderTextStyle");
+            titleText.Style = ResolveRequiredStyle(presenter, "PgGridHeaderTextStyle");
             AutomationProperties.SetAutomationId(titleText, "surface.column-header." + headerData.HeaderKey + ".text");
             Grid.SetColumn(titleText, 0);
             layoutRoot.Children.Add(titleText);
@@ -141,7 +141,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
                         Margin = new Thickness(6, 0, 0, 0),
                         VerticalAlignment = VerticalAlignment.Center,
                     };
-                    glyphText.SetResourceReference(TextBlock.ForegroundProperty, "PgSortGlyphBrush");
+                    glyphText.Style = ResolveRequiredStyle(presenter, "PgGridSortGlyphTextStyle");
                     AutomationProperties.SetAutomationId(glyphText, "surface.column-header." + headerData.HeaderKey + ".sort-glyph");
                     indicatorPanel.Children.Add(glyphText);
                 }
@@ -186,14 +186,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
             return container;
         }
 
-        private static Thickness ResolveHeaderPadding()
+        private static Thickness ResolveHeaderPadding(FrameworkElement owner)
         {
-            if (Application.Current?.TryFindResource("PgGridHeaderPadding") is Thickness thickness)
+            if (owner?.TryFindResource("PgGridHeaderPadding") is Thickness thickness)
             {
                 return thickness;
             }
 
-            return new Thickness(10, 8, 10, 8);
+            throw new InvalidOperationException("Missing required grid resource 'PgGridHeaderPadding'.");
         }
 
         private static string GetGlyph(string iconKey)
@@ -226,9 +226,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
             return baseName;
         }
 
-        private static Style TryFindStyle(string resourceKey)
+        private static Style ResolveRequiredStyle(FrameworkElement owner, string resourceKey)
         {
-            return Application.Current?.TryFindResource(resourceKey) as Style;
+            if (owner?.TryFindResource(resourceKey) is Style style)
+            {
+                return style;
+            }
+
+            throw new InvalidOperationException("Missing required grid style '" + resourceKey + "'.");
         }
 
         protected override AutomationPeer OnCreateAutomationPeer()

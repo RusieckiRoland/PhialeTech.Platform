@@ -42,10 +42,9 @@ namespace PhialeTech.DocumentEditor.Abstractions
         ToggleHeaderRow = 37,
         ToggleHeaderColumn = 38,
         Focus = 39,
-        Clear = 40,
-        ExportHtml = 41,
-        ExportMarkdown = 42,
-        SaveJson = 43,
-        LoadJson = 44,
+        ExportHtml = 40,
+        ExportMarkdown = 41,
+        SaveJson = 42,
+        LoadJson = 43,
     }
 }

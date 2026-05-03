@@ -28,6 +28,7 @@ namespace PhialeGrid.Core.Tests.State
                 Assert.That(state.Groups.Single().ColumnId, Is.EqualTo("Category"));
                 Assert.That(state.Summaries.Single().Type, Is.EqualTo(GridSummaryType.Count));
                 Assert.That(state.RegionLayout.Single(region => region.RegionKind == GridRegionKind.GroupingRegion).State, Is.EqualTo(GridRegionState.Collapsed));
+                Assert.That(state.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion).PlacementOverride, Is.EqualTo(GridRegionPlacement.Left));
                 Assert.That(state.GlobalSearchText, Is.EqualTo("owner:alpha"));
             });
         }
@@ -83,7 +84,7 @@ namespace PhialeGrid.Core.Tests.State
             state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.TopCommandRegion, State = GridRegionState.Open, Size = 44d, IsActive = false });
             state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.GroupingRegion, State = GridRegionState.Open, Size = 56d, IsActive = false });
             state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SummaryBottomRegion, State = GridRegionState.Open, Size = 56d, IsActive = false });
-            state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SideToolRegion, State = GridRegionState.Open, Size = 340d, IsActive = true });
+            state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SideToolRegion, State = GridRegionState.Open, Size = 340d, IsActive = true, PlacementOverride = GridRegionPlacement.Left });
 
             var snapshot = GridViewStateConverter.ToSnapshot(state, baselineColumns);
 
@@ -101,6 +102,7 @@ namespace PhialeGrid.Core.Tests.State
                 Assert.That(snapshot.RegionLayout.Regions.Single(region => region.RegionKind == GridRegionKind.SideToolRegion).State, Is.EqualTo(GridRegionState.Open));
                 Assert.That(snapshot.RegionLayout.Regions.Single(region => region.RegionKind == GridRegionKind.SideToolRegion).IsActive, Is.True);
                 Assert.That(snapshot.RegionLayout.Regions.Single(region => region.RegionKind == GridRegionKind.SideToolRegion).Size, Is.EqualTo(340d));
+                Assert.That(snapshot.RegionLayout.Regions.Single(region => region.RegionKind == GridRegionKind.SideToolRegion).PlacementOverride, Is.EqualTo(GridRegionPlacement.Left));
                 Assert.That(snapshot.GlobalSearchText, Is.EqualTo("hydrant"));
             });
         }
@@ -127,7 +129,7 @@ namespace PhialeGrid.Core.Tests.State
                     new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false ),
                     new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Collapsed, 120d, false ),
                     new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false ),
-                    new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Closed, 320d, false),
+                    new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Closed, 320d, false, GridRegionPlacement.Left),
                 }),
                 "owner:alpha");
         }

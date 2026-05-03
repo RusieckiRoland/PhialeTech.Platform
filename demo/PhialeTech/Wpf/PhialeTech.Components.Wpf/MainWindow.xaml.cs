@@ -22,6 +22,7 @@ using PhialeGrid.Core.State;
 using PhialeTech.ComponentHost.Abstractions.Presentation;
 using PhialeTech.ComponentHost.Presentation;
 using PhialeTech.ComponentHost.State;
+using PhialeTech.Components.Shared.Core;
 using PhialeTech.Components.Shared.Model;
 using PhialeTech.Components.Shared.Services;
 using PhialeTech.Yaml.Library;
@@ -152,6 +153,9 @@ namespace PhialeTech.Components.Wpf
         private string _registeredGridStateKey = string.Empty;
         private int _gridActivationSequence;
         private EventHandler _pendingFirstRenderProbe;
+        private IDisposable _pendingScenarioSelectionGridBatch;
+        private PhialeTech.PhialeGrid.Wpf.Controls.PhialeGrid _pendingScenarioSelectionGridBatchOwner;
+        private bool _pendingGridViewStatePreloadScheduled;
         private WebHostShowcaseView _webHostShowcaseView;
         private PdfViewerShowcaseView _pdfViewerShowcaseView;
         private ReportDesignerShowcaseView _reportDesignerShowcaseView;
@@ -163,6 +167,7 @@ namespace PhialeTech.Components.Wpf
         private bool _isWebDemoChromeCollapsed;
         private bool _webHostPrewarmQueued;
         private WebHostLoadTrace _webHostLoadTrace;
+        private ScenarioLoadTrace _scenarioLoadTrace;
         private int _webComponentsClickTimestamp = -1;
         private bool _isUpdatingYamlGeneratedFormEditor;
         private readonly IReadOnlyList<YamlLibraryFormTemplateOption> _yamlLibraryFormTemplates;
@@ -243,6 +248,8 @@ namespace PhialeTech.Components.Wpf
 
         public WpfHostedSurfaceService HostedSurfaceService { get; }
 
+        public RelayCommand SelectExampleWithTraceCommand { get; }
+
         public MainWindow()
             : this(DemoApplicationServices.CreateIsolatedForWindow(), true)
         {
@@ -250,11 +257,12 @@ namespace PhialeTech.Components.Wpf
 
         public MainWindow(DemoApplicationServices applicationServices, bool ownsApplicationServices = false)
         {
+            SelectExampleWithTraceCommand = new RelayCommand(parameter => SelectExampleWithTrace(parameter as string));
             InitializeComponent();
             _yamlLibraryFormTemplates = LoadYamlLibraryFormTemplates();
             _yamlDocumentInheritanceOptions = BuildYamlDocumentInheritanceOptions();
-            YamlAdvancedInlineDocumentEditorState = CreateDocumentEditorDemoFieldState("yaml-advanced-inline-document-editor", "Inline document", FieldChromeMode.InlineHint, "Inline YAML App presentation keeps the field visually lightweight while preserving the same editor capabilities.");
-            YamlAdvancedFramedDocumentEditorState = CreateDocumentEditorDemoFieldState("yaml-advanced-framed-document-editor", "Framed document", FieldChromeMode.Framed, "Framed YAML App presentation uses the full card chrome for a larger, form-centric editing surface.");
+            YamlAdvancedInlineDocumentEditorState = CreateDocumentEditorDemoFieldState("yaml-advanced-inline-document-editor", "Review notes", FieldChromeMode.InlineHint, "Inline YAML App presentation keeps the field visually lightweight while preserving the same editor capabilities.");
+            YamlAdvancedFramedDocumentEditorState = CreateDocumentEditorDemoFieldState("yaml-advanced-framed-document-editor", "Review notes", FieldChromeMode.Framed, "Framed YAML App presentation uses the full card chrome for a larger, form-centric editing surface.");
             _applicationServices = applicationServices ?? throw new ArgumentNullException(nameof(applicationServices));
             _ownsApplicationServices = ownsApplicationServices;
             PhialeWebHostDiagnostics.Sink = (source, message) => MonacoInputTrace.Write("webhost", source, message);
@@ -270,6 +278,7 @@ namespace PhialeTech.Components.Wpf
                 "Wpf",
                 remoteGridClient: CreateRemoteGridClient(),
                 definitionManager: _applicationServices.DefinitionManager);
+            _viewModel.DiagnosticsTrace = MarkScenarioViewModelTrace;
             _hostedSurfaceManager = new HostedSurfaceManager(new DemoHostedShellCoordinator(_viewModel));
             var hostedSurfaceRegistry = new WpfHostedSurfaceFactoryRegistry();
             hostedSurfaceRegistry.Register(new DemoViewHostedSurfaceFactory());
@@ -301,6 +310,7 @@ namespace PhialeTech.Components.Wpf
         private void HandleWindowLoaded(object sender, RoutedEventArgs e)
         {
             LogGridStateLifecycle("Window loaded. Scheduling grid state registration refresh.");
+            QueueGridViewStatePreload();
             if (_viewModel.ShowSelectionTools || _viewModel.ShowEditingTools || _viewModel.ShowConstraintTools)
             {
                 Dispatcher.BeginInvoke(new Action(ActivateCurrentExampleStateAndScenario), DispatcherPriority.DataBind);
@@ -309,6 +319,55 @@ namespace PhialeTech.Components.Wpf
 
             QueueGridStateRegistrationRefresh();
             QueueWebHostPrewarm();
+        }
+
+        private void QueueGridViewStatePreload()
+        {
+            if (_pendingGridViewStatePreloadScheduled)
+            {
+                return;
+            }
+
+            _pendingGridViewStatePreloadScheduled = true;
+            Dispatcher.BeginInvoke(
+                new Action(() =>
+                {
+                    _pendingGridViewStatePreloadScheduled = false;
+                    PreloadVisibleGridViewStates();
+                }),
+                DispatcherPriority.Background);
+        }
+
+        private void PreloadVisibleGridViewStates()
+        {
+            if (_viewModel == null || _viewModel.SelectedExample != null)
+            {
+                return;
+            }
+
+            var exampleIds = _viewModel.VisibleSections
+                .SelectMany(section => section.Examples)
+                .Select(example => example.Id)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (exampleIds.Length == 0)
+            {
+                return;
+            }
+
+            var preloadedCount = 0;
+            foreach (var exampleId in exampleIds)
+            {
+                var stateKey = DemoApplicationStateKeys.ForGridExample(exampleId);
+                if (_applicationServices.ApplicationStateManager.Preload<GridViewState>(stateKey))
+                {
+                    preloadedCount++;
+                }
+            }
+
+            LogGridStateLifecycle($"Preloaded {preloadedCount}/{exampleIds.Length} visible grid view states.");
         }
 
         private void HandleWindowClosed(object sender, EventArgs e)
@@ -687,6 +746,61 @@ namespace PhialeTech.Components.Wpf
             _webHostLoadTrace?.Mark("SelectDrawerGroup returned");
         }
 
+        private void SelectExampleWithTrace(string exampleId)
+        {
+            StartScenarioLoadTrace(exampleId, "overview card command");
+            TraceNextScenarioRender("First render after scenario command");
+            MarkScenarioLoad("SelectExample call begin");
+            SelectExampleWithGridBatch(exampleId);
+            MarkScenarioLoad("SelectExample call returned");
+        }
+
+        private void SelectExampleWithGridBatch(string exampleId)
+        {
+            var activeGrid = GetCurrentStateGrid();
+            if (activeGrid == null)
+            {
+                _viewModel.SelectExample(exampleId);
+                return;
+            }
+
+            using (activeGrid.BeginGridUpdateBatch("host-example-selection"))
+            {
+                _viewModel.SelectExample(exampleId);
+            }
+        }
+
+        private void BeginScenarioSelectionGridBatch()
+        {
+            CompleteScenarioSelectionGridBatch("superseded");
+
+            var activeGrid = GetCurrentStateGrid();
+            if (activeGrid == null)
+            {
+                LogGridStateLifecycle("Scenario selection grid batch skipped because there is no active grid.");
+                return;
+            }
+
+            _pendingScenarioSelectionGridBatchOwner = activeGrid;
+            _pendingScenarioSelectionGridBatch = activeGrid.BeginGridUpdateBatch("host-selected-example-activation");
+            LogGridStateLifecycle($"Scenario selection grid batch started for {DescribeGrid(activeGrid)}.");
+        }
+
+        private void CompleteScenarioSelectionGridBatch(string reason)
+        {
+            var batch = _pendingScenarioSelectionGridBatch;
+            var owner = _pendingScenarioSelectionGridBatchOwner;
+            if (batch == null)
+            {
+                return;
+            }
+
+            _pendingScenarioSelectionGridBatch = null;
+            _pendingScenarioSelectionGridBatchOwner = null;
+            batch.Dispose();
+            LogGridStateLifecycle($"Scenario selection grid batch completed. Reason='{reason ?? string.Empty}', Grid={DescribeGrid(owner)}.");
+        }
+
         private void HandleWebComponentsComponentPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             _webComponentsClickTimestamp = e?.Timestamp ?? -1;
@@ -760,6 +874,26 @@ namespace PhialeTech.Components.Wpf
         private void HandleCancelEditsClick(object sender, RoutedEventArgs e)
         {
             DemoGrid?.CancelEdits();
+        }
+
+        private void HandleOpenChangesPanelClick(object sender, RoutedEventArgs e)
+        {
+            OpenGridWorkspacePanel(GridRegionKind.ChangePanelRegion);
+        }
+
+        private void HandleOpenValidationPanelClick(object sender, RoutedEventArgs e)
+        {
+            OpenGridWorkspacePanel(GridRegionKind.ValidationPanelRegion);
+        }
+
+        private void OpenGridWorkspacePanel(GridRegionKind regionKind)
+        {
+            if (DemoGrid == null)
+            {
+                throw new InvalidOperationException("Grid workspace panel tab activation requires DemoGrid.");
+            }
+
+            DemoGrid.OpenWorkspacePanel(regionKind);
         }
 
         private void HandleScrollEditedRowDemoClick(object sender, RoutedEventArgs e)
@@ -1151,6 +1285,10 @@ namespace PhialeTech.Components.Wpf
                 {
                     await _documentEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme()).ConfigureAwait(true);
                 }
+                if (_pdfViewerShowcaseView != null)
+                {
+                    await _pdfViewerShowcaseView.ApplyEnvironmentAsync(ResolveReportDesignerTheme()).ConfigureAwait(true);
+                }
                 if (_yamlActionsMonacoEditor != null)
                 {
                     await _yamlActionsMonacoEditor.SetThemeAsync(ResolveReportDesignerTheme()).ConfigureAwait(true);
@@ -1177,6 +1315,16 @@ namespace PhialeTech.Components.Wpf
                 {
                     await _documentEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme()).ConfigureAwait(true);
                 }
+                if (_pdfViewerShowcaseView != null)
+                {
+                    await _pdfViewerShowcaseView.ApplyEnvironmentAsync(ResolveReportDesignerTheme()).ConfigureAwait(true);
+                }
+                return;
+            }
+
+            if (e.PropertyName == nameof(DemoShellViewModel.VisibleSections))
+            {
+                QueueGridViewStatePreload();
                 return;
             }
 
@@ -1197,15 +1345,23 @@ namespace PhialeTech.Components.Wpf
                 return;
             }
 
+            MarkScenarioLoad("SelectedExample PropertyChanged handler begin");
             if (_viewModel.IsYamlDocumentExample || _viewModel.IsYamlActionsExample)
             {
+                MarkScenarioLoad("ResetYamlGenerateFormState begin");
                 ResetYamlGenerateFormState();
+                MarkScenarioLoad("ResetYamlGenerateFormState completed");
             }
 
+            MarkScenarioLoad("BeginDiagnosticsSessionsForSelectedExample begin");
             BeginDiagnosticsSessionsForSelectedExample();
+            MarkScenarioLoad("BeginDiagnosticsSessionsForSelectedExample completed");
             QueueFirstRenderProbeForCurrentExample();
+            BeginScenarioSelectionGridBatch();
             LogGridStateLifecycle($"SelectedExample changed to '{_viewModel.SelectedExample?.Id ?? "<null>"}'. ShowEditingTools={_viewModel.ShowEditingTools}, ShowConstraintTools={_viewModel.ShowConstraintTools}, ShowSelectionTools={_viewModel.ShowSelectionTools}.");
+            MarkScenarioLoad("RefreshDemoGridRegionOptions begin");
             RefreshDemoGridRegionOptions();
+            MarkScenarioLoad("RefreshDemoGridRegionOptions completed");
 
             if (_viewModel.ShowWebHostSurface)
             {
@@ -1217,26 +1373,37 @@ namespace PhialeTech.Components.Wpf
             {
                 _webHostLoadTrace.Mark("SaveAndDetachGridStateRegistration begin");
             }
+            MarkScenarioLoad("SaveAndDetachGridStateRegistration begin");
             SaveAndDetachGridStateRegistration();
+            MarkScenarioLoad("SaveAndDetachGridStateRegistration completed");
             if (_webHostLoadTrace != null)
             {
                 _webHostLoadTrace.Mark("SaveAndDetachGridStateRegistration completed");
             }
 
+            MarkScenarioLoad("MarkStateCleared begin");
             _viewModel.MarkStateCleared();
+            MarkScenarioLoad("MarkStateCleared completed");
+            MarkScenarioLoad("RefreshWebComponentSurface begin");
             RefreshWebComponentSurface();
+            MarkScenarioLoad("RefreshWebComponentSurface completed");
 
             if (_viewModel.ShowActiveLayerSelectorSurface)
             {
+                CompleteScenarioSelectionGridBatch("active-layer-selector-surface");
+                MarkScenarioLoad("SelectedExample PropertyChanged handler stopped for active-layer-selector surface");
                 return;
             }
 
             if (_viewModel.ShowWebComponentsSurface)
             {
                 _webHostLoadTrace?.Mark("Skipping grid cleanup for web-components");
+                CompleteScenarioSelectionGridBatch("web-components-surface");
+                MarkScenarioLoad("SelectedExample PropertyChanged handler stopped for web-components surface");
                 return;
             }
 
+            MarkScenarioLoad("Grid cleanup begin");
             DemoGrid?.CancelEdits();
             DemoGrid?.SetCheckedRows(Array.Empty<string>());
             UpdateScenarioStatus(ScenarioStatusArea.Selection, string.Empty);
@@ -1245,15 +1412,18 @@ namespace PhialeTech.Components.Wpf
             DemoGrid?.ClearHierarchySource();
             DemoGrid?.ClearGlobalSearch();
             _viewModel.GridSearchText = string.Empty;
+            MarkScenarioLoad("Grid cleanup completed");
 
             if (_viewModel.ShowHierarchyTools)
             {
+                MarkScenarioLoad("Scheduling hierarchy scenario activation");
                 _ = Dispatcher.BeginInvoke(new Action(ApplyHierarchyScenarioToGrid), System.Windows.Threading.DispatcherPriority.Loaded);
             }
 
             if (_viewModel.ShowSelectionTools || _viewModel.ShowEditingTools || _viewModel.ShowConstraintTools)
             {
                 LogGridStateLifecycle("Scheduling example activation with state restore.");
+                MarkScenarioLoad("Scheduling ActivateCurrentExampleStateAndScenario at DataBind priority");
                 _ = Dispatcher.BeginInvoke(
                     new Action(ActivateCurrentExampleStateAndScenario),
                     DispatcherPriority.DataBind);
@@ -1261,6 +1431,7 @@ namespace PhialeTech.Components.Wpf
 
             if (_viewModel.ShowFilteringTools)
             {
+                MarkScenarioLoad("Scheduling filtering focus at Loaded priority");
                 _ = Dispatcher.BeginInvoke(
                     new Action(() => DemoGrid?.FocusColumnFilter("Municipality")),
                     DispatcherPriority.Loaded);
@@ -1268,62 +1439,99 @@ namespace PhialeTech.Components.Wpf
 
             if (_viewModel.ShowRemoteTools)
             {
+                MarkScenarioLoad("LoadCurrentRemotePageAsync begin");
                 await _viewModel.LoadCurrentRemotePageAsync();
+                MarkScenarioLoad("LoadCurrentRemotePageAsync completed");
             }
             if (!_viewModel.ShowSelectionTools && !_viewModel.ShowEditingTools && !_viewModel.ShowConstraintTools)
             {
+                MarkScenarioLoad("QueueGridStateRegistrationRefresh begin");
                 QueueGridStateRegistrationRefresh();
+                MarkScenarioLoad("QueueGridStateRegistrationRefresh completed");
+                CompleteScenarioSelectionGridBatch("no-state-activation");
             }
+            MarkScenarioLoad("SelectedExample PropertyChanged handler completed");
         }
 
         private void ActivateCurrentExampleStateAndScenario()
         {
+            MarkScenarioLoad("ActivateCurrentExampleStateAndScenario begin");
             LogGridStateLifecycle("ActivateCurrentExampleStateAndScenario started.");
-            var restoredFromStore = AttachGridStateRegistrationForCurrentExample();
-            EnsureSummaryDesignerRegionVisible();
-
-            if (_viewModel.ShowEditingTools)
+            var activeGrid = GetCurrentStateGrid();
+            if (activeGrid == null)
             {
-                if (restoredFromStore)
-                {
-                    LogGridStateLifecycle("Baseline editing scenario layout reset skipped because persisted state was restored. Reapplying demo row-state markers.");
-                    ApplyEditingScenarioMarkersAfterRestore();
-                }
-                else
-                {
-                    LogGridStateLifecycle("Running baseline editing scenario because persisted state was not restored.");
-                    ApplyEditingScenarioToGrid(GridEditingScenario.Baseline);
-                }
-
+                LogGridStateLifecycle("ActivateCurrentExampleStateAndScenario stopped because there is no active grid.");
+                MarkScenarioLoad("ActivateCurrentExampleStateAndScenario stopped because there is no active grid");
+                CompleteScenarioSelectionGridBatch("activation-no-active-grid");
                 return;
             }
 
-            if (_viewModel.ShowSelectionTools)
+            try
             {
-                if (restoredFromStore)
+                using (activeGrid.BeginGridUpdateBatch("ActivateCurrentExampleStateAndScenario"))
                 {
-                    LogGridStateLifecycle("Baseline selection scenario skipped because persisted state was restored.");
-                }
-                else
-                {
-                    LogGridStateLifecycle("Running baseline selection scenario because persisted state was not restored.");
-                    ApplySelectionScenarioToGrid(enableMultiSelect: false);
-                }
+                    MarkScenarioLoad("AttachGridStateRegistrationForCurrentExample begin");
+                    var restoredFromStore = AttachGridStateRegistrationForCurrentExample();
+                    MarkScenarioLoad("AttachGridStateRegistrationForCurrentExample completed. RestoredFromStore=" + restoredFromStore + ".");
+                    MarkScenarioLoad("EnsureSummaryDesignerRegionVisible begin");
+                    EnsureSummaryDesignerRegionVisible();
+                    MarkScenarioLoad("EnsureSummaryDesignerRegionVisible completed");
 
-                return;
+                    if (_viewModel.ShowEditingTools)
+                    {
+                        if (restoredFromStore)
+                        {
+                            LogGridStateLifecycle("Baseline editing scenario layout reset skipped because persisted state was restored. Reapplying demo row-state markers.");
+                            MarkScenarioLoad("ApplyEditingScenarioMarkersAfterRestore begin");
+                            ApplyEditingScenarioMarkersAfterRestore();
+                            MarkScenarioLoad("ApplyEditingScenarioMarkersAfterRestore completed");
+                        }
+                        else
+                        {
+                            LogGridStateLifecycle("Running baseline editing scenario because persisted state was not restored.");
+                            MarkScenarioLoad("ApplyEditingScenarioToGrid(Baseline) begin");
+                            ApplyEditingScenarioToGrid(GridEditingScenario.Baseline);
+                            MarkScenarioLoad("ApplyEditingScenarioToGrid(Baseline) completed");
+                        }
+
+                        MarkScenarioLoad("ActivateCurrentExampleStateAndScenario completed for editing");
+                        return;
+                    }
+
+                    if (_viewModel.ShowSelectionTools)
+                    {
+                        if (restoredFromStore)
+                        {
+                            LogGridStateLifecycle("Baseline selection scenario skipped because persisted state was restored.");
+                        }
+                        else
+                        {
+                            LogGridStateLifecycle("Running baseline selection scenario because persisted state was not restored.");
+                            ApplySelectionScenarioToGrid(enableMultiSelect: false);
+                        }
+
+                        MarkScenarioLoad("ActivateCurrentExampleStateAndScenario completed for selection");
+                        return;
+                    }
+
+                    if (_viewModel.ShowConstraintTools)
+                    {
+                        if (restoredFromStore)
+                        {
+                            LogGridStateLifecycle("Baseline constraint scenario skipped because persisted state was restored.");
+                        }
+                        else
+                        {
+                            LogGridStateLifecycle("Running baseline constraint scenario because persisted state was not restored.");
+                            ApplyConstraintScenarioToGrid();
+                        }
+                        MarkScenarioLoad("ActivateCurrentExampleStateAndScenario completed for constraints");
+                    }
+                }
             }
-
-            if (_viewModel.ShowConstraintTools)
+            finally
             {
-                if (restoredFromStore)
-                {
-                    LogGridStateLifecycle("Baseline constraint scenario skipped because persisted state was restored.");
-                }
-                else
-                {
-                    LogGridStateLifecycle("Running baseline constraint scenario because persisted state was not restored.");
-                    ApplyConstraintScenarioToGrid();
-                }
+                CompleteScenarioSelectionGridBatch("activation-completed");
             }
         }
 
@@ -1463,7 +1671,7 @@ namespace PhialeTech.Components.Wpf
             {
                 if (_pdfViewerShowcaseView == null)
                 {
-                    _pdfViewerShowcaseView = new PdfViewerShowcaseView();
+                    _pdfViewerShowcaseView = new PdfViewerShowcaseView(ResolveReportDesignerTheme());
                 }
 
                 if (!ReferenceEquals(WebHostSamplePresenter.Content, _pdfViewerShowcaseView))
@@ -1577,6 +1785,41 @@ namespace PhialeTech.Components.Wpf
             {
                 CompositionTarget.Rendering -= handler;
                 _webHostLoadTrace?.Mark(label);
+            };
+
+            CompositionTarget.Rendering += handler;
+        }
+
+        private void StartScenarioLoadTrace(string exampleId, string source)
+        {
+            _scenarioLoadTrace = new ScenarioLoadTrace("ScenarioLoad", exampleId);
+            _scenarioLoadTrace.Mark("Load trace source: " + (source ?? string.Empty));
+            _scenarioLoadTrace.Mark("Scenario log file: " + MonacoInputTrace.CurrentLogFilePath);
+            _scenarioLoadTrace.Mark("Grid diagnostics log file: " + PhialeGridDiagnostics.GetLogFilePath());
+        }
+
+        private void MarkScenarioLoad(string step)
+        {
+            _scenarioLoadTrace?.Mark(step);
+        }
+
+        private void MarkScenarioViewModelTrace(string step)
+        {
+            MarkScenarioLoad("ViewModel: " + (step ?? string.Empty));
+        }
+
+        private void TraceNextScenarioRender(string label)
+        {
+            if (_scenarioLoadTrace == null)
+            {
+                return;
+            }
+
+            EventHandler handler = null;
+            handler = (sender, args) =>
+            {
+                CompositionTarget.Rendering -= handler;
+                _scenarioLoadTrace?.Mark(label);
             };
 
             CompositionTarget.Rendering += handler;
@@ -1719,7 +1962,7 @@ namespace PhialeTech.Components.Wpf
                 var capturedExamples = new List<WpfDemoBookExampleCapture>();
                 foreach (var example in chapter.Examples)
                 {
-                    _viewModel.SelectExample(example.Id);
+                    SelectExampleWithGridBatch(example.Id);
                     _viewModel.SelectedTabIndex = 0;
                     RefreshWebComponentSurface();
                     await WaitForDemoSurfaceAsync(_viewModel.ShowWebComponentsSurface).ConfigureAwait(true);
@@ -1752,7 +1995,7 @@ namespace PhialeTech.Components.Wpf
             }
             else if (!string.IsNullOrWhiteSpace(previousExampleId))
             {
-                _viewModel.SelectExample(previousExampleId);
+                SelectExampleWithGridBatch(previousExampleId);
                 _viewModel.SelectedTabIndex = previousTabIndex;
             }
 

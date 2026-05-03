@@ -1,4 +1,5 @@
 using System.Linq;
+using System;
 using System.Windows.Controls;
 using System.Threading;
 using NUnit.Framework;
@@ -14,13 +15,11 @@ namespace PhialeGrid.Wpf.Tests.Surface
         [Test]
         public void HeaderData_WithSortIconKey_AppendsSortGlyphToContent()
         {
-            var presenter = new GridColumnHeaderPresenter
+            var presenter = CreatePresenter();
+            presenter.HeaderData = new GridHeaderSurfaceItem("col-1", GridHeaderKind.ColumnHeader)
             {
-                HeaderData = new GridHeaderSurfaceItem("col-1", GridHeaderKind.ColumnHeader)
-                {
-                    DisplayText = "City",
-                    IconKey = "sort-asc",
-                },
+                DisplayText = "City",
+                IconKey = "sort-asc",
             };
 
             Assert.That(GridSurfaceTestHost.ReadVisibleText(presenter), Does.Contain("City"));
@@ -28,14 +27,36 @@ namespace PhialeGrid.Wpf.Tests.Surface
         }
 
         [Test]
+        public void HeaderData_WithSortIconKey_UsesDedicatedSortGlyphStyle()
+        {
+            var presenter = CreatePresenter();
+            presenter.HeaderData = new GridHeaderSurfaceItem("col-1", GridHeaderKind.ColumnHeader)
+            {
+                DisplayText = "City",
+                IconKey = "sort-asc",
+            };
+
+            var glyphText = GridSurfaceTestHost.FindElementByAutomationId<TextBlock>(presenter, "surface.column-header.col-1.sort-glyph");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(glyphText, Is.Not.Null);
+                if (glyphText != null)
+                {
+                    Assert.That(glyphText.Style, Is.SameAs(presenter.TryFindResource("PgGridSortGlyphTextStyle")));
+                    Assert.That(glyphText.FontSize, Is.GreaterThan(12d));
+                    Assert.That(glyphText.FontWeight, Is.EqualTo(System.Windows.FontWeights.SemiBold));
+                }
+            });
+        }
+
+        [Test]
         public void HeaderData_WithoutSortIconKey_UsesDisplayTextOnly()
         {
-            var presenter = new GridColumnHeaderPresenter
+            var presenter = CreatePresenter();
+            presenter.HeaderData = new GridHeaderSurfaceItem("col-1", GridHeaderKind.ColumnHeader)
             {
-                HeaderData = new GridHeaderSurfaceItem("col-1", GridHeaderKind.ColumnHeader)
-                {
-                    DisplayText = "City",
-                },
+                DisplayText = "City",
             };
 
             Assert.That(GridSurfaceTestHost.ReadVisibleText(presenter), Is.EqualTo("City"));
@@ -44,14 +65,12 @@ namespace PhialeGrid.Wpf.Tests.Surface
         [Test]
         public void HeaderData_WithSortOrderText_RendersDedicatedSortOrderBadge()
         {
-            var presenter = new GridColumnHeaderPresenter
+            var presenter = CreatePresenter();
+            presenter.HeaderData = new GridHeaderSurfaceItem("col-1", GridHeaderKind.ColumnHeader)
             {
-                HeaderData = new GridHeaderSurfaceItem("col-1", GridHeaderKind.ColumnHeader)
-                {
-                    DisplayText = "City",
-                    IconKey = "sort-asc",
-                    SortOrderText = "2",
-                },
+                DisplayText = "City",
+                IconKey = "sort-asc",
+                SortOrderText = "2",
             };
 
             var badgeText = GridSurfaceTestHost.FindElementByAutomationId<System.Windows.Controls.TextBlock>(presenter, "surface.column-header.col-1.sort-order");
@@ -67,14 +86,12 @@ namespace PhialeGrid.Wpf.Tests.Surface
         [Test]
         public void HeaderData_ShouldRenderSeparatorWithoutHorizontalInset()
         {
-            var presenter = new GridColumnHeaderPresenter
+            var presenter = CreatePresenter();
+            presenter.Width = 180;
+            presenter.Height = 30;
+            presenter.HeaderData = new GridHeaderSurfaceItem("col-1", GridHeaderKind.ColumnHeader)
             {
-                Width = 180,
-                Height = 30,
-                HeaderData = new GridHeaderSurfaceItem("col-1", GridHeaderKind.ColumnHeader)
-                {
-                    DisplayText = "City",
-                },
+                DisplayText = "City",
             };
 
             var window = GridSurfaceTestHost.CreateHostWindow(presenter, width: 220, height: 80);
@@ -99,6 +116,33 @@ namespace PhialeGrid.Wpf.Tests.Surface
             {
                 window.Close();
             }
+        }
+
+        private static GridColumnHeaderPresenter CreatePresenter()
+        {
+            var presenter = new GridColumnHeaderPresenter();
+            LoadGridResources(presenter);
+            return presenter;
+        }
+
+        private static void LoadGridResources(System.Windows.FrameworkElement element)
+        {
+            element.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary
+            {
+                Source = new Uri("pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/ThemeTokens.Day.xaml", UriKind.Absolute),
+            });
+            element.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary
+            {
+                Source = new Uri("pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/Controls.Core.xaml", UriKind.Absolute),
+            });
+            element.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary
+            {
+                Source = new Uri("pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/PhialeGrid.Shared.xaml", UriKind.Absolute),
+            });
+            element.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary
+            {
+                Source = new Uri("pack://application:,,,/PhialeTech.Styles.Wpf;component/Themes/PhialeGrid.Controls.xaml", UriKind.Absolute),
+            });
         }
     }
 }

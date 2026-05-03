@@ -75,6 +75,7 @@ namespace PhialeGrid.Core.State
                         State = region.State,
                         Size = region.Size,
                         IsActive = region.IsActive,
+                        PlacementOverride = region.PlacementOverride,
                     })
                     .ToList(),
                 GlobalSearchText = snapshot.GlobalSearchText ?? string.Empty,
@@ -155,7 +156,8 @@ namespace PhialeGrid.Core.State
                     region.RegionKind,
                     region.State,
                     region.Size,
-                    region.IsActive))
+                    region.IsActive,
+                    region.PlacementOverride))
                 .ToArray());
 
             return new GridStateSnapshot(

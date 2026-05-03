@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,6 +8,7 @@ using NUnit.Framework;
 using PhialeTech.DocumentEditor.Abstractions;
 using PhialeTech.DocumentEditor.Wpf.Controls;
 using PhialeTech.WebHost.Abstractions.Ui.Web;
+using PhialeTech.WebHost.Wpf.Controls;
 
 namespace PhialeTech.WebHost.Wpf.Tests
 {
@@ -37,10 +39,13 @@ namespace PhialeTech.WebHost.Wpf.Tests
         }
 
         [Test]
-        public void PhialeDocumentEditor_OverlaySpansRootGrid_WhenHostedInsideLayoutCell()
+        public void PhialeDocumentEditor_OverlayUsesNearestExplicitScope_WhenHostedInsideLayoutCell()
         {
             var hostFactory = new FakeWebComponentHostFactory();
-            var editor = new PhialeDocumentEditor(hostFactory, new DocumentEditorOptions());
+            var editor = new PhialeDocumentEditor(hostFactory, new DocumentEditorOptions
+            {
+                OverlayMode = DocumentEditorOverlayMode.Container
+            });
             var root = new Grid
             {
                 Width = 900d,
@@ -52,6 +57,7 @@ namespace PhialeTech.WebHost.Wpf.Tests
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1d, GridUnitType.Star) });
 
             var cell = new Grid();
+            OverlayHost.SetIsScope(cell, true);
             Grid.SetRow(cell, 1);
             Grid.SetColumn(cell, 1);
             cell.Children.Add(editor);
@@ -77,10 +83,54 @@ namespace PhialeTech.WebHost.Wpf.Tests
                 Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
                 root.UpdateLayout();
 
-                Assert.That(window.OwnedWindows.Count, Is.EqualTo(1));
-                var overlayWindow = window.OwnedWindows[0];
-                Assert.That(overlayWindow.ActualWidth, Is.GreaterThan(cell.ActualWidth));
-                Assert.That(overlayWindow.ActualHeight, Is.GreaterThan(cell.ActualHeight));
+                Assert.That(cell.Children.Count, Is.EqualTo(2));
+                Assert.That(root.Children.Count, Is.EqualTo(1));
+                Assert.That(cell.Children[1], Is.InstanceOf<Grid>());
+                Assert.That(Panel.GetZIndex((UIElement)cell.Children[1]), Is.EqualTo(short.MaxValue));
+            }
+            finally
+            {
+                window.Close();
+                editor.Dispose();
+            }
+        }
+
+        [Test]
+        public void PhialeDocumentEditor_DoesNotOpenOverlay_WhenOverlayModeIsDisabled()
+        {
+            var hostFactory = new FakeWebComponentHostFactory();
+            var editor = new PhialeDocumentEditor(hostFactory, new DocumentEditorOptions
+            {
+                OverlayMode = DocumentEditorOverlayMode.Disabled
+            });
+            var root = new Grid
+            {
+                Width = 640d,
+                Height = 400d
+            };
+
+            root.Children.Add(editor);
+            var window = new Window
+            {
+                Width = root.Width,
+                Height = root.Height,
+                Content = root,
+                ShowInTaskbar = false,
+                WindowStyle = WindowStyle.None
+            };
+
+            try
+            {
+                window.Show();
+                root.Measure(new Size(root.Width, root.Height));
+                root.Arrange(new Rect(0d, 0d, root.Width, root.Height));
+                root.UpdateLayout();
+
+                hostFactory.Host.RaiseMessage("{\"type\":\"documentEditor.toggleOverlay\",\"isOpen\":true}", "documentEditor.toggleOverlay");
+                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
+                root.UpdateLayout();
+
+                Assert.That(root.Children.Count, Is.EqualTo(1));
             }
             finally
             {

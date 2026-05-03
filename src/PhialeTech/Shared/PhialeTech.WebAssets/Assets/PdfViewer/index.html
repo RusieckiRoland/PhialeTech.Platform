@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -9,8 +9,38 @@
   <style>
     :root {
       color-scheme: light;
-      --pt-surface: #e2e8f0;
-      --pt-page-gap: 16px;
+      --pv-app-bg: #eef2f8;
+      --pv-surface: rgba(255, 255, 255, 0.94);
+      --pv-toolbar: rgba(255, 255, 255, 0.92);
+      --pv-border: rgba(148, 163, 184, 0.32);
+      --pv-border-strong: rgba(148, 163, 184, 0.48);
+      --pv-text: #0f172a;
+      --pv-text-muted: #475569;
+      --pv-shadow: 0 18px 42px rgba(15, 23, 42, 0.10);
+      --pv-button-bg: rgba(255, 255, 255, 0.72);
+      --pv-button-hover: rgba(241, 245, 249, 0.96);
+      --pv-button-active: #0b63ce;
+      --pv-button-active-text: #ffffff;
+      --pv-field-bg: rgba(255, 255, 255, 0.84);
+      --pv-page-gap: 18px;
+      --pv-shell-padding: 16px;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --pv-app-bg: #0f172a;
+      --pv-surface: rgba(15, 23, 42, 0.94);
+      --pv-toolbar: rgba(15, 23, 42, 0.92);
+      --pv-border: rgba(148, 163, 184, 0.22);
+      --pv-border-strong: rgba(148, 163, 184, 0.34);
+      --pv-text: #e5eefb;
+      --pv-text-muted: #9fb2cb;
+      --pv-shadow: 0 24px 54px rgba(2, 6, 23, 0.46);
+      --pv-button-bg: rgba(30, 41, 59, 0.82);
+      --pv-button-hover: rgba(37, 99, 235, 0.18);
+      --pv-button-active: #2563eb;
+      --pv-button-active-text: #eff6ff;
+      --pv-field-bg: rgba(15, 23, 42, 0.82);
     }
 
     html,
@@ -19,8 +49,8 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: var(--pt-surface);
-      color: var(--pt-text);
+      background: var(--pv-app-bg);
+      color: var(--pv-text);
       font-family: "Segoe UI", system-ui, sans-serif;
     }
 
@@ -30,21 +60,171 @@
     }
 
     #app {
-      position: relative;
       width: 100%;
       height: 100%;
+      padding: 0;
+      box-sizing: border-box;
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 24%),
+        linear-gradient(180deg, color-mix(in srgb, var(--pv-app-bg) 86%, white 14%), var(--pv-app-bg));
+    }
+
+    #viewerShell {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      background: var(--pv-surface);
+      border: 1px solid var(--pv-border);
+      box-shadow: var(--pv-shadow);
       overflow: hidden;
-      background: linear-gradient(180deg, #e2e8f0, #dbe4ef);
+    }
+
+    .pdf-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 48px;
+      padding: 8px 12px;
+      box-sizing: border-box;
+      background: var(--pv-toolbar);
+      border-bottom: 1px solid var(--pv-border);
+      flex-wrap: wrap;
+    }
+
+    .pdf-toolbar-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pdf-toolbar-separator {
+      width: 1px;
+      align-self: stretch;
+      background: var(--pv-border);
+      margin: 0 4px;
+    }
+
+    .pdf-toolbar-button,
+    .pdf-toolbar-field,
+    .pdf-toolbar-select {
+      height: 34px;
+      box-sizing: border-box;
+      border-radius: 6px;
+      border: 1px solid var(--pv-border);
+      background: var(--pv-button-bg);
+      color: var(--pv-text);
+      transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+    }
+
+    .pdf-toolbar-button {
+      min-width: 34px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .pdf-toolbar-button:hover:enabled,
+    .pdf-toolbar-field:hover,
+    .pdf-toolbar-select:hover {
+      background: var(--pv-button-hover);
+      border-color: var(--pv-border-strong);
+    }
+
+    .pdf-toolbar-button:focus-visible,
+    .pdf-toolbar-field:focus-visible,
+    .pdf-toolbar-select:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+      border-color: rgba(59, 130, 246, 0.56);
+    }
+
+    .pdf-toolbar-button:disabled {
+      opacity: 0.46;
+      cursor: default;
+    }
+
+    .pdf-toolbar-button.is-active {
+      background: var(--pv-button-active);
+      border-color: var(--pv-button-active);
+      color: var(--pv-button-active-text);
+      box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);
+    }
+
+    .pdf-toolbar-button svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+      flex: 0 0 auto;
+      overflow: visible;
+    }
+
+    .pdf-toolbar-field,
+    .pdf-toolbar-select {
+      padding: 0 10px;
+      font: inherit;
+      color: inherit;
+      background-color: var(--pv-field-bg);
+    }
+
+    .pdf-toolbar-field {
+      width: 64px;
+      text-align: center;
+    }
+
+    .pdf-toolbar-select {
+      min-width: 96px;
+    }
+
+    .pdf-toolbar-page-count {
+      min-width: 36px;
+      color: var(--pv-text-muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .pdf-toolbar-status {
+      margin-left: auto;
+      min-width: 168px;
+      color: var(--pv-text-muted);
+      font-size: 12px;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #viewerStage {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
     }
 
     #viewerContainer {
       position: absolute;
       inset: 0;
       overflow: auto;
-      padding: 16px;
+      padding: var(--pv-shell-padding);
       box-sizing: border-box;
       outline: none;
       scrollbar-color: rgba(148, 163, 184, 0.38) transparent;
+    }
+
+    #viewerContainer[data-hand-tool="true"] {
+      cursor: grab;
+      user-select: none;
+    }
+
+    #viewerContainer[data-hand-tool="true"].is-dragging {
+      cursor: grabbing;
     }
 
     #viewer {
@@ -53,20 +233,74 @@
 
     .pdfViewer .page {
       border-radius: 6px;
-      margin: 0 auto var(--pt-page-gap);
+      margin: 0 auto var(--pv-page-gap);
       box-shadow:
         0 12px 32px rgba(15, 23, 42, 0.16),
         0 0 0 1px rgba(148, 163, 184, 0.2);
     }
+
+    :root[data-theme="dark"] .pdfViewer .page {
+      box-shadow:
+        0 18px 36px rgba(2, 6, 23, 0.54),
+        0 0 0 1px rgba(148, 163, 184, 0.16);
+    }
+
   </style>
 </head>
 <body>
   <div id="app">
-    <div id="viewerContainer" tabindex="0">
-      <div id="viewer" class="pdfViewer"></div>
+    <div id="viewerShell">
+      <div id="toolbar" class="pdf-toolbar">
+        <div class="pdf-toolbar-group">
+          <button id="openButton" class="pdf-toolbar-button" type="button" aria-label="Open file"></button>
+          <button id="downloadButton" class="pdf-toolbar-button" type="button" aria-label="Download file"></button>
+          <button id="printButton" class="pdf-toolbar-button" type="button" aria-label="Print document"></button>
+        </div>
+        <div class="pdf-toolbar-separator" aria-hidden="true"></div>
+        <div class="pdf-toolbar-group">
+          <button id="rotateLeftButton" class="pdf-toolbar-button" type="button" aria-label="Rotate left"></button>
+          <button id="rotateRightButton" class="pdf-toolbar-button" type="button" aria-label="Rotate right"></button>
+        </div>
+        <div class="pdf-toolbar-separator" aria-hidden="true"></div>
+        <div class="pdf-toolbar-group">
+          <button id="previousPageButton" class="pdf-toolbar-button" type="button" aria-label="Previous page"></button>
+          <button id="nextPageButton" class="pdf-toolbar-button" type="button" aria-label="Next page"></button>
+          <input id="pageNumberInput" class="pdf-toolbar-field" type="text" inputmode="numeric" value="1" aria-label="Current page" />
+          <div id="pageCountLabel" class="pdf-toolbar-page-count">/ 0</div>
+        </div>
+        <div class="pdf-toolbar-separator" aria-hidden="true"></div>
+        <div class="pdf-toolbar-group">
+          <button id="zoomOutButton" class="pdf-toolbar-button" type="button" aria-label="Zoom out"></button>
+          <button id="zoomInButton" class="pdf-toolbar-button" type="button" aria-label="Zoom in"></button>
+          <select id="zoomSelect" class="pdf-toolbar-select" aria-label="Zoom level">
+            <option value="page-width">Fit width</option>
+            <option value="page-fit">Fit page</option>
+            <option value="page-actual">100%</option>
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1">100%</option>
+            <option value="1.25">125%</option>
+            <option value="1.5">150%</option>
+            <option value="2">200%</option>
+          </select>
+        </div>
+        <div class="pdf-toolbar-separator" aria-hidden="true"></div>
+        <div class="pdf-toolbar-group">
+          <button id="selectToolButton" class="pdf-toolbar-button" type="button" aria-label="Selection tool"></button>
+          <button id="handToolButton" class="pdf-toolbar-button" type="button" aria-label="Pan tool"></button>
+        </div>
+        <div id="toolbarStatus" class="pdf-toolbar-status">Waiting for document source...</div>
+      </div>
+
+      <div id="viewerStage">
+        <div id="viewerContainer" tabindex="0" data-hand-tool="false">
+          <div id="viewer" class="pdfViewer"></div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <input id="fileInput" type="file" accept="application/pdf,.pdf" hidden />
   <script type="module" src="./phiale-pdf-host.js"></script>
 </body>
 </html>

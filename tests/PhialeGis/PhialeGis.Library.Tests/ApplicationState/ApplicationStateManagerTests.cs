@@ -278,6 +278,51 @@ namespace PhialeGis.Library.Tests.ApplicationState
             });
         }
 
+        [Test]
+        public void Preload_WhenStateIsRegisteredLater_ShouldRestoreAndConsumePreloadedState()
+        {
+            var store = new InMemoryApplicationStateStore();
+            using var manager = new ApplicationStateManager(store);
+            const string stateKey = "Demo/Grid/Editing";
+
+            manager.Save(stateKey, new TestViewState
+            {
+                ColumnWidth = 260d,
+                FilterText = "Persisted",
+                IsColumnVisible = false,
+            });
+
+            var preloaded = manager.Preload<TestViewState>(stateKey);
+            var component = new MutatingApplyStatefulComponent();
+            using var registration = manager.Register(stateKey, component);
+
+            manager.TryLoad<TestViewState>(stateKey, out var loadedState);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(preloaded, Is.True);
+                Assert.That(registration.RestoredFromStore, Is.True);
+                Assert.That(component.ApplyCallCount, Is.EqualTo(1));
+                Assert.That(component.State.FilterText, Is.EqualTo("Mutated by component"));
+                Assert.That(loadedState.FilterText, Is.EqualTo("Persisted"));
+            });
+        }
+
+        [Test]
+        public void Preload_WhenStateDoesNotExist_ShouldReturnFalseWithoutCreatingPayload()
+        {
+            var store = new InMemoryApplicationStateStore();
+            using var manager = new ApplicationStateManager(store);
+
+            var preloaded = manager.Preload<TestViewState>("Demo/Grid/Missing");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(preloaded, Is.False);
+                Assert.That(store.Payloads, Is.Empty);
+            });
+        }
+
         private static string CreateTemporaryDirectory()
         {
             var path = Path.Combine(Path.GetTempPath(), "PhialeTech.ComponentHost.Tests", Guid.NewGuid().ToString("N"));
@@ -360,6 +405,27 @@ namespace PhialeGis.Library.Tests.ApplicationState
             {
                 ApplyCallCount++;
                 throw new InvalidOperationException("Simulated apply failure.");
+            }
+        }
+
+        private sealed class MutatingApplyStatefulComponent : IStatefulComponent<TestViewState>
+        {
+            public event EventHandler StateChanged;
+
+            public TestViewState State { get; private set; }
+
+            public int ApplyCallCount { get; private set; }
+
+            public TestViewState ExportState()
+            {
+                return State ?? new TestViewState();
+            }
+
+            public void ApplyState(TestViewState state)
+            {
+                ApplyCallCount++;
+                State = state ?? new TestViewState();
+                State.FilterText = "Mutated by component";
             }
         }
 

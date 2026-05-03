@@ -60,7 +60,7 @@ namespace PhialeGis.Library.Tests.Demo
             Assert.Multiple(() =>
             {
                 Assert.That(files.Any(file => file.Text.Contains("DemoGrid.ExportCurrentViewToCsv()")), Is.True);
-                Assert.That(files.Any(file => file.Text.Contains("DemoGisCsvTransferService.BuildSampleCsv")), Is.True);
+                Assert.That(files.Any(file => file.Text.Contains("BuildSampleImportCsv")), Is.True);
                 Assert.That(files.Any(file => file.Text.Contains("DemoGisCsvTransferService.Import")), Is.True);
                 Assert.That(files.Any(file => file.Text.Contains("TransferPreviewText")), Is.True);
                 Assert.That(files.Any(file => file.Text.Contains("HandleRestoreSourceClick")), Is.True);

@@ -165,6 +165,11 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
         {
             if (element is GridCellPresenter cellPresenter && item is GridCellSurfaceItem cell)
             {
+                if (AreEquivalent(cellPresenter.CellData, cell))
+                {
+                    return;
+                }
+
                 cellPresenter.CellData = cell;
                 cellPresenter.Bounds = cell.Bounds;
                 return;
@@ -196,6 +201,71 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
                 masterDetailPresenter.OverlayData = masterDetailOverlay;
                 masterDetailPresenter.Bounds = masterDetailOverlay.Bounds;
             }
+        }
+
+        private static bool AreEquivalent(GridCellSurfaceItem current, GridCellSurfaceItem next)
+        {
+            if (current == null || next == null)
+            {
+                return false;
+            }
+
+            return string.Equals(current.ItemKey, next.ItemKey, StringComparison.Ordinal) &&
+                   string.Equals(current.RowKey, next.RowKey, StringComparison.Ordinal) &&
+                   string.Equals(current.ColumnKey, next.ColumnKey, StringComparison.Ordinal) &&
+                   current.Bounds.Equals(next.Bounds) &&
+                   string.Equals(current.StyleKey, next.StyleKey, StringComparison.Ordinal) &&
+                   current.RenderLayer == next.RenderLayer &&
+                   string.Equals(current.DisplayText, next.DisplayText, StringComparison.Ordinal) &&
+                   Equals(current.RawValue, next.RawValue) &&
+                   string.Equals(current.ValueKind, next.ValueKind, StringComparison.Ordinal) &&
+                   current.IsSelected == next.IsSelected &&
+                   current.IsCurrent == next.IsCurrent &&
+                   current.IsCurrentRow == next.IsCurrentRow &&
+                   current.IsEditing == next.IsEditing &&
+                   string.Equals(current.EditingText, next.EditingText, StringComparison.Ordinal) &&
+                   current.IsReadOnly == next.IsReadOnly &&
+                   current.HasValidationError == next.HasValidationError &&
+                   current.DisplayState == next.DisplayState &&
+                   current.ChangeState == next.ChangeState &&
+                   current.ValidationState == next.ValidationState &&
+                   current.AccessState == next.AccessState &&
+                   string.Equals(current.EditSessionId, next.EditSessionId, StringComparison.Ordinal) &&
+                   string.Equals(current.ValidationError, next.ValidationError, StringComparison.Ordinal) &&
+                   current.IsFrozen == next.IsFrozen &&
+                   string.Equals(current.ContentTemplateKey, next.ContentTemplateKey, StringComparison.Ordinal) &&
+                   current.EditorKind == next.EditorKind &&
+                   current.EditorItemsMode == next.EditorItemsMode &&
+                   string.Equals(current.EditMask, next.EditMask, StringComparison.Ordinal) &&
+                   current.IsDummy == next.IsDummy &&
+                   current.IsGroupCaptionCell == next.IsGroupCaptionCell &&
+                   current.ShowInlineChevron == next.ShowInlineChevron &&
+                   current.IsInlineChevronExpanded == next.IsInlineChevronExpanded &&
+                   current.ContentIndent.Equals(next.ContentIndent) &&
+                   AreEquivalent(current.EditorItems, next.EditorItems);
+        }
+
+        private static bool AreEquivalent(IReadOnlyList<string> current, IReadOnlyList<string> next)
+        {
+            if (ReferenceEquals(current, next))
+            {
+                return true;
+            }
+
+            if (current == null || next == null || current.Count != next.Count)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < current.Count; i++)
+            {
+                if (!string.Equals(current[i], next[i], StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void ReleaseRenderedItem(string itemKey)

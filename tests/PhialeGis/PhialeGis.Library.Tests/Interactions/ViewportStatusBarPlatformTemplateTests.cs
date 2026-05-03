@@ -11,7 +11,7 @@ namespace PhialeGis.Library.Tests.Interactions
         [Test]
         public void WpfTemplate_ContainsStatusBarAndTakeoverParts()
         {
-            var text = ReadRepositoryFile("src/PhialeGis/Platforms/Wpf/PhialeGis.Library.WpfUi/Themes/Generic.xaml");
+            var text = ReadRepositoryFile("src/PhialeTech/Shared/PhialeTech.Styles.Wpf/Themes.Linked/PhialeGis.WpfUi/Generic.xaml");
 
             StringAssert.Contains("PART_StatusPrimaryText", text);
             StringAssert.Contains("PART_StatusCoordinateText", text);

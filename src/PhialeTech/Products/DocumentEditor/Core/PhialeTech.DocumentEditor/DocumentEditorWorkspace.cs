@@ -59,6 +59,7 @@ namespace PhialeTech.DocumentEditor
                 isReadOnly = _options.IsReadOnly,
                 theme = _options.InitialTheme,
                 languageCode = NormalizeLanguageCode(_options.InitialLanguageCode),
+                overlayMode = ToMessageOverlayMode(_options.OverlayMode),
                 placeholder = _options.Placeholder ?? string.Empty,
                 documentJson = _options.InitialDocumentJson ?? string.Empty,
                 toolbar = CreateToolbarPayload(_options.Toolbar),
@@ -130,7 +131,6 @@ namespace PhialeTech.DocumentEditor
                 case DocumentEditorCommand.ToggleHeaderRow: return "toggleHeaderRow";
                 case DocumentEditorCommand.ToggleHeaderColumn: return "toggleHeaderColumn";
                 case DocumentEditorCommand.Focus: return "focus";
-                case DocumentEditorCommand.Clear: return "clear";
                 case DocumentEditorCommand.ExportHtml: return "exportHtml";
                 case DocumentEditorCommand.ExportMarkdown: return "exportMarkdown";
                 case DocumentEditorCommand.SaveJson: return "saveJson";
@@ -144,6 +144,21 @@ namespace PhialeTech.DocumentEditor
             return string.Equals(languageCode, "pl", StringComparison.OrdinalIgnoreCase)
                 ? "pl"
                 : "en";
+        }
+
+        private static string ToMessageOverlayMode(DocumentEditorOverlayMode overlayMode)
+        {
+            switch (overlayMode)
+            {
+                case DocumentEditorOverlayMode.Disabled:
+                    return "disabled";
+                case DocumentEditorOverlayMode.Container:
+                    return "container";
+                case DocumentEditorOverlayMode.Window:
+                    return "window";
+                default:
+                    throw new InvalidOperationException("Unsupported DocumentEditor overlay mode: " + overlayMode);
+            }
         }
 
         private static void CopyDirectory(string sourceDirectory, string destinationDirectory)

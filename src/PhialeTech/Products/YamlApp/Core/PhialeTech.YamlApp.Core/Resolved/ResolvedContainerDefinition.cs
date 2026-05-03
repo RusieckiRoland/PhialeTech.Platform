@@ -10,6 +10,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
             string name,
             double? width,
             FieldWidthHint? widthHint,
+            bool isOverlayScope,
             bool visible,
             bool enabled,
             bool showOldValueRestoreButton,
@@ -22,7 +23,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
             bool showBorder,
             ContainerVariant variant,
             IReadOnlyList<ResolvedLayoutItemDefinition> items)
-            : base(id, name, width, widthHint, visible, enabled, showOldValueRestoreButton, validationTrigger, interactionMode, densityMode, fieldChromeMode, captionPlacement, items)
+            : base(id, name, width, widthHint, isOverlayScope, visible, enabled, showOldValueRestoreButton, validationTrigger, interactionMode, densityMode, fieldChromeMode, captionPlacement, items)
         {
             CaptionKey = captionKey;
             ShowBorder = showBorder;

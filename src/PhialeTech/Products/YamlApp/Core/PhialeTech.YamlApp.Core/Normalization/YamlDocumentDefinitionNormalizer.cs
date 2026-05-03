@@ -142,6 +142,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 Name = source.Name,
                 Width = source.Width,
                 WidthHint = source.WidthHint,
+                IsOverlayScope = source.IsOverlayScope,
                 Visible = source.Visible,
                 Enabled = source.Enabled,
                 ShowOldValueRestoreButton = source.ShowOldValueRestoreButton,
@@ -203,6 +204,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     Name = row.Name,
                     Width = row.Width,
                     WidthHint = row.WidthHint,
+                    IsOverlayScope = row.IsOverlayScope,
                     Visible = row.Visible,
                     Enabled = row.Enabled,
                     ShowOldValueRestoreButton = row.ShowOldValueRestoreButton,
@@ -238,6 +240,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     Name = column.Name,
                     Width = column.Width,
                     WidthHint = column.WidthHint,
+                    IsOverlayScope = column.IsOverlayScope,
                     Visible = column.Visible,
                     Enabled = column.Enabled,
                     ShowOldValueRestoreButton = column.ShowOldValueRestoreButton,
@@ -271,6 +274,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     Variant = container.Variant,
                     Width = container.Width,
                     WidthHint = container.WidthHint,
+                    IsOverlayScope = container.IsOverlayScope,
                     Visible = container.Visible,
                     Enabled = container.Enabled,
                     ShowOldValueRestoreButton = container.ShowOldValueRestoreButton,
@@ -732,6 +736,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     DensityMode = source.DensityMode,
                     FieldChromeMode = source.FieldChromeMode,
                     CaptionPlacement = source.CaptionPlacement,
+                    OverlayMode = sourceDocumentEditorField.OverlayMode,
                     IsRequired = source.IsRequired,
                     ShowLabel = source.ShowLabel,
                     ShowPlaceholder = source.ShowPlaceholder,
@@ -905,6 +910,14 @@ namespace PhialeTech.YamlApp.Core.Normalization
             merged.DensityMode = derivedField.DensityMode ?? baseField.DensityMode;
             merged.FieldChromeMode = derivedField.FieldChromeMode ?? baseField.FieldChromeMode;
             merged.CaptionPlacement = derivedField.CaptionPlacement ?? baseField.CaptionPlacement;
+            if (mergedDocumentEditorField != null)
+            {
+                var derivedDocumentEditorField = derivedField as IDocumentEditorFieldDefinition;
+                var baseDocumentEditorField = baseField as IDocumentEditorFieldDefinition;
+                mergedDocumentEditorField.OverlayMode = derivedDocumentEditorField != null && derivedDocumentEditorField.OverlayMode.HasValue
+                    ? derivedDocumentEditorField.OverlayMode
+                    : baseDocumentEditorField == null ? null : baseDocumentEditorField.OverlayMode;
+            }
             merged.IsTouched = derivedField.IsTouched;
             merged.IsPristine = derivedField.IsPristine;
             merged.IsDirty = derivedField.IsDirty;
@@ -1321,6 +1334,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 layout.Name,
                 effectiveWidth,
                 effectiveWidthHint,
+                layout.IsOverlayScope,
                 effectiveVisible,
                 effectiveEnabled,
                 effectiveShowOldValueRestoreButton,
@@ -1437,6 +1451,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     container.Name,
                     effectiveWidth,
                     effectiveWidthHint,
+                    container.IsOverlayScope,
                     effectiveVisible,
                     effectiveEnabled,
                     effectiveShowOldValueRestoreButton,
@@ -1558,6 +1573,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     row.Name,
                     effectiveWidth,
                     effectiveWidthHint,
+                    row.IsOverlayScope,
                     effectiveVisible,
                     effectiveEnabled,
                     effectiveShowOldValueRestoreButton,
@@ -1607,6 +1623,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     column.Name,
                     effectiveWidth,
                     effectiveWidthHint,
+                    column.IsOverlayScope,
                     effectiveVisible,
                     effectiveEnabled,
                     effectiveShowOldValueRestoreButton,

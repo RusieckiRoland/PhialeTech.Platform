@@ -26,6 +26,8 @@ namespace PhialeGrid.Core.Editing
         private IReadOnlyList<object> _recordObjects = Array.Empty<object>();
         private IReadOnlyList<IEditSessionFieldDefinition> _fieldDefinitions = Array.Empty<IEditSessionFieldDefinition>();
         private bool _disposed;
+        private int _stateChangeBatchDepth;
+        private bool _hasPendingStateChanged;
         private int _validationIssueCount;
 
         public EditSessionContext(
@@ -79,6 +81,18 @@ namespace PhialeGrid.Core.Editing
         public bool HasPendingEdits => _editedRecordIds.Count > 0;
 
         public bool HasValidationIssues => _invalidRecordIds.Count > 0;
+
+        public IDisposable BeginStateChangeBatch(string reason)
+        {
+            ThrowIfDisposed();
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                throw new ArgumentException("Edit session state change batch reason is required.", nameof(reason));
+            }
+
+            _stateChangeBatchDepth++;
+            return new StateChangeBatch(this);
+        }
 
         public bool SetCurrentRecord(string recordId)
         {
@@ -1110,6 +1124,29 @@ namespace PhialeGrid.Core.Editing
 
         private void RaiseStateChanged()
         {
+            if (_stateChangeBatchDepth > 0)
+            {
+                _hasPendingStateChanged = true;
+                return;
+            }
+
+            StateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void CompleteStateChangeBatch()
+        {
+            if (_stateChangeBatchDepth <= 0)
+            {
+                throw new InvalidOperationException("Edit session state change batch was completed without an active batch.");
+            }
+
+            _stateChangeBatchDepth--;
+            if (_stateChangeBatchDepth > 0 || !_hasPendingStateChanged)
+            {
+                return;
+            }
+
+            _hasPendingStateChanged = false;
             StateChanged?.Invoke(this, EventArgs.Empty);
         }
 
@@ -1136,6 +1173,28 @@ namespace PhialeGrid.Core.Editing
             public IReadOnlyDictionary<string, IReadOnlyCollection<GridValidationError>> CellErrorsByField { get; }
 
             public IReadOnlyList<EditSessionValidationDetail> Details { get; }
+        }
+
+        private sealed class StateChangeBatch : IDisposable
+        {
+            private EditSessionContext<TRecord> _owner;
+
+            public StateChangeBatch(EditSessionContext<TRecord> owner)
+            {
+                _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            }
+
+            public void Dispose()
+            {
+                if (_owner == null)
+                {
+                    return;
+                }
+
+                var owner = _owner;
+                _owner = null;
+                owner.CompleteStateChangeBatch();
+            }
         }
     }
 }

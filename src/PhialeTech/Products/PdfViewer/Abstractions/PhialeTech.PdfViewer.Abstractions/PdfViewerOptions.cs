@@ -10,6 +10,8 @@ namespace PhialeTech.PdfViewer.Abstractions
 
         public string AssetRootRelativePath { get; set; } = "PdfViewer";
 
+        public string InitialTheme { get; set; } = "light";
+
         public PdfViewerOptions Clone()
         {
             return new PdfViewerOptions
@@ -17,7 +19,8 @@ namespace PhialeTech.PdfViewer.Abstractions
                 EntryPageRelativePath = EntryPageRelativePath,
                 ReadyMessageType = ReadyMessageType,
                 VirtualHostName = VirtualHostName,
-                AssetRootRelativePath = AssetRootRelativePath
+                AssetRootRelativePath = AssetRootRelativePath,
+                InitialTheme = InitialTheme
             };
         }
     }

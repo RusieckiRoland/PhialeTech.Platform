@@ -5,6 +5,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Linq;
@@ -17,6 +18,8 @@ using PhialeGrid.Core.Regions;
 using PhialeGrid.Core.State;
 using PhialeTech.PhialeGrid.Wpf.Controls;
 using PhialeTech.PhialeGrid.Wpf.Surface.Presenters;
+using PhialeTech.Styles.Wpf;
+using PhialeGrid.Wpf.Tests.Surface;
 
 namespace PhialeGrid.Wpf.Tests.State
 {
@@ -69,12 +72,12 @@ namespace PhialeGrid.Wpf.Tests.State
                 window.Show();
                 FlushDispatcher(grid.Dispatcher);
 
-                var state = CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d);
+                var state = CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d);
 
                 grid.ApplyViewState(state);
                 FlushDispatcher(grid.Dispatcher);
 
-                var host = (FrameworkElement)grid.FindName("TopCommandStripHost");
+                var host = (FrameworkElement)grid.FindName("TopCommandBand");
                 Assert.That(host.Visibility, Is.EqualTo(Visibility.Collapsed));
             }
             finally
@@ -459,6 +462,41 @@ namespace PhialeGrid.Wpf.Tests.State
         }
 
         [Test]
+        public void FirstOpen_KeepsVisibleColumnHeaderContentInsideHeaderPresenterBounds()
+        {
+            var grid = CreateGrid();
+            var window = CreateWindow(grid);
+
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var headerBand = (FrameworkElement)grid.FindName("SurfaceColumnHeaderBand");
+                var firstHeader = FindVisualChild<GridColumnHeaderPresenter>(headerBand);
+                var headerContent = firstHeader?.Content as Grid;
+                var headerLayoutRoot = headerContent?.Children.Count > 0 ? headerContent.Children[0] as Grid : null;
+                var headerText = GridSurfaceTestHost.FindElementByAutomationId<TextBlock>(firstHeader, "surface.column-header.Category.text");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(firstHeader, Is.Not.Null);
+                    Assert.That(headerContent, Is.Not.Null);
+                    Assert.That(headerLayoutRoot, Is.Not.Null);
+                    Assert.That(headerText, Is.Not.Null);
+                    Assert.That(headerLayoutRoot.Margin.Top, Is.GreaterThanOrEqualTo(0d));
+                    Assert.That(headerLayoutRoot.Margin.Bottom, Is.GreaterThanOrEqualTo(0d));
+                    Assert.That(headerLayoutRoot.Margin.Top + headerText.ActualHeight + headerLayoutRoot.Margin.Bottom,
+                        Is.LessThanOrEqualTo(firstHeader.ActualHeight + 0.5d));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
         public void ApplyViewState_WhenSideToolRegionIsCollapsed_UsesRailOnlyAndReclaimsWidth()
         {
             var grid = CreateGrid();
@@ -492,6 +530,46 @@ namespace PhialeGrid.Wpf.Tests.State
                     Assert.That(regionColumn.ActualWidth, Is.LessThanOrEqualTo(48d));
                     Assert.That(splitterColumn.ActualWidth, Is.EqualTo(0d).Within(0.1d));
                     Assert.That(surfaceCollapsedWidth, Is.GreaterThan(surfaceOpenWidth + 150d));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void FirstOpen_WhenSideToolRegionIsOpen_StartsPaneAtWorkspaceTop()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border { Width = 120, Height = 600, Child = new TextBlock { Text = "Tools" } };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.SideToolRegion, GridRegionState.Open, 300d));
+                FlushDispatcher(grid.Dispatcher);
+
+                var topWorkspaceBandHost = (FrameworkElement)grid.FindName("TopWorkspaceBandHost");
+                var sideToolHost = (FrameworkElement)grid.FindName("SideToolRegionHost");
+                var sideToolScrollViewer = (ScrollViewer)grid.FindName("SideToolRegionContentScrollViewer");
+                var sideToolExpandedShell = (FrameworkElement)grid.FindName("SideToolRegionExpandedShell");
+
+                var workspaceTop = topWorkspaceBandHost.TranslatePoint(new Point(0d, 0d), grid).Y;
+                var sideToolHostTop = sideToolHost.TranslatePoint(new Point(0d, 0d), grid).Y;
+                var sideToolScrollTop = sideToolScrollViewer.TranslatePoint(new Point(0d, 0d), grid).Y;
+                var sideToolShellTop = sideToolExpandedShell.TranslatePoint(new Point(0d, 0d), grid).Y;
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(sideToolHost.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(sideToolScrollViewer.VerticalOffset, Is.EqualTo(0d).Within(0.1d));
+                    Assert.That(sideToolHostTop, Is.EqualTo(workspaceTop).Within(1d));
+                    Assert.That(sideToolShellTop, Is.EqualTo(workspaceTop).Within(1d));
+                    Assert.That(sideToolScrollTop, Is.GreaterThanOrEqualTo(sideToolShellTop));
                 });
             }
             finally
@@ -535,7 +613,7 @@ namespace PhialeGrid.Wpf.Tests.State
         }
 
         [Test]
-        public void ApplyViewState_WhenTopCommandStripHasContent_UsesCompactSingleLineStripWithoutLegacyTopBarChrome()
+        public void ApplyViewState_WhenTopCommandBandHasContent_DoesNotClipCommandButtons()
         {
             var grid = CreateGrid();
             grid.TopCommandContent = new Border
@@ -550,25 +628,30 @@ namespace PhialeGrid.Wpf.Tests.State
                 window.Show();
                 FlushDispatcher(grid.Dispatcher);
 
-                var state = CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d);
+                var state = CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d);
 
                 grid.ApplyViewState(state);
                 FlushDispatcher(grid.Dispatcher);
 
                 var row = (RowDefinition)grid.FindName("TopCommandStripRow");
-                var host = (FrameworkElement)grid.FindName("TopCommandStripHost");
+                var host = (FrameworkElement)grid.FindName("TopCommandBand");
+                var shell = (FrameworkElement)grid.FindName("TopCommandStripShell");
+                var content = (FrameworkElement)grid.FindName("TopCommandStripContentHost");
                 var toggle = (FrameworkElement)grid.FindName("TopCommandStripToggleButton");
-                var close = (FrameworkElement)grid.FindName("TopCommandStripCloseButton");
+                var close = (Button)grid.FindName("TopCommandStripCloseButton");
+                var expectedCloseStyle = grid.FindResource("PgRegionCloseButtonStyle");
 
                 Assert.Multiple(() =>
                 {
                     Assert.That(row, Is.Not.Null);
                     Assert.That(host, Is.Not.Null);
-                    Assert.That(row.MinHeight, Is.GreaterThanOrEqualTo(36d));
-                    Assert.That(row.ActualHeight, Is.GreaterThanOrEqualTo(36d));
-                    Assert.That(row.ActualHeight, Is.LessThanOrEqualTo(44d));
-                    Assert.That(toggle.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(host.Margin.Bottom, Is.EqualTo(0d));
+                    Assert.That(row.MinHeight, Is.GreaterThanOrEqualTo(52d));
+                    Assert.That(row.ActualHeight, Is.GreaterThanOrEqualTo(shell.DesiredSize.Height));
+                    Assert.That(row.ActualHeight, Is.GreaterThanOrEqualTo(content.DesiredSize.Height));
+                    Assert.That(toggle.Visibility, Is.EqualTo(Visibility.Collapsed));
                     Assert.That(close.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(close.Style, Is.SameAs(expectedCloseStyle));
                     Assert.That(grid.FindName("TopCommandRegionExpanderButton"), Is.Null);
                     Assert.That(grid.FindName("TopCommandRegionCloseButton"), Is.Null);
                 });
@@ -580,7 +663,648 @@ namespace PhialeGrid.Wpf.Tests.State
         }
 
         [Test]
-        public void ApplyViewState_WhenTopCommandStripIsCollapsed_KeepsCompactShellVisibleAndHidesContent()
+        public void ApplyViewState_WhenTopCommandBandAndSideToolAreOpen_TopBandDoesNotSpanOverSideToolRegion()
+        {
+            var grid = CreateGrid();
+            grid.TopCommandContent = new Border
+            {
+                Width = 260,
+                Height = 30,
+                Child = new TextBlock { Text = "Commands" }
+            };
+            grid.SideToolContent = new Border
+            {
+                Width = 180,
+                Height = 300,
+                Child = new TextBlock { Text = "Tools" }
+            };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var state = CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d);
+                var sideState = state.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion);
+                sideState.State = GridRegionState.Open;
+                sideState.Size = 300d;
+
+                grid.ApplyViewState(state);
+                FlushDispatcher(grid.Dispatcher);
+
+                var topHost = (FrameworkElement)grid.FindName("TopCommandStripHost");
+                var topWorkspaceBandHost = (FrameworkElement)grid.FindName("TopWorkspaceBandHost");
+                var surfaceHost = (FrameworkElement)grid.FindName("SurfaceTopViewportHost");
+                var sideHost = (FrameworkElement)grid.FindName("SideToolRegionHost");
+                var splitter = (FrameworkElement)grid.FindName("SideToolRegionSplitter");
+
+                var topLeft = topHost.TranslatePoint(new Point(0d, 0d), grid);
+                var topRight = topHost.TranslatePoint(new Point(topHost.ActualWidth, 0d), grid).X;
+                var surfaceRight = surfaceHost.TranslatePoint(new Point(surfaceHost.ActualWidth, 0d), grid).X;
+                var workspaceTop = topWorkspaceBandHost.TranslatePoint(new Point(0d, 0d), grid).Y;
+                var sideTop = sideHost.TranslatePoint(new Point(0d, 0d), grid).Y;
+                var splitterTop = splitter.TranslatePoint(new Point(0d, 0d), grid).Y;
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(topHost.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(sideHost.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(topRight, Is.EqualTo(surfaceRight).Within(1d));
+                    Assert.That(sideTop, Is.EqualTo(workspaceTop).Within(1d));
+                    Assert.That(splitterTop, Is.EqualTo(workspaceTop).Within(1d));
+                    Assert.That(sideTop, Is.LessThan(topLeft.Y));
+                    Assert.That(sideHost.ActualHeight, Is.GreaterThan(topHost.ActualHeight));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ApplyViewState_WhenRegionSurfacesAreVisible_UsesRegionSurfaceBackgroundToken()
+        {
+            var grid = CreateGrid();
+            grid.TopCommandContent = new Border
+            {
+                Width = 260,
+                Height = 30,
+                Child = new TextBlock { Text = "Commands" }
+            };
+            grid.SideToolContent = new Border
+            {
+                Width = 180,
+                Height = 300,
+                Child = new TextBlock { Text = "Tools" }
+            };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var state = CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d);
+                var sideState = state.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion);
+                sideState.State = GridRegionState.Open;
+                sideState.Size = 300d;
+
+                grid.ApplyViewState(state);
+                FlushDispatcher(grid.Dispatcher);
+
+                var expectedBrush = grid.FindResource("PgGridRegionSurfaceBackgroundBrush");
+                var outerFrame = (Border)grid.FindName("GridOuterFrame");
+                var rootFrame = (Grid)grid.FindName("GridRootFrame");
+                var regionFrame = (Grid)grid.FindName("RegionLayoutFrame");
+                var topHost = (Grid)grid.FindName("TopCommandStripHost");
+                var topShell = (Border)grid.FindName("TopCommandStripShell");
+                var viewportHost = (Grid)grid.FindName("SurfaceTopViewportHost");
+                var sideHost = (Grid)grid.FindName("SideToolRegionHost");
+                var sideShell = (Border)grid.FindName("SideToolRegionExpandedShell");
+                var sideContentViewport = (ScrollViewer)grid.FindName("SideToolRegionContentScrollViewer");
+                var splitter = (GridSplitter)grid.FindName("SideToolRegionSplitter");
+                var sideHeaderChrome = (Border)grid.FindName("SideToolRegionHeaderChrome");
+                var sideHeader = (DockPanel)grid.FindName("SideToolRegionHeader");
+                var sideHeaderGrip = (TextBlock)grid.FindName("SideToolRegionDragGrip");
+                var sideCloseButton = (Button)grid.FindName("SideToolRegionCloseButton");
+                var expectedHeaderBrush = grid.FindResource("PgGridRegionHeaderBackgroundBrush");
+                var expectedRegionRadius = (CornerRadius)grid.FindResource("CornerRadius.Grid.RegionSurface");
+                var expectedHeaderRadius = (CornerRadius)grid.FindResource("CornerRadius.Grid.RegionHeader");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(expectedBrush, Is.Not.Null);
+                    Assert.That(expectedHeaderBrush, Is.Not.Null);
+                    Assert.That(outerFrame.Background, Is.SameAs(expectedBrush));
+                    Assert.That(outerFrame.CornerRadius, Is.EqualTo(expectedRegionRadius));
+                    Assert.That(rootFrame.Clip, Is.TypeOf<RectangleGeometry>());
+                    Assert.That(((RectangleGeometry)rootFrame.Clip).RadiusX, Is.EqualTo(expectedRegionRadius.TopLeft).Within(0.1d));
+                    Assert.That(RoundedChildClipBehavior.GetClipChildToBorder(outerFrame), Is.True);
+                    Assert.That(RoundedChildClipBehavior.GetClipChildToBorder(sideShell), Is.False);
+                    Assert.That(rootFrame.Background, Is.SameAs(expectedBrush));
+                    Assert.That(regionFrame.Background, Is.SameAs(expectedBrush));
+                    Assert.That(topHost.Background, Is.SameAs(expectedBrush));
+                    Assert.That(topShell.Background, Is.SameAs(expectedBrush));
+                    Assert.That(viewportHost.Background, Is.SameAs(expectedBrush));
+                    Assert.That(sideHost.Background, Is.SameAs(expectedBrush));
+                    Assert.That(sideShell.Background, Is.SameAs(expectedBrush));
+                    Assert.That(sideContentViewport.Background, Is.SameAs(expectedBrush));
+                    Assert.That(splitter.Background, Is.SameAs(expectedBrush));
+                    Assert.That(topShell.CornerRadius, Is.EqualTo(expectedRegionRadius));
+                    Assert.That(sideShell.CornerRadius, Is.EqualTo(expectedRegionRadius));
+                    Assert.That(sideHeaderChrome.Background, Is.SameAs(expectedHeaderBrush));
+                    Assert.That(sideHeaderChrome.CornerRadius, Is.EqualTo(expectedHeaderRadius));
+                    Assert.That(sideHeaderChrome.Padding.Left, Is.GreaterThanOrEqualTo(8d));
+                    Assert.That(sideHeaderChrome.Padding.Right, Is.GreaterThanOrEqualTo(8d));
+                    Assert.That(sideHeaderChrome.CornerRadius.TopRight, Is.LessThan(sideShell.CornerRadius.TopRight));
+                    Assert.That(sideHeader.Background, Is.EqualTo(Brushes.Transparent));
+                    Assert.That(sideHeader.Cursor, Is.SameAs(Cursors.SizeAll));
+                    Assert.That(sideHeaderGrip.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(sideHeaderGrip.Text, Is.Not.Empty);
+                    Assert.That(sideCloseButton.Margin.Right, Is.GreaterThan(0d));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void MoveRegion_WhenSideToolRegionMovesLeft_RepositionsWorkspacePanelAndExportsPlacement()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border
+            {
+                Width = 180,
+                Height = 300,
+                Child = new TextBlock { Text = "Tools" }
+            };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.SideToolRegion, GridRegionState.Open, 300d));
+                FlushDispatcher(grid.Dispatcher);
+
+                InvokePrivate(grid, "MoveRegion", GridRegionKind.SideToolRegion, GridRegionPlacement.Left);
+                FlushDispatcher(grid.Dispatcher);
+
+                var sideHost = (FrameworkElement)grid.FindName("SideToolRegionHost");
+                var splitter = (FrameworkElement)grid.FindName("SideToolRegionSplitter");
+                var topWorkspaceBandHost = (FrameworkElement)grid.FindName("TopWorkspaceBandHost");
+                var regionFrame = (FrameworkElement)grid.FindName("RegionLayoutFrame");
+                var surfaceHost = (FrameworkElement)grid.FindName("SurfaceTopViewportHost");
+                var topBand = (FrameworkElement)grid.FindName("TopCommandStripHost");
+                var expander = (Button)grid.FindName("SideToolRegionExpanderButton");
+                var exported = grid.ExportViewState();
+                var sideState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(Grid.GetColumn(sideHost), Is.EqualTo(0));
+                    Assert.That(Grid.GetColumn(splitter), Is.EqualTo(1));
+                    Assert.That(Grid.GetColumn(topWorkspaceBandHost), Is.EqualTo(2));
+                    Assert.That(Grid.GetColumn(regionFrame), Is.EqualTo(2));
+                    Assert.That(Grid.GetColumn(surfaceHost), Is.EqualTo(0));
+                    Assert.That(Grid.GetColumn(topBand), Is.EqualTo(0));
+                    Assert.That(expander.Content, Is.EqualTo("<"));
+                    Assert.That(sideState.PlacementOverride, Is.EqualTo(GridRegionPlacement.Left));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ApplyViewState_WhenWorkspacePanelsAreOnDifferentSides_FiltersBottomTabsByPlacement()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border { Width = 120, Height = 80 };
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+            grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var viewState = CreateRegionViewState(GridRegionKind.SideToolRegion, GridRegionState.Open, 300d);
+                viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion).PlacementOverride = GridRegionPlacement.Left;
+                var changes = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion);
+                changes.State = GridRegionState.Open;
+                changes.Size = 300d;
+                changes.IsActive = true;
+                var validation = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ValidationPanelRegion);
+                validation.State = GridRegionState.Collapsed;
+                validation.Size = 300d;
+                validation.PlacementOverride = GridRegionPlacement.Right;
+
+                grid.ApplyViewState(viewState);
+                FlushDispatcher(grid.Dispatcher);
+
+                var toolsPanelToolsTab = (Button)grid.FindName("ToolsPanelToolsTabButton");
+                var toolsPanelChangesTab = (Button)grid.FindName("ToolsPanelChangesTabButton");
+                var toolsPanelValidationTab = (Button)grid.FindName("ToolsPanelValidationTabButton");
+                var validationPanelToolsTab = (Button)grid.FindName("ValidationPanelToolsTabButton");
+                var validationPanelChangesTab = (Button)grid.FindName("ValidationPanelChangesTabButton");
+                var validationPanelValidationTab = (Button)grid.FindName("ValidationPanelValidationTabButton");
+                var validationRail = (FrameworkElement)grid.FindName("ValidationPanelCollapsedRail");
+                var changesContent = (FrameworkElement)grid.FindName("ChangePanelContentScrollViewer");
+                var rightColumn = (ColumnDefinition)grid.FindName("SideToolRegionColumn");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(toolsPanelToolsTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(toolsPanelChangesTab.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(toolsPanelValidationTab.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(validationPanelToolsTab.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(validationPanelChangesTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(validationPanelValidationTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(validationRail.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(changesContent.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(rightColumn.Width.Value, Is.EqualTo(300d).Within(0.1d));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ApplyViewState_WhenWorkspacePanelTabsAreVisible_SizesTabsToTextPlusOneAOnEachSide()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border { Width = 120, Height = 80 };
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+            grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var viewState = CreateRegionViewState(GridRegionKind.ChangePanelRegion, GridRegionState.Open, 300d);
+                var tools = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion);
+                tools.State = GridRegionState.Open;
+                tools.Size = 300d;
+                tools.PlacementOverride = GridRegionPlacement.Right;
+                var validation = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ValidationPanelRegion);
+                validation.State = GridRegionState.Collapsed;
+                validation.Size = 300d;
+                validation.PlacementOverride = GridRegionPlacement.Right;
+
+                grid.ApplyViewState(viewState);
+                FlushDispatcher(grid.Dispatcher);
+
+                var toolsTab = (Button)grid.FindName("ChangesPanelToolsTabButton");
+                var validationTab = (Button)grid.FindName("ChangesPanelValidationTabButton");
+
+                Assert.Multiple(() =>
+                {
+                    AssertTabWidthMatchesTextPlusOneAOnEachSide(toolsTab, "Grid options");
+                    AssertTabWidthMatchesTextPlusOneAOnEachSide(validationTab, "Validation");
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ApplyViewState_WhenWorkspacePanelTabsAreVisible_RendersTabsBelowExpandedShell()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border { Width = 120, Height = 80 };
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+            grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.SideToolRegion, GridRegionState.Open, 300d));
+                FlushDispatcher(grid.Dispatcher);
+
+                var panel = (PhialeWorkspacePanel)grid.FindName("ToolsPanel");
+                var shell = (Border)grid.FindName("SideToolRegionExpandedShell");
+                var tabStrip = (FrameworkElement)grid.FindName("ToolsPanelExpandedTabStrip");
+                var toolsTab = (Button)grid.FindName("ToolsPanelToolsTabButton");
+                var tabChrome = FindVisualChild<System.Windows.Shapes.Path>(toolsTab);
+                var tabChromeFigure = PathGeometry.CreateFromGeometry(tabChrome.Data).Figures[0];
+                var tabChromeFirstLine = (LineSegment)tabChromeFigure.Segments[0];
+                var tabTopInShell = tabStrip.TranslatePoint(new Point(0d, 0d), shell).Y;
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(IsVisualAncestor(panel, tabStrip), Is.True);
+                    Assert.That(IsVisualAncestor(shell, tabStrip), Is.False);
+                    Assert.That(IsVisualAncestor(shell, toolsTab), Is.False);
+                    Assert.That(tabTopInShell, Is.GreaterThanOrEqualTo(shell.ActualHeight - 2d));
+                    Assert.That(tabChromeFigure.StartPoint, Is.EqualTo(new Point(0.5d, 0.5d)));
+                    Assert.That(tabChromeFirstLine.Point, Is.EqualTo(new Point(5.5d, 16.5d)));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ApplyViewState_WhenWorkspacePanelTabsDoNotFit_ShowsOverflowMenuForHiddenTabs()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border { Width = 120, Height = 80 };
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+            grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var viewState = CreateRegionViewState(GridRegionKind.SideToolRegion, GridRegionState.Open, 220d);
+                var changes = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion);
+                changes.State = GridRegionState.Collapsed;
+                changes.Size = 220d;
+                changes.PlacementOverride = GridRegionPlacement.Right;
+                var validation = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ValidationPanelRegion);
+                validation.State = GridRegionState.Collapsed;
+                validation.Size = 220d;
+                validation.PlacementOverride = GridRegionPlacement.Right;
+
+                grid.ApplyViewState(viewState);
+                FlushDispatcher(grid.Dispatcher);
+                FlushDispatcher(grid.Dispatcher);
+
+                var activeTab = (Button)grid.FindName("ToolsPanelToolsTabButton");
+                var changesTab = (Button)grid.FindName("ToolsPanelChangesTabButton");
+                var validationTab = (Button)grid.FindName("ToolsPanelValidationTabButton");
+                var overflowTab = (Button)grid.FindName("ToolsPanelOverflowTabButton");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(activeTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(overflowTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(overflowTab.ContextMenu, Is.Not.Null);
+                    Assert.That(overflowTab.ContextMenu.Items.Count, Is.GreaterThan(0));
+                    Assert.That(
+                        new[] { changesTab.Visibility, validationTab.Visibility }.Count(visibility => visibility == Visibility.Collapsed),
+                        Is.GreaterThan(0));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ApplyViewState_WhenWorkspacePanelIsCollapsed_SizesRailTabsToTextPlusOneAOnEachSideAndCentersStack()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.SideToolRegion, GridRegionState.Collapsed, 300d));
+                FlushDispatcher(grid.Dispatcher);
+
+                var toolsTab = (Button)grid.FindName("ToolsRailToolsTabButton");
+                var expandedTabStrip = (FrameworkElement)grid.FindName("ToolsPanelExpandedTabStrip");
+                var tabStack = (FrameworkElement)VisualTreeHelper.GetParent(toolsTab);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(toolsTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(expandedTabStrip.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    AssertRailTabHeightMatchesTextPlusOneAOnEachSide(toolsTab, "Grid options");
+                    Assert.That(tabStack.VerticalAlignment, Is.EqualTo(VerticalAlignment.Center));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void OpenWorkspacePanel_WhenPanelIsCollapsed_OpensBeforeActivating()
+        {
+            var grid = CreateGrid();
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.ChangePanelRegion, GridRegionState.Collapsed, 300d));
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.OpenWorkspacePanel(GridRegionKind.ChangePanelRegion);
+                FlushDispatcher(grid.Dispatcher);
+
+                var exported = grid.ExportViewState();
+                var changeState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(changeState.State, Is.EqualTo(GridRegionState.Open));
+                    Assert.That(changeState.IsActive, Is.True);
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void Click_WhenCollapsedWorkspacePanelToggleIsPressed_ExpandsThatPanel()
+        {
+            var grid = CreateGrid();
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+            grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var viewState = CreateRegionViewState(GridRegionKind.ChangePanelRegion, GridRegionState.Collapsed, 300d);
+                var validation = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ValidationPanelRegion);
+                validation.State = GridRegionState.Open;
+                validation.Size = 300d;
+                validation.PlacementOverride = GridRegionPlacement.Right;
+                validation.IsActive = true;
+
+                grid.ApplyViewState(viewState);
+                FlushDispatcher(grid.Dispatcher);
+
+                var collapsedToggle = new Button { Tag = "ChangePanelRegion" };
+                InvokePrivate(grid, "HandleRegionToggleButtonClick", collapsedToggle, new RoutedEventArgs(Button.ClickEvent, collapsedToggle));
+                FlushDispatcher(grid.Dispatcher);
+
+                var exported = grid.ExportViewState();
+                var changeState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(changeState.State, Is.EqualTo(GridRegionState.Open));
+                    Assert.That(changeState.IsActive, Is.True);
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void Click_WhenWorkspacePanelTabOpensCollapsedPanel_ShowsSplitter()
+        {
+            var grid = CreateGrid();
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+            grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var viewState = CreateRegionViewState(GridRegionKind.ValidationPanelRegion, GridRegionState.Open, 300d);
+                var validation = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ValidationPanelRegion);
+                validation.PlacementOverride = GridRegionPlacement.Right;
+                validation.IsActive = true;
+                var changes = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion);
+                changes.State = GridRegionState.Collapsed;
+                changes.Size = 300d;
+                changes.PlacementOverride = GridRegionPlacement.Right;
+
+                grid.ApplyViewState(viewState);
+                FlushDispatcher(grid.Dispatcher);
+
+                var changesTab = (Button)grid.FindName("ValidationPanelChangesTabButton");
+                changesTab.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, changesTab));
+                FlushDispatcher(grid.Dispatcher);
+
+                var exported = grid.ExportViewState();
+                var changeState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion);
+                var splitterColumn = (ColumnDefinition)grid.FindName("SideToolRegionSplitterColumn");
+                var changeSplitter = (FrameworkElement)grid.FindName("ChangePanelRegionSplitter");
+                var changeHost = (FrameworkElement)grid.FindName("ChangePanelRegionHost");
+                var changeTabStrip = (FrameworkElement)grid.FindName("ChangesPanelExpandedTabStrip");
+                var validationHost = (FrameworkElement)grid.FindName("ValidationPanelRegionHost");
+                var validationTabStrip = (FrameworkElement)grid.FindName("ValidationPanelExpandedTabStrip");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(changeState.State, Is.EqualTo(GridRegionState.Open));
+                    Assert.That(changeState.IsActive, Is.True);
+                    Assert.That(changeHost.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(changeTabStrip.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(validationHost.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(validationTabStrip.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(Grid.GetColumn(changeSplitter), Is.EqualTo(3));
+                    Assert.That(splitterColumn.ActualWidth, Is.GreaterThan(0d));
+                    Assert.That(changeSplitter.ActualWidth, Is.GreaterThan(0d));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void Click_WhenCollapsedRailTabOpensPanel_ShowsSplitter()
+        {
+            var grid = CreateGrid();
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+            grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var viewState = CreateRegionViewState(GridRegionKind.ValidationPanelRegion, GridRegionState.Collapsed, 300d);
+                var validation = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ValidationPanelRegion);
+                validation.PlacementOverride = GridRegionPlacement.Right;
+                var changes = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion);
+                changes.State = GridRegionState.Collapsed;
+                changes.Size = 300d;
+                changes.PlacementOverride = GridRegionPlacement.Right;
+
+                grid.ApplyViewState(viewState);
+                FlushDispatcher(grid.Dispatcher);
+
+                var changesRailTab = (Button)grid.FindName("ValidationRailChangesTabButton");
+                changesRailTab.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, changesRailTab));
+                FlushDispatcher(grid.Dispatcher);
+
+                var exported = grid.ExportViewState();
+                var changeState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion);
+                var splitterColumn = (ColumnDefinition)grid.FindName("SideToolRegionSplitterColumn");
+                var changeSplitter = (FrameworkElement)grid.FindName("ChangePanelRegionSplitter");
+                var changeHost = (FrameworkElement)grid.FindName("ChangePanelRegionHost");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(changeState.State, Is.EqualTo(GridRegionState.Open));
+                    Assert.That(changeState.IsActive, Is.True);
+                    Assert.That(changeHost.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(Grid.GetColumn(changeSplitter), Is.EqualTo(3));
+                    Assert.That(splitterColumn.ActualWidth, Is.GreaterThan(0d));
+                    Assert.That(changeSplitter.ActualWidth, Is.GreaterThan(0d));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void MoveRegion_WhenGroupingRegionMovesBottom_ReparentsWorkspaceBandAndExportsPlacement()
+        {
+            var grid = CreateGrid();
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d));
+                FlushDispatcher(grid.Dispatcher);
+
+                InvokePrivate(grid, "MoveRegion", GridRegionKind.GroupingRegion, GridRegionPlacement.Bottom);
+                FlushDispatcher(grid.Dispatcher);
+
+                var groupingHost = (FrameworkElement)grid.FindName("GroupingRegionHost");
+                var bottomBandHost = (Panel)grid.FindName("BottomWorkspaceBandHost");
+                var exported = grid.ExportViewState();
+                var groupingState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.GroupingRegion);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(groupingHost.Parent, Is.SameAs(bottomBandHost));
+                    Assert.That(groupingState.PlacementOverride, Is.EqualTo(GridRegionPlacement.Bottom));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void MoveRegion_WhenTopCommandRegionMovesBottom_ReclaimsTopCommandRow()
         {
             var grid = CreateGrid();
             grid.TopCommandContent = new Border
@@ -595,19 +1319,23 @@ namespace PhialeGrid.Wpf.Tests.State
                 window.Show();
                 FlushDispatcher(grid.Dispatcher);
 
-                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Collapsed, 44d));
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d));
                 FlushDispatcher(grid.Dispatcher);
 
-                var host = (FrameworkElement)grid.FindName("TopCommandStripHost");
-                var content = (FrameworkElement)grid.FindName("TopCommandStripContentHost");
-                var row = (RowDefinition)grid.FindName("TopCommandStripRow");
+                InvokePrivate(grid, "MoveRegion", GridRegionKind.TopCommandRegion, GridRegionPlacement.Bottom);
+                FlushDispatcher(grid.Dispatcher);
+
+                var topCommandBand = (FrameworkElement)grid.FindName("TopCommandBand");
+                var bottomBandHost = (Panel)grid.FindName("BottomWorkspaceBandHost");
+                var topCommandRow = (RowDefinition)grid.FindName("TopCommandStripRow");
+                var exported = grid.ExportViewState();
+                var topCommandState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.TopCommandRegion);
 
                 Assert.Multiple(() =>
                 {
-                    Assert.That(host.Visibility, Is.EqualTo(Visibility.Visible));
-                    Assert.That(content.Visibility, Is.EqualTo(Visibility.Collapsed));
-                    Assert.That(row.ActualHeight, Is.GreaterThanOrEqualTo(36d));
-                    Assert.That(row.ActualHeight, Is.LessThanOrEqualTo(44d));
+                    Assert.That(topCommandBand.Parent, Is.SameAs(bottomBandHost));
+                    Assert.That(topCommandRow.ActualHeight, Is.EqualTo(0d).Within(0.1d));
+                    Assert.That(topCommandState.PlacementOverride, Is.EqualTo(GridRegionPlacement.Bottom));
                 });
             }
             finally
@@ -617,7 +1345,251 @@ namespace PhialeGrid.Wpf.Tests.State
         }
 
         [Test]
-        public void ApplyViewState_WhenGroupingHasNoGroupsAndLargeSavedSize_KeepsCompactHeaderWithoutExpander()
+        public void Click_WhenSideToolRegionExpanderIsPressed_CollapsesWorkspacePanel()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border
+            {
+                Width = 180,
+                Height = 300,
+                Child = new TextBlock { Text = "Tools" }
+            };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.SideToolRegion, GridRegionState.Open, 300d));
+                FlushDispatcher(grid.Dispatcher);
+
+                var expander = (Button)grid.FindName("SideToolRegionExpanderButton");
+                var expectedCursor = expander.Cursor;
+                expander.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, expander));
+                FlushDispatcher(grid.Dispatcher);
+
+                var exported = grid.ExportViewState();
+                var sideState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion);
+                var collapsedRail = (FrameworkElement)grid.FindName("SideToolRegionCollapsedRail");
+                var expandedShell = (FrameworkElement)grid.FindName("SideToolRegionExpandedShell");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(expectedCursor, Is.SameAs(Cursors.Hand));
+                    Assert.That(sideState.State, Is.EqualTo(GridRegionState.Collapsed));
+                    Assert.That(collapsedRail.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(expandedShell.Visibility, Is.EqualTo(Visibility.Collapsed));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void DragStart_WhenPointerStartsOnRegionButton_DoesNotArmRegionDrag()
+        {
+            var grid = CreateGrid();
+            var button = new Button { Content = ">" };
+
+            var isInteractiveChild = (bool)InvokePrivate(grid, "IsRegionDragStartedFromInteractiveChild", button);
+
+            Assert.That(isInteractiveChild, Is.True);
+        }
+
+        [Test]
+        public void DragPreview_WhenSideToolRegionIsDragged_AnimatesWorkspacePanelPane()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border
+            {
+                Width = 180,
+                Height = 300,
+                Child = new TextBlock { Text = "Tools" }
+            };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.SideToolRegion, GridRegionState.Open, 300d));
+                FlushDispatcher(grid.Dispatcher);
+
+                InvokePrivate(grid, "BeginRegionDragPreview", GridRegionKind.SideToolRegion);
+                InvokePrivate(grid, "UpdateRegionDragPreview", new Vector(-180d, 0d), new Point(40d, 20d));
+                FlushDispatcher(grid.Dispatcher);
+
+                var host = (Grid)grid.FindName("SideToolRegionHost");
+                var panel = (Grid)grid.FindName("ToolsPanel");
+                var shell = (Border)grid.FindName("SideToolRegionExpandedShell");
+                var transform = (TranslateTransform)shell.RenderTransform;
+                var overlay = (FrameworkElement)grid.FindName("RegionDockPreviewOverlay");
+                var leftDockPreview = (Border)grid.FindName("RegionDockPreviewLeft");
+                var rightDockPreview = (Border)grid.FindName("RegionDockPreviewRight");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(host.Background, Is.SameAs(Brushes.Transparent));
+                    Assert.That(panel.Background, Is.SameAs(Brushes.Transparent));
+                    Assert.That(shell.Opacity, Is.LessThan(1d));
+                    Assert.That(transform.X, Is.LessThan(-100d));
+                    Assert.That(overlay.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(leftDockPreview.Opacity, Is.GreaterThan(rightDockPreview.Opacity));
+                });
+
+                InvokePrivate(grid, "EndRegionDragPreview");
+                FlushDispatcher(grid.Dispatcher);
+                Assert.That(host.Background, Is.Not.SameAs(Brushes.Transparent));
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void DragPreview_WhenWorkspaceBandIsDragged_ShowsVerticalDockTargetsWithoutMovingWorkspacePanelPane()
+        {
+            var grid = CreateGrid();
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d));
+                FlushDispatcher(grid.Dispatcher);
+
+                InvokePrivate(grid, "BeginRegionDragPreview", GridRegionKind.GroupingRegion);
+                InvokePrivate(grid, "UpdateRegionDragPreview", new Vector(0d, 140d), new Point(40d, 20d), new Point(40d, 400d));
+                FlushDispatcher(grid.Dispatcher);
+
+                var shell = (Border)grid.FindName("SideToolRegionExpandedShell");
+                var transform = (TranslateTransform)shell.RenderTransform;
+                var overlay = (FrameworkElement)grid.FindName("WorkspaceBandDockPreviewOverlay");
+                var regionOverlay = (FrameworkElement)grid.FindName("RegionDockPreviewOverlay");
+                var regionLayoutFrame = (FrameworkElement)grid.FindName("RegionLayoutFrame");
+                var topDockPreview = (Border)grid.FindName("RegionDockPreviewTop");
+                var bottomDockPreview = (Border)grid.FindName("RegionDockPreviewBottom");
+                var leftDockPreview = (Border)grid.FindName("RegionDockPreviewLeft");
+                var rightDockPreview = (Border)grid.FindName("RegionDockPreviewRight");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(transform.X, Is.EqualTo(0d).Within(0.1d));
+                    Assert.That(overlay.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(Grid.GetColumn(overlay), Is.EqualTo(Grid.GetColumn(regionLayoutFrame)));
+                    Assert.That(regionOverlay.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(topDockPreview.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(bottomDockPreview.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(leftDockPreview.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(rightDockPreview.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(bottomDockPreview.Opacity, Is.GreaterThan(topDockPreview.Opacity));
+                });
+
+                InvokePrivate(grid, "EndRegionDragPreview");
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void DragPreview_WhenWorkspaceBandIsDragged_UsesRootOverlayForBottomDockTargetBelowSurfaceScrollbar()
+        {
+            var grid = CreateGrid();
+            grid.ItemsSource = Enumerable.Range(0, 8)
+                .Select(index => new TestRow { Category = "A", ObjectName = "Wide object " + index })
+                .ToArray();
+            grid.Columns = new[]
+                {
+                    new GridColumnDefinition("Category", "Category", width: 140d, displayIndex: 0, valueType: typeof(string)),
+                    new GridColumnDefinition("ObjectName", "Object name", width: 220d, displayIndex: 1, valueType: typeof(string)),
+                }
+                .Concat(Enumerable.Range(0, 12).Select(index => new GridColumnDefinition(
+                    "extra" + index,
+                    "Extra " + index,
+                    width: 160d,
+                    displayIndex: index + 2,
+                    valueType: typeof(string))))
+                .ToArray();
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Width = 720;
+                window.Height = 520;
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                InvokePrivate(grid, "BeginRegionDragPreview", GridRegionKind.GroupingRegion);
+                InvokePrivate(grid, "UpdateRegionDragPreview", new Vector(0d, 220d), new Point(40d, 20d), new Point(40d, 420d));
+                FlushDispatcher(grid.Dispatcher);
+
+                var bottomDockPreview = (Border)grid.FindName("RegionDockPreviewBottom");
+                var workspaceBandOverlay = (Grid)grid.FindName("WorkspaceBandDockPreviewOverlay");
+                var regionOverlay = (Grid)grid.FindName("RegionDockPreviewOverlay");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(grid.SurfaceHorizontalScrollBarGutterHeight, Is.GreaterThan(0d));
+                    Assert.That(bottomDockPreview.Parent, Is.SameAs(workspaceBandOverlay));
+                    Assert.That(workspaceBandOverlay.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(regionOverlay.Visibility, Is.EqualTo(Visibility.Collapsed));
+                });
+
+                InvokePrivate(grid, "EndRegionDragPreview");
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ApplyViewState_WhenTopCommandBandIsClosed_RemovesBandWithoutLeavingDeadSpace()
+        {
+            var grid = CreateGrid();
+            grid.TopCommandContent = new Border
+            {
+                Height = 28,
+                Child = new TextBlock { Text = "Commands" }
+            };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Closed, 52d));
+                FlushDispatcher(grid.Dispatcher);
+
+                var host = (FrameworkElement)grid.FindName("TopCommandBand");
+                var content = (FrameworkElement)grid.FindName("TopCommandStripContentHost");
+                var row = (RowDefinition)grid.FindName("TopCommandStripRow");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(host.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(content.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(row.ActualHeight, Is.EqualTo(0d).Within(0.1d));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ApplyViewState_WhenGroupingHasNoGroups_KeepsWorkspaceBandWithoutExpander()
         {
             var grid = CreateGrid();
             var window = CreateWindow(grid);
@@ -627,22 +1599,24 @@ namespace PhialeGrid.Wpf.Tests.State
                 window.Show();
                 FlushDispatcher(grid.Dispatcher);
 
-                var state = CreateRegionViewState(GridRegionKind.GroupingRegion, GridRegionState.Open, 180d);
+                var state = CreateRegionViewState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d);
 
                 grid.ApplyViewState(state);
                 FlushDispatcher(grid.Dispatcher);
 
                 var row = (RowDefinition)grid.FindName("GroupingRegionRow");
-                var expander = (FrameworkElement)grid.FindName("GroupingRegionExpanderButton");
+                var groupingHost = (FrameworkElement)grid.FindName("GroupingRegionHost");
+                var groupingBand = (FrameworkElement)grid.FindName("GroupingBandContentHost");
                 var close = (FrameworkElement)grid.FindName("GroupingRegionCloseButton");
 
                 Assert.Multiple(() =>
                 {
                     Assert.That(row, Is.Not.Null);
-                    Assert.That(row.MinHeight, Is.GreaterThanOrEqualTo(56d));
+                    Assert.That(row.Height.IsAuto, Is.True);
+                    Assert.That(groupingHost.Height, Is.EqualTo(56d).Within(0.1d));
                     Assert.That(row.ActualHeight, Is.GreaterThanOrEqualTo(56d));
                     Assert.That(row.ActualHeight, Is.LessThanOrEqualTo(56d));
-                    Assert.That(expander.Visibility, Is.EqualTo(Visibility.Collapsed));
+                    Assert.That(groupingBand, Is.Not.Null);
                     Assert.That(close.Visibility, Is.EqualTo(Visibility.Visible));
                 });
             }
@@ -721,7 +1695,7 @@ namespace PhialeGrid.Wpf.Tests.State
         }
 
         [Test]
-        public void TopCommandStripToggleButton_FlowsThroughCoreRegionState_AndCollapsesTheStrip()
+        public void TopCommandBandCloseButton_FlowsThroughCoreRegionState_AndClosesTheBand()
         {
             var grid = CreateGrid();
             grid.TopCommandContent = new Border
@@ -736,17 +1710,17 @@ namespace PhialeGrid.Wpf.Tests.State
                 window.Show();
                 FlushDispatcher(grid.Dispatcher);
 
-                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d));
+                grid.ApplyViewState(CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d));
                 FlushDispatcher(grid.Dispatcher);
 
-                var toggleButton = (Button)grid.FindName("TopCommandStripToggleButton");
-                toggleButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                var closeButton = (Button)grid.FindName("TopCommandStripCloseButton");
+                closeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 FlushDispatcher(grid.Dispatcher);
 
                 var exported = grid.ExportViewState();
                 var topState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.TopCommandRegion);
 
-                Assert.That(topState.State, Is.EqualTo(GridRegionState.Collapsed));
+                Assert.That(topState.State, Is.EqualTo(GridRegionState.Closed));
             }
             finally
             {
@@ -861,6 +1835,53 @@ namespace PhialeGrid.Wpf.Tests.State
             dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
         }
 
+        private static void AssertTabWidthMatchesTextPlusOneAOnEachSide(Button tab, string text)
+        {
+            var textWidth = MeasureTextWidth(tab, text);
+            var letterWidth = MeasureTextWidth(tab, "a");
+            var expectedWidth = textWidth + (2d * (letterWidth + 4d));
+
+            Assert.That(tab.ActualWidth, Is.EqualTo(expectedWidth).Within(2.0d), tab.Name);
+        }
+
+        private static void AssertRailTabHeightMatchesTextPlusOneAOnEachSide(Button tab, string text)
+        {
+            var textWidth = MeasureTextWidth(tab, text);
+            var letterWidth = MeasureTextWidth(tab, "a");
+            var expectedHeight = textWidth + (2d * (letterWidth + 4d));
+
+            Assert.That(tab.ActualHeight, Is.EqualTo(expectedHeight).Within(2.0d), tab.Name);
+        }
+
+        private static double MeasureTextWidth(Control control, string text)
+        {
+            var typeface = new Typeface(control.FontFamily, control.FontStyle, control.FontWeight, control.FontStretch);
+            var pixelsPerDip = VisualTreeHelper.GetDpi(control).PixelsPerDip;
+            var formattedText = new FormattedText(
+                text,
+                CultureInfo.CurrentUICulture,
+                FlowDirection.LeftToRight,
+                typeface,
+                control.FontSize,
+                Brushes.Black,
+                pixelsPerDip);
+
+            return formattedText.WidthIncludingTrailingWhitespace;
+        }
+
+        private static bool IsVisualAncestor(DependencyObject ancestor, DependencyObject descendant)
+        {
+            for (var current = descendant; current != null; current = VisualTreeHelper.GetParent(current))
+            {
+                if (ReferenceEquals(current, ancestor))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static T FindVisualChild<T>(DependencyObject root) where T : DependencyObject
         {
             if (root == null)
@@ -914,7 +1935,7 @@ namespace PhialeGrid.Wpf.Tests.State
     {
         var argumentTypes = args.Select(static arg => arg?.GetType()).ToArray();
         var method = target.GetType()
-            .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+            .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic)
             .SingleOrDefault(candidate =>
             {
                 if (!string.Equals(candidate.Name, methodName, StringComparison.Ordinal))
@@ -959,10 +1980,12 @@ namespace PhialeGrid.Wpf.Tests.State
         {
             var viewState = new GridViewState();
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.CoreGridSurface, State = GridRegionState.Open, Size = null, IsActive = false });
-            viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.TopCommandRegion, State = GridRegionState.Open, Size = 44d, IsActive = false });
+            viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.TopCommandRegion, State = GridRegionState.Open, Size = 52d, IsActive = false });
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.GroupingRegion, State = GridRegionState.Open, Size = 56d, IsActive = false });
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SummaryBottomRegion, State = GridRegionState.Open, Size = 56d, IsActive = false });
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SideToolRegion, State = GridRegionState.Closed, Size = 320d, IsActive = false });
+            viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.ChangePanelRegion, State = GridRegionState.Closed, Size = 320d, IsActive = false });
+            viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.ValidationPanelRegion, State = GridRegionState.Closed, Size = 320d, IsActive = false });
 
             var target = viewState.RegionLayout.Single(region => region.RegionKind == regionKind);
             target.State = state;

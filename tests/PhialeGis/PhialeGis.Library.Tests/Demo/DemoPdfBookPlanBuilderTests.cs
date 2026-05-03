@@ -18,6 +18,7 @@ public sealed class DemoPdfBookPlanBuilderTests
             "architecture",
             "grid",
             "active-layer-selector",
+            "yaml-ui",
             "web-components",
         }));
     }
@@ -33,6 +34,9 @@ public sealed class DemoPdfBookPlanBuilderTests
             "web-host",
             "pdf-viewer",
             "report-designer",
+            "monaco-editor",
+            "document-editor",
+            "web-component-scroll-host",
         }));
     }
 }

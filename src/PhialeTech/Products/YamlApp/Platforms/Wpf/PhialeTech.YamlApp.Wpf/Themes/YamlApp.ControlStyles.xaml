@@ -25,36 +25,41 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type buttons:YamlButton}">
-                    <Grid MinWidth="{TemplateBinding ChromeMinWidth}"
-                          MinHeight="{TemplateBinding ChromeMinHeight}"
-                          SnapsToDevicePixels="True"
-                          UseLayoutRounding="True">
-                        <buttons:YamlButtonSkiaChromePresenter x:Name="PART_ChromePresenter"
-                                                               BackgroundBrush="{TemplateBinding Background}"
-                                                               BorderBrush="{TemplateBinding BorderBrush}"
-                                                               HoverBackgroundBrush="{DynamicResource Brush.Button.Secondary.HoverBackground}"
-                                                               HoverBorderBrush="{DynamicResource Brush.Button.Secondary.HoverBorder}"
-                                                               FocusBrush="{DynamicResource Brush.Focus.Ring}"
-                                                               CornerRadius="{TemplateBinding ChromeCornerRadius}"
-                                                               IsHovered="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}"
-                                                               IsPressed="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}"
-                                                               HasKeyboardFocus="{Binding IsKeyboardFocused, RelativeSource={RelativeSource TemplatedParent}}"
-                                                               IsEnabledState="{Binding IsEnabled, RelativeSource={RelativeSource TemplatedParent}}" />
-                        <DockPanel Margin="{TemplateBinding ChromePadding}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   LastChildFill="False">
-                            <TextBlock x:Name="ButtonLeadingIcon"
-                                       Margin="{TemplateBinding ChromeIconMargin}"
-                                       FontFamily="{DynamicResource Text.Icon.FontFamily}"
-                                       FontSize="{TemplateBinding ChromeIconSize}"
-                                       Foreground="{TemplateBinding Foreground}"
-                                       Text="{TemplateBinding IconGlyph}" />
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              RecognizesAccessKey="True"
-                                              TextElement.Foreground="{TemplateBinding Foreground}"
-                                              TextElement.FontSize="{TemplateBinding ChromeFontSize}" />
+                    <Grid
+                        MinWidth="{TemplateBinding ChromeMinWidth}"
+                        MinHeight="{TemplateBinding ChromeMinHeight}"
+                        SnapsToDevicePixels="True"
+                        UseLayoutRounding="True">
+                        <buttons:YamlButtonSkiaChromePresenter
+                            x:Name="PART_ChromePresenter"
+                            BackgroundBrush="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            CornerRadius="{TemplateBinding ChromeCornerRadius}"
+                            FocusBrush="{DynamicResource Brush.Focus.Ring}"
+                            HasKeyboardFocus="{Binding IsKeyboardFocused, RelativeSource={RelativeSource TemplatedParent}}"
+                            HoverBackgroundBrush="{DynamicResource Brush.Button.Secondary.HoverBackground}"
+                            HoverBorderBrush="{DynamicResource Brush.Button.Secondary.HoverBorder}"
+                            IsEnabledState="{Binding IsEnabled, RelativeSource={RelativeSource TemplatedParent}}"
+                            IsHovered="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}"
+                            IsPressed="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}" />
+                        <DockPanel
+                            Margin="{TemplateBinding ChromePadding}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            LastChildFill="False">
+                            <TextBlock
+                                x:Name="ButtonLeadingIcon"
+                                Margin="{TemplateBinding ChromeIconMargin}"
+                                FontFamily="{DynamicResource Text.Icon.FontFamily}"
+                                FontSize="{TemplateBinding ChromeIconSize}"
+                                Foreground="{TemplateBinding Foreground}"
+                                Text="{TemplateBinding IconGlyph}" />
+                            <ContentPresenter
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True"
+                                TextElement.FontSize="{TemplateBinding ChromeFontSize}"
+                                TextElement.Foreground="{TemplateBinding Foreground}" />
                         </DockPanel>
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -108,29 +113,33 @@
         </Setter>
     </Style>
 
-    <Style x:Key="YamlDocument.ActionButtonStyle.Horizontal.Last"
-           TargetType="{x:Type actions:YamlDocumentActionButton}"
-           BasedOn="{StaticResource YamlButton.DefaultStyle}">
+    <Style
+        x:Key="YamlDocument.ActionButtonStyle.Horizontal.Last"
+        BasedOn="{StaticResource YamlButton.DefaultStyle}"
+        TargetType="{x:Type actions:YamlDocumentActionButton}">
         <Setter Property="Margin" Value="0" />
     </Style>
 
-    <Style x:Key="YamlDocument.ActionButtonStyle.Horizontal.Spaced"
-           TargetType="{x:Type actions:YamlDocumentActionButton}"
-           BasedOn="{StaticResource YamlDocument.ActionButtonStyle.Horizontal.Last}">
+    <Style
+        x:Key="YamlDocument.ActionButtonStyle.Horizontal.Spaced"
+        BasedOn="{StaticResource YamlDocument.ActionButtonStyle.Horizontal.Last}"
+        TargetType="{x:Type actions:YamlDocumentActionButton}">
         <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.ActionButtonHorizontalGap}" />
     </Style>
 
-    <Style x:Key="YamlDocument.ActionButtonStyle.Vertical.Last"
-           TargetType="{x:Type actions:YamlDocumentActionButton}"
-           BasedOn="{StaticResource YamlButton.DefaultStyle}">
+    <Style
+        x:Key="YamlDocument.ActionButtonStyle.Vertical.Last"
+        BasedOn="{StaticResource YamlButton.DefaultStyle}"
+        TargetType="{x:Type actions:YamlDocumentActionButton}">
         <Setter Property="Margin" Value="0" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="MinWidth" Value="{DynamicResource Size.FormShell.ActionButton.VerticalMinWidth}" />
     </Style>
 
-    <Style x:Key="YamlDocument.ActionButtonStyle.Vertical.Spaced"
-           TargetType="{x:Type actions:YamlDocumentActionButton}"
-           BasedOn="{StaticResource YamlDocument.ActionButtonStyle.Vertical.Last}">
+    <Style
+        x:Key="YamlDocument.ActionButtonStyle.Vertical.Spaced"
+        BasedOn="{StaticResource YamlDocument.ActionButtonStyle.Vertical.Last}"
+        TargetType="{x:Type actions:YamlDocumentActionButton}">
         <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.ActionButtonVerticalGap}" />
     </Style>
 </ResourceDictionary>

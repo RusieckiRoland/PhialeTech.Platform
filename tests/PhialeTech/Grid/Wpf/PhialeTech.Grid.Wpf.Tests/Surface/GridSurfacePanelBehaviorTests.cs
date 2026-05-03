@@ -53,6 +53,26 @@ namespace PhialeGrid.Wpf.Tests.Surface
         }
 
         [Test]
+        public void RenderSnapshot_WhenEquivalentCellSnapshotArrives_DoesNotRebindPresenter()
+        {
+            var panel = new GridSurfacePanel();
+            panel.RenderSnapshot(CreateSnapshot(
+                new[] { CreateColumnHeader("col-1", 40, 0, 100, 30) },
+                new[] { CreateCell("row-1", "col-1", 40, 30, 100, 20, "Alpha") },
+                null));
+
+            var presenter = (GridCellPresenter)FindLayerChild(panel, 1, 0);
+            var initialCellData = presenter.CellData;
+
+            panel.RenderSnapshot(CreateSnapshot(
+                new[] { CreateColumnHeader("col-1", 40, 0, 100, 30) },
+                new[] { CreateCell("row-1", "col-1", 40, 30, 100, 20, "Alpha") },
+                null));
+
+            Assert.That(ReferenceEquals(initialCellData, presenter.CellData), Is.True);
+        }
+
+        [Test]
         public void RenderSnapshot_WhenItemDisappears_ReusesReleasedContainerForNextCell()
         {
             var panel = new GridSurfacePanel();

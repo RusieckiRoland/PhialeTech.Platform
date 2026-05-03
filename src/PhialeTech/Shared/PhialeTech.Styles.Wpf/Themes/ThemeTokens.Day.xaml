@@ -39,6 +39,8 @@
     <Color x:Key="Color.Badge.Text">#4B5563</Color>
     <Color x:Key="Color.Grid.Filter.Background">#F6F9FC</Color>
     <Color x:Key="Color.Grid.Filter.Border">#D8E1EE</Color>
+    <Color x:Key="Color.Grid.RegionSurface.Background">#F4F7FB</Color>
+    <Color x:Key="Color.Grid.RegionHeader.Background">#EAF0F7</Color>
     <Color x:Key="Color.Grid.Header.Background">#DDECFB</Color>
     <Color x:Key="Color.Grid.Header.Border">#5E8FC7</Color>
     <Color x:Key="Color.Grid.Header.Separator">#9FBBDE</Color>
@@ -250,6 +252,8 @@
     <CornerRadius x:Key="CornerRadius.Shell.Window.Root">14</CornerRadius>
     <CornerRadius x:Key="CornerRadius.Shell.CommandButton">8</CornerRadius>
     <CornerRadius x:Key="CornerRadius.Shell.NavigationButton">10</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Grid.RegionSurface">12</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.Grid.RegionHeader">8</CornerRadius>
     <sys:Double x:Key="Size.Shell.TitleBar.Height">56</sys:Double>
     <sys:Double x:Key="Size.Shell.NavigationRail.Width">220</sys:Double>
     <sys:Double x:Key="Size.Shell.CommandButton.MinHeight">34</sys:Double>

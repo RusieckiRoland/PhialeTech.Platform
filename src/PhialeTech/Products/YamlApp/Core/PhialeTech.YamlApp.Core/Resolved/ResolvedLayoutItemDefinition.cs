@@ -9,6 +9,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
             string name,
             double? width,
             FieldWidthHint? widthHint,
+            bool isOverlayScope,
             bool visible,
             bool enabled,
             bool showOldValueRestoreButton,
@@ -22,6 +23,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
             Name = name;
             Width = width;
             WidthHint = widthHint;
+            IsOverlayScope = isOverlayScope;
             Visible = visible;
             Enabled = enabled;
             ShowOldValueRestoreButton = showOldValueRestoreButton;
@@ -39,6 +41,8 @@ namespace PhialeTech.YamlApp.Core.Resolved
         public double? Width { get; }
 
         public FieldWidthHint? WidthHint { get; }
+
+        public bool IsOverlayScope { get; }
 
         public bool Visible { get; }
 

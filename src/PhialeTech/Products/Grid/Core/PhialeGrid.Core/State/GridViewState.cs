@@ -115,5 +115,7 @@ namespace PhialeGrid.Core.State
         public double? Size { get; set; }
 
         public bool IsActive { get; set; }
+
+        public GridRegionPlacement? PlacementOverride { get; set; }
     }
 }

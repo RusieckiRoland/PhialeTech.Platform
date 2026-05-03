@@ -41,6 +41,8 @@ namespace PhialeTech.PdfViewer.Abstractions
 
         Task PrintAsync();
 
+        Task SetThemeAsync(string theme);
+
         void FocusViewer();
     }
 }

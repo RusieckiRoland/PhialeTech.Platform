@@ -26,6 +26,15 @@ namespace PhialeGrid.Core.HitTesting
             double y,
             GridSurfaceSnapshot snapshot)
         {
+            return HitTest(x, y, snapshot, GridHitTestSurfaceScope.FullSurface);
+        }
+
+        public GridHitTestResult HitTest(
+            double x,
+            double y,
+            GridSurfaceSnapshot snapshot,
+            GridHitTestSurfaceScope surfaceScope)
+        {
             if (snapshot == null)
                 throw new ArgumentNullException(nameof(snapshot));
 
@@ -35,9 +44,12 @@ namespace PhialeGrid.Core.HitTesting
                 return overlayHit;
 
             // Potem nagłówki
-            var headerHit = HitTestHeaders(x, y, snapshot);
+            var headerHit = HitTestHeaders(x, y, snapshot, surfaceScope);
             if (headerHit != null && headerHit.TargetKind != GridHitTargetKind.None)
                 return headerHit;
+
+            if (surfaceScope == GridHitTestSurfaceScope.ColumnHeaderSurface)
+                return null;
 
             // Potem current cell marker 
             var currentCellHit = HitTestCurrentCell(x, y, snapshot);
@@ -109,12 +121,28 @@ namespace PhialeGrid.Core.HitTesting
             return null;
         }
 
-        private GridHitTestResult HitTestHeaders(double x, double y, GridSurfaceSnapshot snapshot)
+        private GridHitTestResult HitTestHeaders(
+            double x,
+            double y,
+            GridSurfaceSnapshot snapshot,
+            GridHitTestSurfaceScope surfaceScope)
         {
             // Szukam w headerach z dołu listy (bo są rysowane wcześniej)
             for (int i = snapshot.Headers.Count - 1; i >= 0; i--)
             {
                 var header = snapshot.Headers[i];
+                if (surfaceScope == GridHitTestSurfaceScope.DataSurface &&
+                    header.Kind == GridHeaderKind.ColumnHeader)
+                {
+                    continue;
+                }
+
+                if (surfaceScope == GridHitTestSurfaceScope.ColumnHeaderSurface &&
+                    header.Kind != GridHeaderKind.ColumnHeader)
+                {
+                    continue;
+                }
+
                 if (header.Bounds.Contains(x, y))
                 {
                     var row = IsRowUtilityHeaderKind(header.Kind)

@@ -259,6 +259,8 @@ namespace PhialeTech.PdfViewer.WinUI.Controls
 
         public Task PrintAsync() => _runtime.PrintAsync();
 
+        public Task SetThemeAsync(string theme) => _runtime.SetThemeAsync(theme);
+
         public void FocusViewer()
         {
             if (_disposed)

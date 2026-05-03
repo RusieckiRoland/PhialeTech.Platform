@@ -5,10 +5,14 @@ using System.Threading;
 using NUnit.Framework;
 using PhialeGrid.Core;
 using PhialeGrid.Core.Columns;
+using PhialeGrid.Core.Data;
+using PhialeGrid.Core.Editing;
 using PhialeGrid.Core.Query;
+using PhialeGrid.Core.Regions;
 using PhialeGrid.Core.Surface;
 using PhialeGrid.Core.Validation;
 using PhialeTech.PhialeGrid.Wpf.Controls;
+using PhialeTech.PhialeGrid.Wpf.Diagnostics;
 using PhialeTech.PhialeGrid.Wpf.Surface.Presenters;
 using PhialeTech.PhialeGrid.Wpf.Surface;
 using UniversalInput.Contracts;
@@ -292,6 +296,421 @@ namespace PhialeGrid.Wpf.Tests.Surface
                 {
                     Assert.That(marker, Is.Not.Null);
                     Assert.That(marker.TargetKey, Does.StartWith("group:"));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void SurfaceRuntime_WhenGridMutationsAreBatched_PerformsSingleRowsRefresh()
+        {
+            var grid = CreateGroupedScrollableGrid();
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 320, height: 180);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                PhialeGridDiagnostics.BeginGridSession(grid.DiagnosticsGridIdForTests, "batched grid mutation test", true);
+
+                using (grid.BeginGridUpdateBatch("component-grid-mutation"))
+                {
+                    Assert.That(grid.SetRowValueForDemo("row-5", "Owner", string.Empty), Is.True);
+                    Assert.That(grid.SetRowValueForDemo("row-4", "Name", "Zeta edited"), Is.True);
+                    Assert.That(grid.FocusRow("row-5", "Owner"), Is.True);
+                }
+
+                GridSurfaceTestHost.FlushDispatcher(grid);
+                var surfaceHost = GridSurfaceTestHost.FindSurfaceHost(grid);
+                var refreshRowsCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "RefreshRowsViewExecuted");
+                var snapshotCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "SyncSurfaceRendererSnapshot");
+                var indicatorCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "RefreshSurfaceRowIndicatorsExecuted");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(refreshRowsCount, Is.EqualTo(1));
+                    Assert.That(snapshotCount, Is.EqualTo(1));
+                    Assert.That(indicatorCount, Is.EqualTo(0));
+                    Assert.That(surfaceHost.CurrentSnapshot.CurrentCell, Is.Not.Null);
+                    Assert.That(surfaceHost.CurrentSnapshot.CurrentCell.RowKey, Is.EqualTo("row-5"));
+                    Assert.That(surfaceHost.CurrentSnapshot.CurrentCell.ColumnKey, Is.EqualTo("Owner"));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void SurfaceRuntime_WhenHostModelChangesAreBatched_PerformsSingleRowsRefresh()
+        {
+            var grid = CreateScrollableGrid();
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 320, height: 180);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                PhialeGridDiagnostics.BeginGridSession(grid.DiagnosticsGridIdForTests, "batched host model update test", true);
+
+                using (grid.BeginGridUpdateBatch("host-model-update"))
+                {
+                    grid.Columns = new[]
+                    {
+                        new GridColumnDefinition("Name", "Name", width: 140, displayIndex: 0),
+                        new GridColumnDefinition("City", "City", width: 140, displayIndex: 1),
+                        new GridColumnDefinition("Owner", "Owner", width: 160, displayIndex: 2),
+                    };
+                    grid.ItemsSource = new[]
+                    {
+                        new SurfaceRow { Id = "row-a", Name = "Atlas", City = "Warsaw", Status = "Ready", Owner = "A", Scale = "100" },
+                        new SurfaceRow { Id = "row-b", Name = "Beryl", City = "Warsaw", Status = "Draft", Owner = "B", Scale = "200" },
+                        new SurfaceRow { Id = "row-c", Name = "Cobalt", City = "Gdansk", Status = "Ready", Owner = "C", Scale = "300" },
+                    };
+                    grid.Groups = new[] { new GridGroupDescriptor("City") };
+                    grid.Sorts = new[] { new GridSortDescriptor("Name", GridSortDirection.Ascending) };
+                }
+
+                GridSurfaceTestHost.FlushDispatcher(grid);
+                var surfaceHost = GridSurfaceTestHost.FindSurfaceHost(grid);
+                var refreshRowsCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "RefreshRowsViewExecuted");
+                var snapshotCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "SyncSurfaceRendererSnapshot");
+                var groupedQueryCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "BuildGroupedSurfaceResult");
+
+                var groupRows = surfaceHost.CurrentSnapshot.Rows
+                    .Where(row => row.RowKey.StartsWith("group:", StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(refreshRowsCount, Is.EqualTo(1));
+                    Assert.That(snapshotCount, Is.EqualTo(1));
+                    Assert.That(groupedQueryCount, Is.EqualTo(1));
+                    Assert.That(surfaceHost.CurrentSnapshot.Columns.Select(column => column.ColumnKey), Is.EquivalentTo(new[] { "Name", "City", "Owner" }));
+                    Assert.That(groupRows, Has.Length.EqualTo(2));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void SurfaceRuntime_WhenExternalEditSessionRaisesEquivalentStructuralState_DoesNotRebuildRows()
+        {
+            var columns = new[]
+            {
+                new GridColumnDefinition("Name", "Name", width: 140, displayIndex: 0),
+                new GridColumnDefinition("City", "City", width: 140, displayIndex: 1),
+                new GridColumnDefinition("Owner", "Owner", width: 160, displayIndex: 2),
+            };
+            var rows = new object[]
+            {
+                new SurfaceRow { Id = "row-a", Name = "Atlas", City = "Warsaw", Status = "Ready", Owner = "A", Scale = "100" },
+                new SurfaceRow { Id = "row-b", Name = "Beryl", City = "Gdansk", Status = "Draft", Owner = "B", Scale = "200" },
+            };
+            var fields = ObjectEditSessionFieldDefinitionFactory.CreateFromGridColumns(columns);
+            var dataSource = new InMemoryEditSessionDataSource<object>(rows, fields);
+            var editContext = new EditSessionContext<object>(dataSource, row => ((SurfaceRow)row).Id);
+            var grid = new WpfGrid
+            {
+                Width = 320,
+                Height = 160,
+                IsGridReadOnly = false,
+                LanguageDirectory = global::PhialeGrid.Wpf.Tests.GridTestRepositoryPaths.GridLanguagesDirectory,
+                EditSessionContext = editContext,
+            };
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 320, height: 180);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                PhialeGridDiagnostics.BeginGridSession(grid.DiagnosticsGridIdForTests, "equivalent external edit context state test", true);
+
+                using (grid.BeginGridUpdateBatch("equivalent-external-edit-context"))
+                {
+                    dataSource.ReplaceData(rows, fields);
+                }
+
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var refreshRowsCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "RefreshRowsViewExecuted");
+                var snapshotCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "SyncSurfaceRendererSnapshot");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(refreshRowsCount, Is.EqualTo(0));
+                    Assert.That(snapshotCount, Is.EqualTo(0));
+                });
+            }
+            finally
+            {
+                window.Close();
+                editContext.Dispose();
+            }
+        }
+
+        [Test]
+        public void SurfaceRuntime_WhenExternalEditSessionReplacesRecordsWithSameRowIds_DoesNotRebuildRows()
+        {
+            var columns = new[]
+            {
+                new GridColumnDefinition("Name", "Name", width: 140, displayIndex: 0),
+                new GridColumnDefinition("City", "City", width: 140, displayIndex: 1),
+                new GridColumnDefinition("Owner", "Owner", width: 160, displayIndex: 2),
+            };
+            var rows = new object[]
+            {
+                new SurfaceRow { Id = "row-a", Name = "Atlas", City = "Warsaw", Status = "Ready", Owner = "A", Scale = "100" },
+                new SurfaceRow { Id = "row-b", Name = "Beryl", City = "Gdansk", Status = "Draft", Owner = "B", Scale = "200" },
+            };
+            var replacementRows = new object[]
+            {
+                new SurfaceRow { Id = "row-a", Name = "Atlas", City = "Warsaw", Status = "Ready", Owner = "A", Scale = "100" },
+                new SurfaceRow { Id = "row-b", Name = "Beryl", City = "Gdansk", Status = "Draft", Owner = "B", Scale = "200" },
+            };
+            var fields = ObjectEditSessionFieldDefinitionFactory.CreateFromGridColumns(columns);
+            var dataSource = new InMemoryEditSessionDataSource<object>(rows, fields);
+            var editContext = new EditSessionContext<object>(dataSource, row => ((SurfaceRow)row).Id);
+            var grid = new WpfGrid
+            {
+                Width = 320,
+                Height = 160,
+                IsGridReadOnly = false,
+                LanguageDirectory = global::PhialeGrid.Wpf.Tests.GridTestRepositoryPaths.GridLanguagesDirectory,
+                EditSessionContext = editContext,
+            };
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 320, height: 180);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                PhialeGridDiagnostics.BeginGridSession(grid.DiagnosticsGridIdForTests, "same row ids external edit context state test", true);
+
+                using (grid.BeginGridUpdateBatch("same-row-ids-external-edit-context"))
+                {
+                    dataSource.ReplaceData(replacementRows, fields);
+                }
+
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var refreshRowsCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "RefreshRowsViewExecuted");
+                var snapshotCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "SyncSurfaceRendererSnapshot");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(refreshRowsCount, Is.EqualTo(0));
+                    Assert.That(snapshotCount, Is.EqualTo(0));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void SurfaceRuntime_WhenExternalEditSessionChangesColumnPresentationOnly_DoesNotRebuildRows()
+        {
+            var columns = new[]
+            {
+                new GridColumnDefinition("Name", "Name", width: 140, displayIndex: 0),
+                new GridColumnDefinition("City", "City", width: 140, displayIndex: 1),
+                new GridColumnDefinition("Owner", "Owner", width: 160, displayIndex: 2),
+            };
+            var presentationColumns = new[]
+            {
+                new GridColumnDefinition("Name", "Name", width: 180, displayIndex: 2),
+                new GridColumnDefinition("City", "City", width: 120, isVisible: false, displayIndex: 0),
+                new GridColumnDefinition("Owner", "Owner", width: 220, displayIndex: 1),
+            };
+            var rows = new object[]
+            {
+                new SurfaceRow { Id = "row-a", Name = "Atlas", City = "Warsaw", Status = "Ready", Owner = "A", Scale = "100" },
+                new SurfaceRow { Id = "row-b", Name = "Beryl", City = "Gdansk", Status = "Draft", Owner = "B", Scale = "200" },
+            };
+            var fields = ObjectEditSessionFieldDefinitionFactory.CreateFromGridColumns(columns);
+            var presentationFields = ObjectEditSessionFieldDefinitionFactory.CreateFromGridColumns(presentationColumns);
+            var dataSource = new InMemoryEditSessionDataSource<object>(rows, fields);
+            var editContext = new EditSessionContext<object>(dataSource, row => ((SurfaceRow)row).Id);
+            var grid = new WpfGrid
+            {
+                Width = 320,
+                Height = 160,
+                IsGridReadOnly = false,
+                LanguageDirectory = global::PhialeGrid.Wpf.Tests.GridTestRepositoryPaths.GridLanguagesDirectory,
+                EditSessionContext = editContext,
+            };
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 320, height: 180);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                PhialeGridDiagnostics.BeginGridSession(grid.DiagnosticsGridIdForTests, "presentation-only external edit context state test", true);
+
+                using (grid.BeginGridUpdateBatch("presentation-only-external-edit-context"))
+                {
+                    dataSource.ReplaceData(rows, presentationFields);
+                }
+
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var refreshRowsCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "RefreshRowsViewExecuted");
+                var snapshotCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "SyncSurfaceRendererSnapshot");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(refreshRowsCount, Is.EqualTo(0));
+                    Assert.That(snapshotCount, Is.EqualTo(0));
+                });
+            }
+            finally
+            {
+                window.Close();
+                editContext.Dispose();
+            }
+        }
+
+        [Test]
+        public void SurfaceRuntime_WhenHiddenGridBecomesVisibleBeforeHostBatch_DoesNotFlushIntermediateState()
+        {
+            var grid = CreateScrollableGrid();
+            grid.Visibility = System.Windows.Visibility.Collapsed;
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 320, height: 180);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                PhialeGridDiagnostics.BeginGridSession(grid.DiagnosticsGridIdForTests, "visible host batch test", true);
+
+                grid.Visibility = System.Windows.Visibility.Visible;
+                using (grid.BeginGridUpdateBatch("visible-host-batch"))
+                {
+                    grid.Columns = new[]
+                    {
+                        new GridColumnDefinition("Name", "Name", width: 140, displayIndex: 0),
+                        new GridColumnDefinition("City", "City", width: 140, displayIndex: 1),
+                    };
+                    grid.ItemsSource = new[]
+                    {
+                        new SurfaceRow { Id = "row-a", Name = "Atlas", City = "Warsaw", Status = "Ready", Owner = "A", Scale = "100" },
+                        new SurfaceRow { Id = "row-b", Name = "Beryl", City = "Gdansk", Status = "Draft", Owner = "B", Scale = "200" },
+                    };
+                }
+
+                GridSurfaceTestHost.FlushDispatcher(grid);
+                var surfaceHost = GridSurfaceTestHost.FindSurfaceHost(grid);
+                var refreshRowsCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "RefreshRowsViewExecuted");
+                var snapshotCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "SyncSurfaceRendererSnapshot");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(refreshRowsCount, Is.EqualTo(1));
+                    Assert.That(snapshotCount, Is.EqualTo(1));
+                    Assert.That(surfaceHost.CurrentSnapshot.Columns.Select(column => column.ColumnKey), Is.EqualTo(new[] { "Name", "City" }));
+                    Assert.That(surfaceHost.CurrentSnapshot.Rows.Select(row => row.RowKey), Is.EqualTo(new[] { "row-a", "row-b" }));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void SurfaceRuntime_WhenRegionVisibilityChangesAreBatched_AppliesRegionLayoutOnce()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new System.Windows.Controls.Border
+            {
+                Width = 160,
+                Height = 120,
+            };
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 640, height: 320);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                PhialeGridDiagnostics.BeginGridSession(grid.DiagnosticsGridIdForTests, "batched region layout test", true);
+                var viewStateChangedCount = 0;
+                grid.ViewStateChanged += (_, __) => viewStateChangedCount++;
+
+                using (grid.BeginGridUpdateBatch("region-visibility-update"))
+                {
+                    grid.SetRegionVisibility(GridRegionKind.SideToolRegion, true);
+                    grid.SetRegionVisibility(GridRegionKind.GroupingRegion, false);
+                    grid.SetRegionVisibility(GridRegionKind.SideToolRegion, true);
+                    grid.SetRegionVisibility(GridRegionKind.GroupingRegion, false);
+
+                    Assert.That(
+                        PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "ApplyRegionLayoutExecuted"),
+                        Is.EqualTo(0));
+                    Assert.That(viewStateChangedCount, Is.EqualTo(0));
+                }
+
+                GridSurfaceTestHost.FlushDispatcher(grid);
+                var applyCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "ApplyRegionLayoutExecuted");
+                var exported = grid.ExportViewState();
+                var sideToolState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion);
+                var groupingState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.GroupingRegion);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(applyCount, Is.EqualTo(1));
+                    Assert.That(viewStateChangedCount, Is.EqualTo(1));
+                    Assert.That(sideToolState.State, Is.EqualTo(GridRegionState.Open));
+                    Assert.That(groupingState.State, Is.EqualTo(GridRegionState.Closed));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void SurfaceRuntime_WhenEquivalentViewStateIsApplied_SkipsRowsAndRegionRefresh()
+        {
+            var grid = CreateGroupedScrollableGrid();
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 480, height: 240);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var state = grid.ExportViewState();
+                PhialeGridDiagnostics.BeginGridSession(grid.DiagnosticsGridIdForTests, "equivalent view state test", true);
+
+                grid.ApplyViewState(state);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var refreshRowsCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "RefreshRowsViewExecuted");
+                var snapshotCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "SyncSurfaceRendererSnapshot");
+                var regionLayoutCount = PhialeGridDiagnostics.GetGridCounter(grid.DiagnosticsGridIdForTests, "ApplyRegionLayoutExecuted");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(refreshRowsCount, Is.EqualTo(0));
+                    Assert.That(snapshotCount, Is.EqualTo(0));
+                    Assert.That(regionLayoutCount, Is.EqualTo(0));
                 });
             }
             finally

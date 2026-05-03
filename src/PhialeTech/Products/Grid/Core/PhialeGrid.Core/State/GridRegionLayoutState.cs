@@ -9,7 +9,8 @@ namespace PhialeGrid.Core.State
             GridRegionKind regionKind,
             GridRegionState state,
             double? size,
-            bool isActive)
+            bool isActive,
+            GridRegionPlacement? placementOverride = null)
         {
             if (!Enum.IsDefined(typeof(GridRegionKind), regionKind))
             {
@@ -31,10 +32,16 @@ namespace PhialeGrid.Core.State
                 throw new InvalidOperationException("Only open regions can be active.");
             }
 
+            if (placementOverride.HasValue && !Enum.IsDefined(typeof(GridRegionPlacement), placementOverride.Value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(placementOverride), placementOverride, "Unknown grid region placement.");
+            }
+
             RegionKind = regionKind;
             State = state;
             Size = size;
             IsActive = isActive;
+            PlacementOverride = placementOverride;
         }
 
         public GridRegionKind RegionKind { get; }
@@ -44,5 +51,7 @@ namespace PhialeGrid.Core.State
         public bool IsActive { get; }
 
         public double? Size { get; }
+
+        public GridRegionPlacement? PlacementOverride { get; }
     }
 }

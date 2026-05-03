@@ -3,6 +3,7 @@ namespace PhialeGrid.Localization
     public static class GridTextKeys
     {
         public const string GroupingDropHere = "grouping.drop_here";
+        public const string GroupingBandLabel = "grouping.band_label";
         public const string GroupingEmpty = "grouping.empty";
         public const string GroupingClear = "grouping.clear";
         public const string GroupingExpand = "grouping.expand";

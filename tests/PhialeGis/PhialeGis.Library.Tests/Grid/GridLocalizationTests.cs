@@ -18,8 +18,9 @@ namespace PhialeGis.Library.Tests.Grid
 
             Assert.That(catalog.AvailableLanguageCodes, Does.Contain("en"));
             Assert.That(catalog.AvailableLanguageCodes, Does.Contain("pl"));
-            Assert.That(catalog.GetText("en", GridTextKeys.GroupingDropHere), Is.EqualTo("Drag a column header here to group by that column"));
-            Assert.That(catalog.GetText("pl", GridTextKeys.GroupingDropHere), Is.EqualTo("Przeciągnij nagłówek kolumny tutaj, aby grupować po tej kolumnie"));
+            Assert.That(catalog.GetText("en", GridTextKeys.GroupingBandLabel), Is.EqualTo("Group by:"));
+            Assert.That(catalog.GetText("en", GridTextKeys.GroupingDropHere), Is.EqualTo("- - Drop column here to group - -"));
+            Assert.That(catalog.GetText("pl", GridTextKeys.GroupingDropHere), Is.EqualTo("- - Upuść kolumnę tutaj, aby grupować - -"));
             Assert.That(catalog.GetText("en", GridTextKeys.GroupingExpandAll), Is.EqualTo("Expand all groups"));
             Assert.That(catalog.GetText("pl", GridTextKeys.GroupingCollapseAll), Is.EqualTo("Zwiń wszystkie grupy"));
             Assert.That(catalog.GetText("en", GridTextKeys.EditingPending), Does.Contain("Unsaved edits detected"));

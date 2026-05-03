@@ -247,6 +247,48 @@ namespace PhialeGrid.Core.Tests.Editing
             });
         }
 
+        [Test]
+        public void BeginStateChangeBatch_WhenMultipleFieldValuesChange_RaisesSingleStateChanged()
+        {
+            var records = new[]
+            {
+                new MutableTestRecord("row-1", "Alpha", "Owner A"),
+            };
+            var fields = new IEditSessionFieldDefinition[]
+            {
+                new EditSessionFieldDefinition<MutableTestRecord>(
+                    "Name",
+                    "Name",
+                    typeof(string),
+                    record => record.Name,
+                    (record, value) => record.Name = value as string),
+                new EditSessionFieldDefinition<MutableTestRecord>(
+                    "Owner",
+                    "Owner",
+                    typeof(string),
+                    record => record.Owner,
+                    (record, value) => record.Owner = value as string),
+            };
+            var source = new InMemoryEditSessionDataSource<MutableTestRecord>(records, fields);
+            var sut = new EditSessionContext<MutableTestRecord>(source, record => record.Id);
+            var stateChangedCount = 0;
+            sut.StateChanged += (sender, args) => stateChangedCount++;
+
+            using (sut.BeginStateChangeBatch("multi-field-edit"))
+            {
+                Assert.That(sut.TrySetFieldValue("row-1", "Name", "Beta"), Is.True);
+                Assert.That(sut.TrySetFieldValue("row-1", "Owner", "Owner B"), Is.True);
+            }
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(stateChangedCount, Is.EqualTo(1));
+                Assert.That(sut.SurfaceStateProjection.RecordStates["row-1"].EditState, Is.EqualTo(RecordEditState.Modified));
+                Assert.That(sut.SurfaceStateProjection.CellStates["row-1_Name"].ChangeState, Is.EqualTo(CellChangeState.Modified));
+                Assert.That(sut.SurfaceStateProjection.CellStates["row-1_Owner"].ChangeState, Is.EqualTo(CellChangeState.Modified));
+            });
+        }
+
         private sealed class TestRecord
         {
             public TestRecord(string id, string name)
@@ -258,6 +300,22 @@ namespace PhialeGrid.Core.Tests.Editing
             public string Id { get; }
 
             public string Name { get; }
+        }
+
+        private sealed class MutableTestRecord
+        {
+            public MutableTestRecord(string id, string name, string owner)
+            {
+                Id = id;
+                Name = name;
+                Owner = owner;
+            }
+
+            public string Id { get; }
+
+            public string Name { get; set; }
+
+            public string Owner { get; set; }
         }
     }
 }

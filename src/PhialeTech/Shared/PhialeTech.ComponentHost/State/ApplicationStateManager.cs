@@ -12,6 +12,7 @@ namespace PhialeTech.ComponentHost.State
         private readonly IApplicationStateStore _store;
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly Dictionary<string, Registration> _registrations = new Dictionary<string, Registration>(StringComparer.Ordinal);
+        private readonly Dictionary<string, PreloadedState> _preloadedStates = new Dictionary<string, PreloadedState>(StringComparer.Ordinal);
 
         public ApplicationStateManager(IApplicationStateStore store, JsonSerializerOptions jsonOptions = null)
         {
@@ -73,7 +74,9 @@ namespace PhialeTech.ComponentHost.State
 
         public void Delete(string stateKey)
         {
-            _store.Delete(NormalizeStateKey(stateKey));
+            var normalizedStateKey = NormalizeStateKey(stateKey);
+            _store.Delete(normalizedStateKey);
+            _preloadedStates.Remove(normalizedStateKey);
         }
 
         public void Save<TState>(string stateKey, TState state)
@@ -83,7 +86,7 @@ namespace PhialeTech.ComponentHost.State
 
         public bool TryLoad<TState>(string stateKey, out TState state)
         {
-            if (TryLoad(NormalizeStateKey(stateKey), typeof(TState), out var rawState) && rawState is TState typedState)
+            if (TryLoad(NormalizeStateKey(stateKey), typeof(TState), out var rawState, false, true) && rawState is TState typedState)
             {
                 state = typedState;
                 return true;
@@ -91,6 +94,11 @@ namespace PhialeTech.ComponentHost.State
 
             state = default(TState);
             return false;
+        }
+
+        public bool Preload<TState>(string stateKey)
+        {
+            return TryLoad(NormalizeStateKey(stateKey), typeof(TState), out _, true, false);
         }
 
         public void Unregister(string stateKey)
@@ -126,22 +134,38 @@ namespace PhialeTech.ComponentHost.State
 
             var payload = JsonSerializer.Serialize(envelope, _jsonOptions);
             _store.Save(stateKey, payload);
+            _preloadedStates.Remove(stateKey);
         }
 
-        private bool TryLoad(string stateKey, Type stateType, out object state)
+        private bool TryLoad(string stateKey, Type stateType, out object state, bool keepPreloadedState, bool consumePreloadedState)
         {
             var payload = _store.Load(stateKey);
             if (string.IsNullOrWhiteSpace(payload))
             {
+                _preloadedStates.Remove(stateKey);
                 state = null;
                 return false;
             }
 
             try
             {
+                if (_preloadedStates.TryGetValue(stateKey, out var preloadedState) &&
+                    preloadedState.StateType == stateType &&
+                    string.Equals(preloadedState.Payload, payload, StringComparison.Ordinal))
+                {
+                    state = preloadedState.State;
+                    if (consumePreloadedState)
+                    {
+                        _preloadedStates.Remove(stateKey);
+                    }
+
+                    return state != null;
+                }
+
                 var envelope = JsonSerializer.Deserialize<ApplicationStateEnvelope>(payload, _jsonOptions);
                 if (envelope == null || envelope.State.ValueKind == JsonValueKind.Undefined || envelope.State.ValueKind == JsonValueKind.Null)
                 {
+                    _preloadedStates.Remove(stateKey);
                     state = null;
                     return false;
                 }
@@ -150,15 +174,22 @@ namespace PhialeTech.ComponentHost.State
                 if (!string.IsNullOrWhiteSpace(envelope.StateType) &&
                     !string.Equals(envelope.StateType, expectedTypeName, StringComparison.Ordinal))
                 {
+                    _preloadedStates.Remove(stateKey);
                     state = null;
                     return false;
                 }
 
                 state = envelope.State.Deserialize(stateType, _jsonOptions);
+                if (state != null && keepPreloadedState)
+                {
+                    _preloadedStates[stateKey] = new PreloadedState(payload, stateType, state);
+                }
+
                 return state != null;
             }
             catch
             {
+                _preloadedStates.Remove(stateKey);
                 state = null;
                 return false;
             }
@@ -166,7 +197,7 @@ namespace PhialeTech.ComponentHost.State
 
         private bool TryRestoreLoadedState(string stateKey, Registration registration, out object state)
         {
-            if (!TryLoad(stateKey, registration.StateType, out state))
+            if (!TryLoad(stateKey, registration.StateType, out state, false, true))
             {
                 return false;
             }
@@ -179,6 +210,7 @@ namespace PhialeTech.ComponentHost.State
             catch
             {
                 _store.Delete(stateKey);
+                _preloadedStates.Remove(stateKey);
                 state = null;
                 return false;
             }
@@ -236,6 +268,22 @@ namespace PhialeTech.ComponentHost.State
             public string StateType { get; set; }
 
             public JsonElement State { get; set; }
+        }
+
+        private sealed class PreloadedState
+        {
+            public PreloadedState(string payload, Type stateType, object state)
+            {
+                Payload = payload;
+                StateType = stateType;
+                State = state;
+            }
+
+            public string Payload { get; }
+
+            public Type StateType { get; }
+
+            public object State { get; }
         }
     }
 }

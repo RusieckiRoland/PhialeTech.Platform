@@ -7,5 +7,7 @@ namespace PhialeGrid.Core.Regions
         GroupingRegion,
         SummaryBottomRegion,
         SideToolRegion,
+        ChangePanelRegion,
+        ValidationPanelRegion,
     }
 }

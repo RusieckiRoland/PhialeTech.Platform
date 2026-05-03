@@ -10,6 +10,7 @@ namespace PhialeGrid.Core.Interaction
             GridRegionCommandKind commandKind,
             GridRegionKind regionKind,
             double? requestedSize = null,
+            GridRegionPlacement? requestedPlacement = null,
             GridInputModifiers modifiers = GridInputModifiers.None)
             : base(timestamp, modifiers)
         {
@@ -40,9 +41,27 @@ namespace PhialeGrid.Core.Interaction
                 throw new InvalidOperationException("Only resize region commands may carry a requested size.");
             }
 
+            if (commandKind == GridRegionCommandKind.Move)
+            {
+                if (!requestedPlacement.HasValue)
+                {
+                    throw new InvalidOperationException("Move region commands require a requested placement.");
+                }
+
+                if (!Enum.IsDefined(typeof(GridRegionPlacement), requestedPlacement.Value))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(requestedPlacement), requestedPlacement, "Unknown grid region placement.");
+                }
+            }
+            else if (requestedPlacement.HasValue)
+            {
+                throw new InvalidOperationException("Only move region commands may carry a requested placement.");
+            }
+
             CommandKind = commandKind;
             RegionKind = regionKind;
             RequestedSize = requestedSize;
+            RequestedPlacement = requestedPlacement;
         }
 
         public GridRegionCommandKind CommandKind { get; }
@@ -50,6 +69,8 @@ namespace PhialeGrid.Core.Interaction
         public GridRegionKind RegionKind { get; }
 
         public double? RequestedSize { get; }
+
+        public GridRegionPlacement? RequestedPlacement { get; }
     }
 
     public enum GridRegionCommandKind
@@ -60,5 +81,6 @@ namespace PhialeGrid.Core.Interaction
         Close,
         Resize,
         Activate,
+        Move,
     }
 }

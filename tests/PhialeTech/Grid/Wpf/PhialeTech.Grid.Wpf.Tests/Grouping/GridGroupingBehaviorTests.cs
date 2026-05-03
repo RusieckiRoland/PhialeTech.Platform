@@ -6,6 +6,7 @@ using NUnit.Framework;
 using PhialeTech.Components.Shared.Model;
 using PhialeTech.Components.Shared.ViewModels;
 using PhialeTech.PhialeGrid.Wpf.Controls;
+using PhialeGrid.Core.Query;
 using PhialeGrid.Wpf.Tests.Surface;
 using WpfGrid = PhialeTech.PhialeGrid.Wpf.Controls.PhialeGrid;
 
@@ -96,6 +97,33 @@ namespace PhialeGrid.Wpf.Tests.Grouping
             {
                 window.Close();
             }
+        }
+
+        [Test]
+        public void GroupChips_PreserveDirectionGlyphAndHierarchyConnectorState()
+        {
+            var grid = new WpfGrid
+            {
+                LanguageDirectory = global::PhialeGrid.Wpf.Tests.GridTestRepositoryPaths.GridLanguagesDirectory,
+            };
+
+            grid.SetGroups(new[]
+            {
+                new GridGroupDescriptor("GeometryType", GridSortDirection.Ascending),
+                new GridGroupDescriptor("Municipality", GridSortDirection.Descending),
+                new GridGroupDescriptor("District", GridSortDirection.Ascending),
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(grid.GroupChips.Count, Is.EqualTo(3));
+                Assert.That(grid.GroupChips[0].DirectionGlyph, Is.EqualTo("↑"));
+                Assert.That(grid.GroupChips[0].HasFollowingGroup, Is.True);
+                Assert.That(grid.GroupChips[1].DirectionGlyph, Is.EqualTo("↓"));
+                Assert.That(grid.GroupChips[1].HasFollowingGroup, Is.True);
+                Assert.That(grid.GroupChips[2].DirectionGlyph, Is.EqualTo("↑"));
+                Assert.That(grid.GroupChips[2].HasFollowingGroup, Is.False);
+            });
         }
 
         [Test]

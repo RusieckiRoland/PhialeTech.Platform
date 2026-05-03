@@ -28471,7 +28471,6 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     toggleHeaderRow: "toggleHeaderRow",
     toggleHeaderColumn: "toggleHeaderColumn",
     focus: "focus",
-    clear: "clear",
     exportHtml: "exportHtml",
     exportMarkdown: "exportMarkdown",
     saveJson: "saveJson",
@@ -28589,7 +28588,6 @@ Please report this to https://github.com/markedjs/marked.`, e) {
   var ICONS = {
     expand: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5"/><path d="M3 3l7 7"/><path d="M16 3h5v5"/><path d="M21 3l-7 7"/><path d="M8 21H3v-5"/><path d="M3 21l7-7"/><path d="M16 21h5v-5"/><path d="M21 21l-7-7"/></svg>',
     collapse: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3"/><path d="M3 10l7-7"/><path d="M14 3v7h7"/><path d="M21 10l-7-7"/><path d="M10 21v-7H3"/><path d="M3 14l7 7"/><path d="M14 21v-7h7"/><path d="M21 14l-7 7"/></svg>',
-    close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>',
     undo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H4v5"/><path d="M4 12c1.8-3.8 5-5.7 9.4-5.7 4.4 0 7.7 2.4 8.6 6.7"/></svg>',
     redo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7h5v5"/><path d="M20 12c-1.8-3.8-5-5.7-9.4-5.7-4.4 0-7.7 2.4-8.6 6.7"/></svg>',
     paragraph: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h7a4 4 0 0 1 0 8H11"/><path d="M11 6v12"/><path d="M15 6v12"/></svg>',
@@ -28747,6 +28745,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     isReadOnly: false,
     theme: "light",
     languageCode: "en",
+    overlayMode: "window",
     placeholder: "",
     toolbar: { items: DEFAULT_TOOLBAR.map((command2, index) => ({ command: command2, isVisible: true, order: index })) },
     documentJson: null
@@ -28808,6 +28807,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
   }
   function normalizeLanguageCode(languageCode) {
     return languageCode === "pl" ? "pl" : "en";
+  }
+  function normalizeOverlayMode(overlayMode) {
+    return overlayMode === "disabled" || overlayMode === "container" || overlayMode === "window" ? overlayMode : "window";
   }
   function applyLanguage(languageCode) {
     bootstrap.languageCode = normalizeLanguageCode(languageCode);
@@ -28935,6 +28937,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const commands = Array.from(hiddenToolbarCommands).sort();
     window.localStorage?.setItem(TOOLBAR_VISIBILITY_STORAGE_KEY, JSON.stringify(commands));
     postMessage({ type: "documentEditor.toolbarVisibilityChanged", hiddenCommands: commands });
+  }
+  function createEmptyDocument() {
+    return { type: "doc", content: [{ type: "paragraph" }] };
+  }
+  function snapshotDocumentJson() {
+    return JSON.stringify(editor.getJSON());
   }
   function isToolbarCommandVisible(command2) {
     return !hiddenToolbarCommands.has(command2);
@@ -29233,8 +29241,6 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       case COMMANDS.focus:
         editor.commands.focus();
         return true;
-      case COMMANDS.clear:
-        return chain.clearContent(true).run();
       default:
         return false;
     }
@@ -29673,6 +29679,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     renderToolbar();
   }
   function setOverlayOpen(isOpen, notifyHost) {
+    if (bootstrap.overlayMode === "disabled") {
+      isOverlayOpen = false;
+      shell.classList.remove("is-overlay");
+      renderShellActions();
+      return;
+    }
     isOverlayOpen = !!isOpen;
     shell.classList.toggle("is-overlay", isOverlayOpen);
     renderShellActions();
@@ -29685,29 +29697,19 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       return;
     }
     shellActionsElement.innerHTML = "";
-    const overlayToggle = document.createElement("button");
-    overlayToggle.type = "button";
-    overlayToggle.className = "editor-shell-action";
-    overlayToggle.title = getLabel(isOverlayOpen ? "overlayCollapse" : "overlayExpand");
-    overlayToggle.setAttribute("aria-label", overlayToggle.title);
-    overlayToggle.innerHTML = isOverlayOpen ? ICONS.collapse : ICONS.expand;
-    overlayToggle.addEventListener("click", (event) => {
-      event.preventDefault();
-      setOverlayOpen(!isOverlayOpen, true);
-    });
-    shellActionsElement.appendChild(overlayToggle);
-    if (isOverlayOpen) {
-      const overlayClose = document.createElement("button");
-      overlayClose.type = "button";
-      overlayClose.className = "editor-shell-action";
-      overlayClose.title = getLabel("overlayClose");
-      overlayClose.setAttribute("aria-label", overlayClose.title);
-      overlayClose.innerHTML = ICONS.close;
-      overlayClose.addEventListener("click", (event) => {
+    const canOverlay = bootstrap.overlayMode !== "disabled";
+    if (canOverlay) {
+      const overlayToggle = document.createElement("button");
+      overlayToggle.type = "button";
+      overlayToggle.className = "editor-shell-action";
+      overlayToggle.title = getLabel(isOverlayOpen ? "overlayCollapse" : "overlayExpand");
+      overlayToggle.setAttribute("aria-label", overlayToggle.title);
+      overlayToggle.innerHTML = isOverlayOpen ? ICONS.collapse : ICONS.expand;
+      overlayToggle.addEventListener("click", (event) => {
         event.preventDefault();
-        setOverlayOpen(false, true);
+        setOverlayOpen(!isOverlayOpen, true);
       });
-      shellActionsElement.appendChild(overlayClose);
+      shellActionsElement.appendChild(overlayToggle);
     }
   }
   function renderToolbar() {
@@ -29782,7 +29784,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         return;
       }
       if (kind === "json") {
-        const parsed = value ? JSON.parse(value) : { type: "doc", content: [{ type: "paragraph" }] };
+        const parsed = value ? JSON.parse(value) : createEmptyDocument();
         editor.commands.setContent(parsed, { emitUpdate: false });
         dirty = false;
         return;
@@ -29814,10 +29816,6 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         case "documentEditor.setDocumentJson":
           setContent2("json", message.documentJson || "");
           break;
-        case "documentEditor.clear":
-          editor.commands.clearContent(true);
-          dirty = true;
-          break;
         case "documentEditor.focus":
           editor.commands.focus();
           break;
@@ -29828,6 +29826,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         case "documentEditor.setToolbarConfig":
           bootstrap.toolbar = message.toolbar || bootstrap.toolbar;
           renderToolbar();
+          break;
+        case "documentEditor.setOverlayMode":
+          bootstrap.overlayMode = normalizeOverlayMode(message.overlayMode);
+          if (bootstrap.overlayMode === "disabled" && isOverlayOpen) {
+            setOverlayOpen(false, false);
+          } else {
+            renderShellActions();
+          }
           break;
         case "documentEditor.setOverlay":
           setOverlayOpen(message.isOpen, false);
@@ -29869,6 +29875,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     applyTheme(bootstrap.theme);
     applyTextStyles();
     bootstrap.languageCode = normalizeLanguageCode(bootstrap.languageCode);
+    bootstrap.overlayMode = normalizeOverlayMode(bootstrap.overlayMode);
     document.documentElement.lang = bootstrap.languageCode;
     editor = new Editor({
       element: surfaceElement,
@@ -29896,6 +29903,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         Markdown
       ],
       onCreate() {
+        captureBaselineDocument();
         renderShellActions();
         renderToolbar();
         postMessage({ type: "documentEditor.ready" });
@@ -29903,6 +29911,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       },
       onUpdate() {
         dirty = true;
+        renderShellActions();
         renderToolbar();
         broadcast("documentEditor.contentChanged");
       },

@@ -597,6 +597,45 @@ namespace PhialeGrid.Core.Tests.Rendering
         }
 
         [Test]
+        public void BuildSnapshot_WhenCellProjectionMarksRowAsModified_AddsPendingEditTrackMarker()
+        {
+            var sut = new GridSurfaceBuilder();
+            var context = CreateContext();
+            context.StateProjection = new GridSurfaceStateProjection(
+                new Dictionary<string, GridRecordRenderState>(StringComparer.OrdinalIgnoreCase),
+                new Dictionary<string, GridCellRenderState>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["row-2_col-1"] = new GridCellRenderState(
+                        "row-2",
+                        "col-1",
+                        CellDisplayState.Normal,
+                        CellChangeState.Modified,
+                        CellValidationState.Valid,
+                        CellAccessState.Editable),
+                });
+
+            var snapshot = sut.BuildSnapshot(context);
+            var marker = snapshot.ViewportState.VerticalTrackMarkers.Single();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(marker.TargetKey, Is.EqualTo("row-2"));
+                Assert.That(marker.Kind, Is.EqualTo(GridViewportTrackMarkerKind.PendingEdit));
+            });
+        }
+
+        [Test]
+        public void BuildSnapshot_WhenNoRowsHaveState_DoesNotAddTrackMarkers()
+        {
+            var sut = new GridSurfaceBuilder();
+            var context = CreateContext();
+
+            var snapshot = sut.BuildSnapshot(context);
+
+            Assert.That(snapshot.ViewportState.VerticalTrackMarkers, Is.Empty);
+        }
+
+        [Test]
         public void BuildSnapshot_WhenCurrentDataRowExists_DoesNotAddOpaqueRowOverlay()
         {
             var sut = new GridSurfaceBuilder();

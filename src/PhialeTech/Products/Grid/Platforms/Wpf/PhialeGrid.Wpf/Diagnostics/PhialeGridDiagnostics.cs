@@ -73,6 +73,26 @@ namespace PhialeTech.PhialeGrid.Wpf.Diagnostics
             }
         }
 
+        public static int GetGridCounter(string gridId, string counterName)
+        {
+            if (string.IsNullOrWhiteSpace(gridId) || string.IsNullOrWhiteSpace(counterName))
+            {
+                return 0;
+            }
+
+            lock (SyncRoot)
+            {
+                if (!GridSessions.TryGetValue(gridId, out var session))
+                {
+                    return 0;
+                }
+
+                return session.Counters.TryGetValue(counterName, out var current)
+                    ? current
+                    : 0;
+            }
+        }
+
         public static string DescribeGridSession(string gridId)
         {
             if (string.IsNullOrWhiteSpace(gridId))

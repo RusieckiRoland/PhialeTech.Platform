@@ -176,6 +176,8 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public RelayCommand ShowOverviewCommand { get; }
 
+        public Action<string> DiagnosticsTrace { get; set; }
+
         public IReadOnlyList<DemoLanguageOption> LanguageOptions { get; }
 
         public IReadOnlyList<DemoThemeOption> ThemeOptions =>
@@ -1187,7 +1189,7 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public bool ShowSummaryDesignerTools => SelectedExample != null && (SelectedExample.Id == "summaries" || SelectedExample.Id == "state-persistence" || SelectedExample.Id == "summary-designer");
 
-        public string GridSideToolRegionTitleText => ShowSummaryDesignerTools ? "Summary designer" : "Tools";
+        public string GridSideToolRegionTitleText => ShowSummaryDesignerTools ? "Summary designer" : "Grid options";
 
         public bool ShowGridEditCommandBar => ShowGridSurface;
 
@@ -1227,27 +1229,49 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public void SelectExample(string exampleId)
         {
+            TraceDiagnostics("SelectExample started. ExampleId='" + (exampleId ?? string.Empty) + "'.");
             var example = _catalog.GetExampleById(exampleId);
+            TraceDiagnostics("SelectExample catalog lookup finished. Found=" + (example != null) + ".");
             if (example == null)
             {
+                TraceDiagnostics("SelectExample stopped because example was not found. ExampleId='" + (exampleId ?? string.Empty) + "'.");
                 return;
             }
 
+            TraceDiagnostics("SelectExample deferred rebuild block started. ExampleId='" + example.Id + "'.");
             DeferGridEditSessionContextRebuild(() =>
             {
+                TraceDiagnostics("RebuildDrawerGroups started.");
                 _selectedDrawerGroupId = NormalizeDrawerGroupId(example.DrawerGroupId);
                 RebuildDrawerGroups();
+                TraceDiagnostics("RebuildDrawerGroups finished.");
+                TraceDiagnostics("RebuildSections started.");
                 RebuildSections();
+                TraceDiagnostics("RebuildSections finished.");
+                TraceDiagnostics("SelectedExample assignment started.");
                 SelectedExample = example;
+                TraceDiagnostics("SelectedExample assignment finished.");
+                TraceDiagnostics("SetMasterDetailOutside(false) started.");
                 SetMasterDetailOutside(false);
+                TraceDiagnostics("SetMasterDetailOutside(false) finished.");
+                TraceDiagnostics("SelectedTabIndex assignment started.");
                 SelectedTabIndex = (int)DemoTabKind.Demo;
+                TraceDiagnostics("SelectedTabIndex assignment finished.");
                 if (!IsWebComponentsExampleDefinition(example))
                 {
+                    TraceDiagnostics("RebuildGridColumns started.");
                     RebuildGridColumns();
+                    TraceDiagnostics("RebuildGridColumns finished.");
+                    TraceDiagnostics("RebuildScenarioState started.");
                     RebuildScenarioState(true);
+                    TraceDiagnostics("RebuildScenarioState finished.");
                 }
+                TraceDiagnostics("RebuildCodeFiles started.");
                 RebuildCodeFiles();
+                TraceDiagnostics("RebuildCodeFiles finished.");
             });
+            TraceDiagnostics("SelectExample deferred rebuild block finished. ExampleId='" + example.Id + "'.");
+            TraceDiagnostics("SelectExample finished. ExampleId='" + example.Id + "'.");
         }
 
         public void SelectComponent(string componentId)
@@ -1553,6 +1577,7 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         private void RebuildGridEditSessionContext()
         {
+            TraceDiagnostics("RebuildGridEditSessionContext started.");
             var records = GridRecords ?? Array.Empty<DemoGisRecordViewModel>();
             var fieldDefinitions = _gridFieldDefinitions != null && _gridFieldDefinitions.Count > 0
                 ? _gridFieldDefinitions
@@ -1572,6 +1597,12 @@ namespace PhialeTech.Components.Shared.ViewModels
             {
                 GridEditSessionContext = _ownedGridEditSessionContext;
             }
+            TraceDiagnostics("RebuildGridEditSessionContext finished. Records=" + records.Count + ", Fields=" + fieldDefinitions.Count + ".");
+        }
+
+        private void TraceDiagnostics(string message)
+        {
+            DiagnosticsTrace?.Invoke(message ?? string.Empty);
         }
 
         private void RequestGridEditSessionContextRebuild()

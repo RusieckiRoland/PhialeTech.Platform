@@ -47,7 +47,7 @@ namespace PhialeGrid.Core.Regions
 
             ValidatePlacement(hostKind, placement);
             ValidateSizeBounds(size, minSize, maxSize);
-            ValidateStateSemantics(state, isAvailable, isActive, canCollapse, canActivate);
+            ValidateStateSemantics(hostKind, state, isAvailable, isActive, canCollapse, canResize, canActivate);
 
             RegionKind = regionKind;
             HostKind = hostKind;
@@ -97,24 +97,24 @@ namespace PhialeGrid.Core.Regions
         {
             switch (hostKind)
             {
-                case GridRegionHostKind.Surface:
+                case GridRegionHostKind.CoreSurface:
                     if (placement != GridRegionPlacement.Center)
                     {
-                        throw new ArgumentException("Surface view states must use the Center placement.", nameof(placement));
+                        throw new ArgumentException("Core surface view states must use the Center placement.", nameof(placement));
                     }
 
                     break;
-                case GridRegionHostKind.Strip:
+                case GridRegionHostKind.WorkspaceBand:
                     if (placement != GridRegionPlacement.Top && placement != GridRegionPlacement.Bottom)
                     {
-                        throw new ArgumentException("Strip view states must use the Top or Bottom placement.", nameof(placement));
+                        throw new ArgumentException("Workspace band view states must use the Top or Bottom placement.", nameof(placement));
                     }
 
                     break;
-                case GridRegionHostKind.Pane:
+                case GridRegionHostKind.WorkspacePanel:
                     if (placement != GridRegionPlacement.Left && placement != GridRegionPlacement.Right)
                     {
-                        throw new ArgumentException("Pane view states must use the Left or Right placement.", nameof(placement));
+                        throw new ArgumentException("Workspace panel view states must use the Left or Right placement.", nameof(placement));
                     }
 
                     break;
@@ -157,12 +157,24 @@ namespace PhialeGrid.Core.Regions
         }
 
         private static void ValidateStateSemantics(
+            GridRegionHostKind hostKind,
             GridRegionState state,
             bool isAvailable,
             bool isActive,
             bool canCollapse,
+            bool canResize,
             bool canActivate)
         {
+            if (hostKind == GridRegionHostKind.WorkspaceBand && (canCollapse || canResize))
+            {
+                throw new InvalidOperationException("Workspace band view states can only close and move vertically; they cannot collapse or resize.");
+            }
+
+            if (hostKind == GridRegionHostKind.WorkspacePanel && !canResize)
+            {
+                throw new InvalidOperationException("Workspace panel view states require resize support.");
+            }
+
             if (state == GridRegionState.Collapsed && !canCollapse)
             {
                 throw new InvalidOperationException("A collapsed region view state requires collapse support.");

@@ -1,5 +1,6 @@
 # PhialeGrid default English UI text
-grouping.drop_here=Drag a column header here to group by that column
+grouping.drop_here=- - Drop column here to group - -
+grouping.band_label=Group by:
 grouping.empty=No grouping applied
 grouping.clear=Clear grouping
 grouping.expand=Expand group

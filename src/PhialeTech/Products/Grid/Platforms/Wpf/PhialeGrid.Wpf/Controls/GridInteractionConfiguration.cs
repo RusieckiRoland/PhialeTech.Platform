@@ -13,6 +13,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
     public enum GridDensity
     {
         Compact,
+        Normal,
         Comfortable,
         Touch,
     }
@@ -129,6 +130,30 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         {
             switch (density)
             {
+                case GridDensity.Compact:
+                    return new GridDensityMetrics(
+                        GridDensity.Compact,
+                        30d,
+                        28d,
+                        28d,
+                        new Thickness(8d, 4d, 8d, 4d),
+                        new Thickness(10d, 8d, 10d, 8d),
+                        new Thickness(8d, 6d, 24d, 6d),
+                        18d,
+                        new Thickness(28d, 0d, 0d, 8d),
+                        18d);
+                case GridDensity.Normal:
+                    return new GridDensityMetrics(
+                        GridDensity.Normal,
+                        34d,
+                        30d,
+                        30d,
+                        new Thickness(9d, 5d, 9d, 5d),
+                        new Thickness(11d, 9d, 11d, 9d),
+                        new Thickness(9d, 7d, 26d, 7d),
+                        19d,
+                        new Thickness(30d, 0d, 0d, 8d),
+                        20d);
                 case GridDensity.Comfortable:
                     return new GridDensityMetrics(
                         GridDensity.Comfortable,
@@ -154,17 +179,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                         new Thickness(40d, 0d, 0d, 8d),
                         30d);
                 default:
-                    return new GridDensityMetrics(
-                        GridDensity.Compact,
-                        30d,
-                        28d,
-                        28d,
-                        new Thickness(8d, 4d, 8d, 4d),
-                        new Thickness(10d, 8d, 10d, 8d),
-                        new Thickness(8d, 6d, 24d, 6d),
-                        18d,
-                        new Thickness(28d, 0d, 0d, 8d),
-                        18d);
+                    throw new InvalidOperationException("Unknown grid density.");
             }
         }
 
@@ -176,8 +191,11 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     return 20d;
                 case GridDensity.Touch:
                     return 24d;
-                default:
+                case GridDensity.Compact:
+                case GridDensity.Normal:
                     return 20d;
+                default:
+                    throw new InvalidOperationException("Unknown grid density.");
             }
         }
 
@@ -189,8 +207,11 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     return 20d;
                 case GridDensity.Touch:
                     return 22d;
-                default:
+                case GridDensity.Compact:
+                case GridDensity.Normal:
                     return 18d;
+                default:
+                    throw new InvalidOperationException("Unknown grid density.");
             }
         }
 
@@ -229,11 +250,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             switch (density)
             {
                 case GridDensity.Comfortable:
+                case GridDensity.Normal:
                     return 8d;
                 case GridDensity.Touch:
                     return 9d;
-                default:
+                case GridDensity.Compact:
                     return 7d;
+                default:
+                    throw new InvalidOperationException("Unknown grid density.");
             }
         }
 
@@ -242,11 +266,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             switch (density)
             {
                 case GridDensity.Comfortable:
+                case GridDensity.Normal:
                     return 10d;
                 case GridDensity.Touch:
                     return 12d;
-                default:
+                case GridDensity.Compact:
                     return 8d;
+                default:
+                    throw new InvalidOperationException("Unknown grid density.");
             }
         }
 
@@ -258,8 +285,12 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     return 28d;
                 case GridDensity.Touch:
                     return 34d;
-                default:
+                case GridDensity.Normal:
+                    return 26d;
+                case GridDensity.Compact:
                     return 24d;
+                default:
+                    throw new InvalidOperationException("Unknown grid density.");
             }
         }
 
@@ -271,8 +302,12 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     return 6d;
                 case GridDensity.Touch:
                     return 8d;
-                default:
+                case GridDensity.Normal:
+                    return 5d;
+                case GridDensity.Compact:
                     return 4d;
+                default:
+                    throw new InvalidOperationException("Unknown grid density.");
             }
         }
 
@@ -284,8 +319,12 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     return 18d;
                 case GridDensity.Touch:
                     return 20d;
-                default:
+                case GridDensity.Normal:
+                    return 17d;
+                case GridDensity.Compact:
                     return 16d;
+                default:
+                    throw new InvalidOperationException("Unknown grid density.");
             }
         }
     }

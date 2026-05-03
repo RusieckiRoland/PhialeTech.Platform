@@ -73,6 +73,13 @@
                 <Setter Property="Background" Value="{DynamicResource DemoTokenBackgroundBrush}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource DemoTokenBorderBrush}" />
             </Style>
+            <Style x:Key="GridCommandStripBadgeButtonStyle" TargetType="Button" BasedOn="{StaticResource Button.Tertiary}">
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Cursor" Value="Hand" />
+            </Style>
             <Style x:Key="GridCommandStripBadgeTextStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="11" />
                 <Setter Property="FontFamily" Value="Bahnschrift SemiBold" />
@@ -594,7 +601,7 @@
                                                                         Height="168"
                                                                         Margin="0,0,16,0"
                                                                         Style="{StaticResource OverviewCardButtonStyle}"
-                                                                        Command="{Binding DataContext.SelectExampleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                        Command="{Binding SelectExampleWithTraceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                         CommandParameter="{Binding Id}" />
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
@@ -1520,30 +1527,36 @@
                                                            Orientation="Horizontal"
                                                            VerticalAlignment="Center"
                                                            Margin="12,0,0,0">
-                                                    <Border Style="{StaticResource GridCommandStripBadgeBorderStyle}"
-                                                            Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=HasPendingEdits, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Style="{StaticResource GridCommandStripBadgeTextStyle}"
-                                                                       Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=PendingEditCount}" />
-                                                            <TextBlock Margin="4,0,0,0"
-                                                                       Style="{StaticResource GridCommandStripBadgeTextStyle}"
-                                                                       Text="{Binding DirtyRowsBadgeLabelText}" />
-                                                        </StackPanel>
-                                                    </Border>
-                                                    <Border Style="{StaticResource GridCommandStripBadgeBorderStyle}"
-                                                            Background="{DynamicResource DemoWarningBackgroundBrush}"
-                                                            BorderBrush="{DynamicResource DemoWarningBorderBrush}"
-                                                            Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=HasValidationIssues, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Style="{StaticResource GridCommandStripBadgeTextStyle}"
-                                                                       Foreground="{DynamicResource DemoWarningTextBrush}"
-                                                                       Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=ValidationIssueCount}" />
-                                                            <TextBlock Margin="4,0,0,0"
-                                                                       Style="{StaticResource GridCommandStripBadgeTextStyle}"
-                                                                       Foreground="{DynamicResource DemoWarningTextBrush}"
-                                                                       Text="{Binding ValidationIssuesBadgeLabelText}" />
-                                                        </StackPanel>
-                                                    </Border>
+                                                    <Button Style="{StaticResource GridCommandStripBadgeButtonStyle}"
+                                                            Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=HasPendingEdits, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                            Click="HandleOpenChangesPanelClick">
+                                                        <Border Style="{StaticResource GridCommandStripBadgeBorderStyle}">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Style="{StaticResource GridCommandStripBadgeTextStyle}"
+                                                                           Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=PendingEditCount}" />
+                                                                <TextBlock Margin="4,0,0,0"
+                                                                           Style="{StaticResource GridCommandStripBadgeTextStyle}"
+                                                                           Text="{Binding DirtyRowsBadgeLabelText}" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Button>
+                                                    <Button Style="{StaticResource GridCommandStripBadgeButtonStyle}"
+                                                            Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=HasValidationIssues, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                            Click="HandleOpenValidationPanelClick">
+                                                        <Border Style="{StaticResource GridCommandStripBadgeBorderStyle}"
+                                                                Background="{DynamicResource DemoWarningBackgroundBrush}"
+                                                                BorderBrush="{DynamicResource DemoWarningBorderBrush}">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Style="{StaticResource GridCommandStripBadgeTextStyle}"
+                                                                           Foreground="{DynamicResource DemoWarningTextBrush}"
+                                                                           Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=ValidationIssueCount}" />
+                                                                <TextBlock Margin="4,0,0,0"
+                                                                           Style="{StaticResource GridCommandStripBadgeTextStyle}"
+                                                                           Foreground="{DynamicResource DemoWarningTextBrush}"
+                                                                           Text="{Binding ValidationIssuesBadgeLabelText}" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Button>
                                                 </WrapPanel>
 
                                                 <WrapPanel Tag="DemoGridTopCommandActions"
@@ -1627,484 +1640,14 @@
                                             </DockPanel>
                                         </grid:PhialeGrid.TopCommandContent>
                                         <grid:PhialeGrid.SideToolContent>
-                                            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                                          HorizontalScrollBarVisibility="Disabled">
-                                                <StackPanel Visibility="{Binding ShowGridSideToolRegionContent, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <TextBlock Text="Grid tools"
-                                                               Style="{StaticResource SectionHeadlineStyle}" />
-
-                                                    <WrapPanel Visibility="{Binding ShowGridModeTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <TextBlock Margin="0,6,10,0"
-                                                                   VerticalAlignment="Center"
-                                                                   Foreground="{DynamicResource DemoSecondaryTextBrush}"
-                                                                   Text="Interaction" />
-                                                        <ComboBox Width="140"
-                                                                  Margin="0,0,10,10"
-                                                                  Style="{StaticResource DemoComboBoxStyle}"
-                                                                  SelectedValue="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=InteractionMode, Mode=TwoWay}"
-                                                                  SelectedValuePath="Tag">
-                                                            <ComboBoxItem Tag="{x:Static grid:GridInteractionMode.Classic}" Content="Classic" />
-                                                            <ComboBoxItem Tag="{x:Static grid:GridInteractionMode.Touch}" Content="Touch" />
-                                                            <ComboBoxItem Tag="{x:Static grid:GridInteractionMode.Auto}" Content="Auto" />
-                                                        </ComboBox>
-                                                        <TextBlock Margin="0,6,10,0"
-                                                                   VerticalAlignment="Center"
-                                                                   Foreground="{DynamicResource DemoSecondaryTextBrush}"
-                                                                   Text="Density" />
-                                                        <ComboBox Width="160"
-                                                                  Margin="0,0,10,10"
-                                                                  Style="{StaticResource DemoComboBoxStyle}"
-                                                                  SelectedValue="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=Density, Mode=TwoWay}"
-                                                                  SelectedValuePath="Tag">
-                                                            <ComboBoxItem Tag="{x:Static grid:GridDensity.Compact}" Content="Compact" />
-                                                            <ComboBoxItem Tag="{x:Static grid:GridDensity.Comfortable}" Content="Comfortable" />
-                                                            <ComboBoxItem Tag="{x:Static grid:GridDensity.Touch}" Content="Touch" />
-                                                        </ComboBox>
-                                                    </WrapPanel>
-
-                                                    <Border Visibility="{Binding ShowLayoutTools, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                            Margin="0,0,0,10"
-                                                            Padding="12,10"
-                                                            Background="{DynamicResource DemoHintBackgroundBrush}"
-                                                            BorderBrush="{DynamicResource DemoHintBorderBrush}"
-                                                            BorderThickness="1"
-                                                            CornerRadius="10">
-                                                        <TextBlock Text="{Binding LayoutToolsHintText}"
-                                                                   FontSize="13"
-                                                                   Foreground="{DynamicResource DemoHintTextBrush}"
-                                                                   TextWrapping="Wrap" />
-                                                    </Border>
-
-                                                    <WrapPanel Visibility="{Binding ShowSearchTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <TextBox Width="240"
-                                                                 Margin="0,0,10,10"
-                                                                 Padding="12,8"
-                                                                 Text="{Binding GridSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding ApplySearchText}"
-                                                                Click="HandleApplySearchClick" />
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding ClearSearchText}"
-                                                                Click="HandleClearSearchClick" />
-                                                    </WrapPanel>
-
-                                                    <WrapPanel Visibility="{Binding ShowFilteringTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding FocusMunicipalityFilterText}"
-                                                                Click="HandleFocusMunicipalityFilterClick" />
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding FocusOwnerFilterText}"
-                                                                Click="HandleFocusOwnerFilterClick" />
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding ClearColumnFiltersText}"
-                                                                Click="HandleClearColumnFiltersClick" />
-                                                    </WrapPanel>
-
-                                                    <WrapPanel Visibility="{Binding ShowStateTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding SaveStateText}"
-                                                                Click="HandleSaveStateClick" />
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding RestoreStateText}"
-                                                                Click="HandleRestoreStateClick" />
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding ResetStateText}"
-                                                                Click="HandleResetStateClick" />
-                                                        <TextBlock Style="{StaticResource ToolbarStatusTextStyle}"
-                                                                   Text="{Binding StateStatusText}" />
-                                                    </WrapPanel>
-
-                                                    <Border Margin="0,0,0,12"
-                                                            Padding="12"
-                                                            Background="{DynamicResource DemoTokenBackgroundBrush}"
-                                                            BorderBrush="{DynamicResource DemoTokenBorderBrush}"
-                                                            BorderThickness="1"
-                                                            CornerRadius="10"
-                                                            Visibility="{Binding ShowSelectionTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <StackPanel>
-                                                            <TextBlock Text="Selection commands"
-                                                                       FontFamily="Bahnschrift SemiBold"
-                                                                       FontSize="13"
-                                                                       Foreground="{DynamicResource DemoHeaderTextBrush}" />
-                                                            <WrapPanel Margin="0,10,0,0">
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="Show single current row"
-                                                                        Click="HandleShowSingleCurrentRowScenarioClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="Show MultiSelect demo"
-                                                                        Click="HandleShowMultiSelectScenarioClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding CopySelectionText}"
-                                                                        Click="HandleCopySelectionClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding SelectVisibleRowsText}"
-                                                                        Click="HandleSelectVisibleRowsClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding ClearSelectionText}"
-                                                                        Click="HandleClearSelectionClick" />
-                                                            </WrapPanel>
-                                                            <TextBlock Margin="0,10,0,0"
-                                                                       FontSize="13"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
-                                                                       Text="{Binding SelectionScenarioStatusText}"
-                                                                       TextWrapping="Wrap" />
-                                                        </StackPanel>
-                                                    </Border>
-
-                                                    <Border Margin="0,0,0,12"
-                                                            Padding="12"
-                                                            Background="{DynamicResource DemoTokenBackgroundBrush}"
-                                                            BorderBrush="{DynamicResource DemoTokenBorderBrush}"
-                                                            BorderThickness="1"
-                                                            CornerRadius="10"
-                                                            Visibility="{Binding ShowEditingTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <StackPanel>
-                                                            <TextBlock Text="Editing scenarios"
-                                                                       FontFamily="Bahnschrift SemiBold"
-                                                                       FontSize="13"
-                                                                       Foreground="{DynamicResource DemoHeaderTextBrush}" />
-                                                            <WrapPanel Margin="0,10,0,0">
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="Show row-state baseline"
-                                                                        Click="HandleShowRowStateBaselineScenarioClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="Show current + edited"
-                                                                        Click="HandleShowEditedPriorityScenarioClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="Show current + error"
-                                                                        Click="HandleShowInvalidPriorityScenarioClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="Reset row-state demo"
-                                                                        Click="HandleResetRowStateScenarioClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="Scroll to edited row"
-                                                                        Click="HandleScrollEditedRowDemoClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="Scroll to error cell"
-                                                                        Click="HandleScrollErrorCellDemoClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="Scroll to last column"
-                                                                        Click="HandleScrollFarColumnDemoClick" />
-                                                            </WrapPanel>
-                                                            <Border Margin="0,10,0,0"
-                                                                    Style="{StaticResource DemoStatusBannerBorderStyle}"
-                                                                    Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=HasPendingEdits, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                                <TextBlock Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=PendingEditBannerText}"
-                                                                           FontSize="13"
-                                                                           FontWeight="SemiBold"
-                                                                           Foreground="{DynamicResource DemoWarningTextBrush}"
-                                                                           TextWrapping="Wrap" />
-                                                            </Border>
-                                                            <TextBlock Margin="0,10,0,0"
-                                                                       FontSize="13"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
-                                                                       Text="{Binding EditingScenarioStatusText}"
-                                                                       TextWrapping="Wrap" />
-                                                        </StackPanel>
-                                                    </Border>
-
-                                                    <Expander Visibility="{Binding ShowConstraintTools, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                              Margin="0,0,0,12"
-                                                              IsExpanded="False"
-                                                              Background="{DynamicResource DemoTokenBackgroundBrush}"
-                                                              BorderBrush="{DynamicResource DemoTokenBorderBrush}"
-                                                              BorderThickness="1">
-                                                        <Expander.Header>
-                                                            <StackPanel>
-                                                                <TextBlock Text="{Binding ConstraintRulesTitle}"
-                                                                           FontFamily="Bahnschrift SemiBold"
-                                                                           FontSize="14"
-                                                                           Foreground="{DynamicResource DemoHeaderTextBrush}" />
-                                                                <TextBlock Margin="0,4,0,0"
-                                                                           FontSize="12"
-                                                                           Foreground="{DynamicResource DemoSecondaryTextBrush}"
-                                                                           Text="Open the code tab to see constraints defined in EditSession field definitions, not in GridColumnDefinition."
-                                                                           TextWrapping="Wrap" />
-                                                            </StackPanel>
-                                                        </Expander.Header>
-                                                        <Border Padding="12"
-                                                                Background="{DynamicResource DemoTokenBackgroundBrush}"
-                                                                BorderBrush="{DynamicResource DemoTokenBorderBrush}"
-                                                                BorderThickness="1"
-                                                                CornerRadius="10">
-                                                            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                                                          HorizontalScrollBarVisibility="Disabled"
-                                                                          MaxHeight="220"
-                                                                          CanContentScroll="False">
-                                                                <ItemsControl ItemsSource="{Binding ConstraintRules}">
-                                                                    <ItemsControl.ItemsPanel>
-                                                                        <ItemsPanelTemplate>
-                                                                            <WrapPanel />
-                                                                        </ItemsPanelTemplate>
-                                                                    </ItemsControl.ItemsPanel>
-                                                                    <ItemsControl.ItemTemplate>
-                                                                        <DataTemplate>
-                                                                            <Border Width="360"
-                                                                                    Margin="0,0,10,8"
-                                                                                    Padding="8,6"
-                                                                                    Background="{DynamicResource DemoSurfaceBrush}"
-                                                                                    BorderBrush="{DynamicResource DemoTokenBorderBrush}"
-                                                                                    BorderThickness="1"
-                                                                                    CornerRadius="8">
-                                                                                <TextBlock FontSize="12"
-                                                                                           Foreground="{DynamicResource DemoPrimaryTextBrush}"
-                                                                                           TextWrapping="Wrap"
-                                                                                           Text="{Binding}" />
-                                                                            </Border>
-                                                                        </DataTemplate>
-                                                                    </ItemsControl.ItemTemplate>
-                                                                </ItemsControl>
-                                                            </ScrollViewer>
-                                                        </Border>
-                                                    </Expander>
-
-                                                    <TextBlock Margin="0,0,0,12"
-                                                               Visibility="{Binding ShowConstraintTools, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                               FontSize="13"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource DemoSecondaryTextBrush}"
-                                                               Text="{Binding ConstraintScenarioStatusText}"
-                                                               TextWrapping="Wrap" />
-
-                                                    <Border Margin="0,0,0,12"
-                                                            Padding="12,10"
-                                                            Background="{DynamicResource DemoPanelBackgroundBrush}"
-                                                            BorderBrush="{DynamicResource DemoPanelBorderBrush}"
-                                                            BorderThickness="1"
-                                                            CornerRadius="12"
-                                                            Visibility="{Binding ShowSummaryDesignerTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <Grid>
-                                                            <Grid.RowDefinitions>
-                                                                <RowDefinition Height="Auto" />
-                                                                <RowDefinition Height="Auto" />
-                                                                <RowDefinition Height="Auto" />
-                                                            </Grid.RowDefinitions>
-
-                                                            <DockPanel Grid.Row="0"
-                                                                       LastChildFill="False">
-                                                                <TextBlock VerticalAlignment="Center"
-                                                                           Text="Summary designer"
-                                                                           FontFamily="Bahnschrift SemiBold"
-                                                                           FontSize="14"
-                                                                           Foreground="{DynamicResource DemoHeaderTextBrush}" />
-
-                                                                <WrapPanel DockPanel.Dock="Right">
-                                                                    <Button Style="{StaticResource GridCommandStripButtonStyle}"
-                                                                            Click="HandleAddSummaryClick">
-                                                                        <Button.Content>
-                                                                            <StackPanel Orientation="Horizontal">
-                                                                                <TextBlock Margin="0,0,6,0"
-                                                                                           FontSize="12"
-                                                                                           FontWeight="Bold"
-                                                                                           Text="+" />
-                                                                                <TextBlock Text="{Binding AddSummaryText}" />
-                                                                            </StackPanel>
-                                                                        </Button.Content>
-                                                                    </Button>
-                                                                    <Button Style="{StaticResource GridCommandStripButtonStyle}"
-                                                                            Click="HandleResetSummariesClick">
-                                                                        <Button.Content>
-                                                                            <StackPanel Orientation="Horizontal">
-                                                                                <TextBlock Margin="0,0,6,0"
-                                                                                           FontSize="12"
-                                                                                           Text="↺" />
-                                                                                <TextBlock Text="{Binding ResetSummariesText}" />
-                                                                            </StackPanel>
-                                                                        </Button.Content>
-                                                                    </Button>
-                                                                </WrapPanel>
-                                                            </DockPanel>
-
-                                                            <TextBlock Grid.Row="1"
-                                                                       Margin="0,6,0,10"
-                                                                       FontSize="12"
-                                                                       Foreground="{DynamicResource DemoSecondaryTextBrush}"
-                                                                       Text="Configure summary definitions here. The bottom summary region should only present results."
-                                                                       TextWrapping="Wrap" />
-
-                                                            <StackPanel Grid.Row="2">
-                                                                <WrapPanel Margin="0,0,0,10">
-                                                                    <ComboBox Width="220"
-                                                                              Margin="0,0,10,10"
-                                                                              Style="{StaticResource DemoComboBoxStyle}"
-                                                                              ItemsSource="{Binding AvailableSummaryColumns}"
-                                                                              DisplayMemberPath="Header"
-                                                                              SelectedItem="{Binding SelectedSummaryColumn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                                                    <ComboBox Width="180"
-                                                                              Margin="0,0,10,10"
-                                                                              Style="{StaticResource DemoComboBoxStyle}"
-                                                                              ItemsSource="{Binding AvailableSummaryTypes}"
-                                                                              DisplayMemberPath="DisplayName"
-                                                                              SelectedItem="{Binding SelectedSummaryType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                                                </WrapPanel>
-                                                                <ItemsControl ItemsSource="{Binding ConfiguredSummaries}">
-                                                                    <ItemsControl.ItemsPanel>
-                                                                        <ItemsPanelTemplate>
-                                                                            <WrapPanel />
-                                                                        </ItemsPanelTemplate>
-                                                                    </ItemsControl.ItemsPanel>
-                                                                    <ItemsControl.ItemTemplate>
-                                                                        <DataTemplate>
-                                                                            <Border Margin="0,0,10,10"
-                                                                                    Padding="10,6"
-                                                                                    Background="{DynamicResource DemoTokenBackgroundBrush}"
-                                                                                    BorderBrush="{DynamicResource DemoTokenBorderBrush}"
-                                                                                    BorderThickness="1"
-                                                                                    CornerRadius="10">
-                                                                                <StackPanel Orientation="Horizontal">
-                                                                                    <TextBlock Text="{Binding Label}"
-                                                                                               FontSize="11"
-                                                                                               FontWeight="Normal"
-                                                                                               Foreground="{DynamicResource DemoTokenTextBrush}" />
-                                                                                    <Button Margin="8,0,0,0"
-                                                                                            Padding="2,0"
-                                                                                            Background="Transparent"
-                                                                                            BorderThickness="0"
-                                                                                            Tag="{Binding}"
-                                                                                            Click="HandleRemoveSummaryClick">
-                                                                                        <TextBlock Text="x"
-                                                                                                   FontSize="11"
-                                                                                                   FontWeight="Normal"
-                                                                                                   Foreground="{DynamicResource DemoSecondaryTextBrush}" />
-                                                                                    </Button>
-                                                                                </StackPanel>
-                                                                            </Border>
-                                                                        </DataTemplate>
-                                                                    </ItemsControl.ItemTemplate>
-                                                                </ItemsControl>
-                                                            </StackPanel>
-                                                        </Grid>
-                                                    </Border>
-
-                                                    <Border Margin="0,0,0,12"
-                                                            Padding="12"
-                                                            Background="{DynamicResource DemoTokenBackgroundBrush}"
-                                                            BorderBrush="{DynamicResource DemoTokenBorderBrush}"
-                                                            BorderThickness="1"
-                                                            CornerRadius="10"
-                                                            Visibility="{Binding ShowHierarchyTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <StackPanel>
-                                                            <TextBlock Text="Hierarchy"
-                                                                       FontFamily="Bahnschrift SemiBold"
-                                                                       FontSize="13"
-                                                                       Foreground="{DynamicResource DemoHeaderTextBrush}" />
-                                                            <WrapPanel Margin="0,10,0,0">
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding ExpandHierarchyText}"
-                                                                        Click="HandleExpandHierarchyClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding CollapseHierarchyText}"
-                                                                        Click="HandleCollapseHierarchyClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding MasterDetailPlacementText}"
-                                                                        Visibility="{Binding ShowMasterDetailPlacementToggle, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                        Click="HandleToggleMasterDetailPlacementClick" />
-                                                            </WrapPanel>
-                                                        </StackPanel>
-                                                    </Border>
-
-                                                    <Border Margin="0,0,0,12"
-                                                            Padding="12"
-                                                            Background="{DynamicResource DemoTokenBackgroundBrush}"
-                                                            BorderBrush="{DynamicResource DemoTokenBorderBrush}"
-                                                            BorderThickness="1"
-                                                            CornerRadius="10"
-                                                            Visibility="{Binding ShowRemoteTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <StackPanel>
-                                                            <TextBlock Text="Remote data"
-                                                                       FontFamily="Bahnschrift SemiBold"
-                                                                       FontSize="13"
-                                                                       Foreground="{DynamicResource DemoHeaderTextBrush}" />
-                                                            <WrapPanel Margin="0,10,0,0">
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding PrevPageText}"
-                                                                        IsEnabled="{Binding CanMovePreviousRemotePage}"
-                                                                        Click="HandlePreviousRemotePageClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding NextPageText}"
-                                                                        IsEnabled="{Binding CanMoveNextRemotePage}"
-                                                                        Click="HandleNextRemotePageClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding RefreshRemoteText}"
-                                                                        IsEnabled="{Binding CanRefreshRemotePage}"
-                                                                        Click="HandleRefreshRemoteClick" />
-                                                            </WrapPanel>
-                                                            <TextBlock Margin="0,10,0,0"
-                                                                       Style="{StaticResource ToolbarStatusTextStyle}"
-                                                                       Text="{Binding RemoteStatusText}" />
-                                                        </StackPanel>
-                                                    </Border>
-
-                                                    <WrapPanel Visibility="{Binding ShowPersonalizationTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <TextBox Width="200"
-                                                                 Margin="0,0,10,10"
-                                                                 Padding="12,8"
-                                                                 Text="{Binding PendingViewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding SaveViewText}"
-                                                                Click="HandleSaveViewClick" />
-                                                        <ComboBox Width="220"
-                                                                  Margin="0,0,10,10"
-                                                                  ItemsSource="{Binding SavedViewNames}"
-                                                                  SelectedItem="{Binding SelectedSavedViewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding ApplyViewText}"
-                                                                Click="HandleApplyViewClick" />
-                                                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                Content="{Binding DeleteViewText}"
-                                                                Click="HandleDeleteViewClick" />
-                                                    </WrapPanel>
-
-                                                    <Border Margin="0,0,0,12"
-                                                            Padding="12"
-                                                            Background="{DynamicResource DemoTokenBackgroundBrush}"
-                                                            BorderBrush="{DynamicResource DemoTokenBorderBrush}"
-                                                            BorderThickness="1"
-                                                            CornerRadius="10"
-                                                            Visibility="{Binding ShowTransferTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <StackPanel>
-                                                            <TextBlock Text="Transfer"
-                                                                       FontFamily="Bahnschrift SemiBold"
-                                                                       FontSize="13"
-                                                                       Foreground="{DynamicResource DemoHeaderTextBrush}" />
-                                                            <WrapPanel Margin="0,10,0,0">
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding ExportCsvText}"
-                                                                        Click="HandleExportCsvClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding ImportSampleCsvText}"
-                                                                        Click="HandleImportSampleCsvClick" />
-                                                                <Button Style="{StaticResource ToolbarButtonStyle}"
-                                                                        Content="{Binding RestoreDataText}"
-                                                                        Click="HandleRestoreSourceClick" />
-                                                            </WrapPanel>
-                                                            <TextBlock Margin="0,10,0,0"
-                                                                       Style="{StaticResource ToolbarStatusTextStyle}"
-                                                                       Text="{Binding TransferStatusText}" />
-                                                        </StackPanel>
-                                                    </Border>
-
-                                                    <Border Margin="0,0,0,10"
-                                                            Style="{StaticResource DemoSurfaceBorderStyle}"
-                                                            Visibility="{Binding ShowTransferTools, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <TextBox MinHeight="130"
-                                                                 Padding="12"
-                                                                 BorderThickness="0"
-                                                                 Background="Transparent"
-                                                                 Foreground="{DynamicResource DemoPrimaryTextBrush}"
-                                                                 Text="{Binding TransferPreviewText, Mode=OneWay}"
-                                                                 FontFamily="Consolas"
-                                                                 FontSize="12"
-                                                                 IsReadOnly="True"
-                                                                 AcceptsReturn="True"
-                                                                 VerticalScrollBarVisibility="Auto"
-                                                                 HorizontalScrollBarVisibility="Auto" />
-                                                    </Border>
-                                                </StackPanel>
-                                            </ScrollViewer>
+                                            <grid:PhialeToolsPanel Visibility="{Binding ShowGridSideToolRegionContent, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         </grid:PhialeGrid.SideToolContent>
+                                        <grid:PhialeGrid.ChangePanelContent>
+                                            <grid:PhialeChangePanel Visibility="{Binding ShowGridSideToolRegionContent, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </grid:PhialeGrid.ChangePanelContent>
+                                        <grid:PhialeGrid.ValidationPanelContent>
+                                            <grid:PhialeValidationPanel Visibility="{Binding ShowGridSideToolRegionContent, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </grid:PhialeGrid.ValidationPanelContent>
                                     </grid:PhialeGrid>
                                     <selector:ActiveLayerSelector x:Name="DemoActiveLayerSelector"
                                                                   Visibility="{Binding ShowActiveLayerSelectorSurface, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -3117,6 +2660,7 @@
 
                                                     <Grid Margin="0,4,0,0"
                                                           HorizontalAlignment="Stretch"
+                                                          webHost:OverlayHost.IsScope="True"
                                                           SnapsToDevicePixels="True"
                                                           UseLayoutRounding="True">
                                                         <Grid.ColumnDefinitions>
@@ -3141,10 +2685,12 @@
                                                                        FontSize="12"
                                                                        Foreground="{DynamicResource DemoSecondaryTextBrush}"
                                                                        TextWrapping="Wrap" />
-                                                            <yamlDocumentEditor:YamlDocumentEditor x:Name="YamlAdvancedInlineDocumentEditorControl"
-                                                                                                   MinHeight="260"
-                                                                                                   HorizontalAlignment="Stretch"
-                                                                                                   RuntimeFieldState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlAdvancedInlineDocumentEditorState}" />
+                                                            <Grid MinHeight="260"
+                                                                  HorizontalAlignment="Stretch">
+                                                                <yamlDocumentEditor:YamlDocumentEditor x:Name="YamlAdvancedInlineDocumentEditorControl"
+                                                                                                       HorizontalAlignment="Stretch"
+                                                                                                       RuntimeFieldState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlAdvancedInlineDocumentEditorState}" />
+                                                            </Grid>
                                                         </StackPanel>
 
                                                         <StackPanel Grid.Column="2"
@@ -3164,10 +2710,12 @@
                                                                        FontSize="12"
                                                                        Foreground="{DynamicResource DemoSecondaryTextBrush}"
                                                                        TextWrapping="Wrap" />
-                                                            <yamlDocumentEditor:YamlDocumentEditor x:Name="YamlAdvancedFramedDocumentEditorControl"
-                                                                                                   MinHeight="260"
-                                                                                                   HorizontalAlignment="Stretch"
-                                                                                                   RuntimeFieldState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlAdvancedFramedDocumentEditorState}" />
+                                                            <Grid MinHeight="260"
+                                                                  HorizontalAlignment="Stretch">
+                                                                <yamlDocumentEditor:YamlDocumentEditor x:Name="YamlAdvancedFramedDocumentEditorControl"
+                                                                                                       HorizontalAlignment="Stretch"
+                                                                                                       RuntimeFieldState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlAdvancedFramedDocumentEditorState}" />
+                                                            </Grid>
                                                         </StackPanel>
                                                     </Grid>
                                                 </StackPanel>

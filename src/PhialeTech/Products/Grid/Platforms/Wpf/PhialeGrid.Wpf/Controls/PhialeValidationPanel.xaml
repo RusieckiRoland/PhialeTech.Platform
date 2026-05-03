@@ -1,0 +1,42 @@
+<UserControl x:Class="PhialeTech.PhialeGrid.Wpf.Controls.PhialeValidationPanel"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:grid="clr-namespace:PhialeTech.PhialeGrid.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="360"
+             d:DesignWidth="280">
+    <DockPanel LastChildFill="True">
+        <TextBlock DockPanel.Dock="Bottom"
+                   Margin="{DynamicResource PgWorkspacePanelSectionMargin}"
+                   Style="{DynamicResource PgWorkspacePanelBodyTextStyle}"
+                   Text="Fix the issue to clear validation." />
+
+        <StackPanel>
+            <TextBlock Style="{DynamicResource PgWorkspacePanelHeaderTextStyle}"
+                       Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=ValidationIssueCount, StringFormat={}{0} validation issues}" />
+
+            <ItemsControl Margin="{DynamicResource PgWorkspacePanelContentMargin}"
+                          ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=ValidationIssueRowIds}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{DynamicResource PgWorkspacePanelWarningCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Style="{DynamicResource PgWorkspacePanelCaptionTextStyle}"
+                                           Text="{Binding StringFormat={}Row {0}}" />
+                                <TextBlock Margin="{DynamicResource PgWorkspacePanelInlineButtonMargin}"
+                                           Style="{DynamicResource PgWorkspacePanelBodyTextStyle}"
+                                           Text="Value required" />
+                                <Button Style="{DynamicResource PgWorkspacePanelLinkButtonStyle}"
+                                        Content="Go to cell"
+                                        Click="HandleGoToCellClick" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </DockPanel>
+</UserControl>

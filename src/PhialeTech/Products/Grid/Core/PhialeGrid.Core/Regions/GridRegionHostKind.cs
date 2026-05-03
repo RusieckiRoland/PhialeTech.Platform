@@ -2,8 +2,8 @@ namespace PhialeGrid.Core.Regions
 {
     public enum GridRegionHostKind
     {
-        Surface,
-        Strip,
-        Pane,
+        CoreSurface,
+        WorkspaceBand,
+        WorkspacePanel,
     }
 }

@@ -12,11 +12,10 @@ namespace PhialeGrid.Wpf.Tests.Surface
             var xaml = ReadRepositoryFile(
                 "src",
                 "PhialeTech",
-                "Products",
+                "Shared",
+                "PhialeTech.Styles.Wpf",
+                "Themes.Linked",
                 "Grid",
-                "Platforms",
-                "Wpf",
-                "PhialeGrid.Wpf",
                 "PhialeGrid.xaml");
 
             Assert.Multiple(() =>
@@ -232,7 +231,7 @@ namespace PhialeGrid.Wpf.Tests.Surface
                 "PhialeGrid.Wpf",
                 "Regions",
                 "WpfGridRegionLayoutAdapter.cs");
-            var stripPresenterCode = ReadRepositoryFile(
+            var bandPresenterCode = ReadRepositoryFile(
                 "src",
                 "PhialeTech",
                 "Products",
@@ -241,8 +240,8 @@ namespace PhialeGrid.Wpf.Tests.Surface
                 "Wpf",
                 "PhialeGrid.Wpf",
                 "Regions",
-                "WpfGridStripRegionPresenter.cs");
-            var panePresenterCode = ReadRepositoryFile(
+                "WpfGridWorkspaceBandPresenter.cs");
+            var workspacePanelPresenterCode = ReadRepositoryFile(
                 "src",
                 "PhialeTech",
                 "Products",
@@ -251,7 +250,7 @@ namespace PhialeGrid.Wpf.Tests.Surface
                 "Wpf",
                 "PhialeGrid.Wpf",
                 "Regions",
-                "WpfGridPaneRegionPresenter.cs");
+                "WpfGridWorkspacePanelPresenter.cs");
             var surfacePanelCode = ReadRepositoryFile(
                 "src",
                 "PhialeTech",
@@ -276,13 +275,126 @@ namespace PhialeGrid.Wpf.Tests.Surface
             Assert.Multiple(() =>
             {
                 Assert.That(gridCode, Does.Contain("WpfGridRegionLayoutAdapter"));
-                Assert.That(adapterCode, Does.Contain("WpfGridStripRegionPresenter"));
-                Assert.That(adapterCode, Does.Contain("WpfGridPaneRegionPresenter"));
+                Assert.That(adapterCode, Does.Contain("WpfGridWorkspaceBandPresenter"));
+                Assert.That(adapterCode, Does.Contain("WpfGridWorkspacePanelPresenter"));
                 Assert.That(surfaceHeaderBandCode, Does.Contain("GridSurfaceColumnHeaderBand"));
-                Assert.That(stripPresenterCode, Does.Contain("GridRegionViewState"));
-                Assert.That(panePresenterCode, Does.Contain("GridRegionViewState"));
-                Assert.That(panePresenterCode, Does.Not.Contain("GridRegionLayoutManager"));
+                Assert.That(bandPresenterCode, Does.Contain("GridRegionViewState"));
+                Assert.That(workspacePanelPresenterCode, Does.Contain("GridRegionViewState"));
+                Assert.That(workspacePanelPresenterCode, Does.Not.Contain("GridRegionLayoutManager"));
                 Assert.That(surfacePanelCode, Does.Not.Contain("ColumnHeaderContainerType, _headerLayer"));
+            });
+        }
+
+        [Test]
+        public void PhialeGridRegionFrame_UsesDedicatedThemeTokenForRegionSurfaceBackground()
+        {
+            var gridXaml = ReadRepositoryFile(
+                "src",
+                "PhialeTech",
+                "Shared",
+                "PhialeTech.Styles.Wpf",
+                "Themes.Linked",
+                "Grid",
+                "PhialeGrid.xaml");
+            var sharedStyles = ReadRepositoryFile(
+                "src",
+                "PhialeTech",
+                "Shared",
+                "PhialeTech.Styles.Wpf",
+                "Themes",
+                "PhialeGrid.Shared.xaml");
+            var dayTokens = ReadRepositoryFile(
+                "src",
+                "PhialeTech",
+                "Shared",
+                "PhialeTech.Styles.Wpf",
+                "Themes",
+                "ThemeTokens.Day.xaml");
+            var nightTokens = ReadRepositoryFile(
+                "src",
+                "PhialeTech",
+                "Shared",
+                "PhialeTech.Styles.Wpf",
+                "Themes",
+                "ThemeTokens.Night.xaml");
+            var highContrastTokens = ReadRepositoryFile(
+                "src",
+                "PhialeTech",
+                "Shared",
+                "PhialeTech.Styles.Wpf",
+                "Themes",
+                "ThemeTokens.HighContrast.xaml");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(gridXaml, Does.Contain("x:Name=\"GridRootFrame\""));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"GridOuterFrame\""));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"RegionLayoutFrame\""));
+                Assert.That(gridXaml, Does.Contain("x:Key=\"PgGridRegionSurfaceGridStyle\""));
+                Assert.That(gridXaml, Does.Contain("x:Key=\"PgGridOuterFrameBorderStyle\""));
+                Assert.That(gridXaml, Does.Contain("x:Key=\"PgGridRegionSurfaceBorderStyle\""));
+                Assert.That(gridXaml, Does.Contain("x:Key=\"PgGridRegionHeaderChromeBorderStyle\""));
+                Assert.That(gridXaml, Does.Contain("x:Key=\"PgGridRegionDockPreviewZoneStyle\""));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"RegionDockPreviewOverlay\""));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"RegionDockPreviewLeft\""));
+                Assert.That(gridXaml, Does.Contain("x:Name=\"RegionDockPreviewRight\""));
+                Assert.That(gridXaml, Does.Contain("RoundedChildClipBehavior.ClipChildToBorder"));
+                Assert.That(gridXaml, Does.Contain("Value=\"{DynamicResource PgGridRegionSurfaceBackgroundBrush}\""));
+                Assert.That(gridXaml, Does.Contain("Value=\"{DynamicResource CornerRadius.Grid.RegionSurface}\""));
+                Assert.That(gridXaml, Does.Contain("Value=\"{DynamicResource CornerRadius.Grid.RegionHeader}\""));
+                Assert.That(gridXaml, Does.Contain("Style=\"{StaticResource PgGridRegionSurfaceGridStyle}\""));
+                Assert.That(gridXaml, Does.Contain("Style=\"{StaticResource PgGridRegionSurfaceBorderStyle}\""));
+                Assert.That(gridXaml, Does.Contain("<Grid Background=\"{TemplateBinding Background}\">"));
+                Assert.That(sharedStyles, Does.Contain("PgGridRegionSurfaceBackgroundBrush"));
+                Assert.That(sharedStyles, Does.Contain("Color.Grid.RegionSurface.Background"));
+                Assert.That(dayTokens, Does.Contain("Color.Grid.RegionSurface.Background"));
+                Assert.That(dayTokens, Does.Contain("CornerRadius.Grid.RegionSurface"));
+                Assert.That(dayTokens, Does.Contain("CornerRadius.Grid.RegionHeader"));
+                Assert.That(nightTokens, Does.Contain("Color.Grid.RegionSurface.Background"));
+                Assert.That(nightTokens, Does.Contain("CornerRadius.Grid.RegionSurface"));
+                Assert.That(nightTokens, Does.Contain("CornerRadius.Grid.RegionHeader"));
+                Assert.That(highContrastTokens, Does.Contain("Color.Grid.RegionSurface.Background"));
+                Assert.That(highContrastTokens, Does.Contain("CornerRadius.Grid.RegionSurface"));
+                Assert.That(highContrastTokens, Does.Contain("CornerRadius.Grid.RegionHeader"));
+            });
+        }
+
+        [Test]
+        public void HeaderBandPointerBridge_BelongsToDedicatedBandComponent_NotPhialeGridShell()
+        {
+            var gridCode = ReadRepositoryFile(
+                "src",
+                "PhialeTech",
+                "Products",
+                "Grid",
+                "Platforms",
+                "Wpf",
+                "PhialeGrid.Wpf",
+                "PhialeGrid.cs");
+            var surfaceHeaderBandCode = ReadRepositoryFile(
+                "src",
+                "PhialeTech",
+                "Products",
+                "Grid",
+                "Platforms",
+                "Wpf",
+                "PhialeGrid.Wpf",
+                "Surface",
+                "GridSurfaceColumnHeaderBand.cs");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(gridCode, Does.Not.Contain("SurfaceColumnHeaderBand.PreviewMouseLeftButtonDown +="));
+                Assert.That(gridCode, Does.Not.Contain("SurfaceColumnHeaderBand.PreviewMouseMove +="));
+                Assert.That(gridCode, Does.Not.Contain("SurfaceColumnHeaderBand.PreviewMouseLeftButtonUp +="));
+                Assert.That(gridCode, Does.Not.Contain("HandleSurfaceColumnHeaderBandPreviewMouseLeftButtonDown("));
+                Assert.That(gridCode, Does.Not.Contain("HandleSurfaceColumnHeaderBandPreviewMouseMove("));
+                Assert.That(gridCode, Does.Not.Contain("HandleSurfaceColumnHeaderBandPreviewMouseLeftButtonUp("));
+                Assert.That(gridCode, Does.Not.Contain("HandleSurfaceColumnHeaderBandMouseLeave("));
+                Assert.That(gridCode, Does.Not.Contain("HandlePointerPressedForTesting("));
+                Assert.That(surfaceHeaderBandCode, Does.Contain("PreviewMouseLeftButtonDown"));
+                Assert.That(surfaceHeaderBandCode, Does.Contain("PreviewMouseMove"));
+                Assert.That(surfaceHeaderBandCode, Does.Contain("PreviewMouseLeftButtonUp"));
             });
         }
 
@@ -442,6 +554,53 @@ namespace PhialeGrid.Wpf.Tests.Surface
                 Assert.That(liveHelperCode, Does.Not.Contain("GridSurfaceSyntheticInput."));
                 Assert.That(rowHeaderSelectionCode, Does.Not.Contain("HandlePointerPressedForTesting("));
                 Assert.That(rowHeaderSelectionCode, Does.Not.Contain("HandlePointerReleasedForTesting("));
+            });
+        }
+
+        [Test]
+        public void SurfaceColumnHeaderBand_UpdatesCursorUsingColumnHeaderSurface()
+        {
+            var hostCode = ReadRepositoryFile(
+                "src",
+                "PhialeTech",
+                "Products",
+                "Grid",
+                "Platforms",
+                "Wpf",
+                "PhialeGrid.Wpf",
+                "Surface",
+                "GridSurfaceHost.cs");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(hostCode, Does.Contain("HandleExternalPointerMoved"));
+                Assert.That(hostCode, Does.Contain("args.Pointer.Position.X"));
+                Assert.That(hostCode, Does.Contain("GridHitTestSurfaceScope.ColumnHeaderSurface"));
+                Assert.That(hostCode, Does.Contain("UpdatePointerCursor(position, GridHitTestSurfaceScope.DataSurface)"));
+            });
+        }
+
+        [Test]
+        public void SurfaceColumnHeaderBand_OwnsMouseCaptureForExternalHeaderInteractions()
+        {
+            var headerBandCode = ReadRepositoryFile(
+                "src",
+                "PhialeTech",
+                "Products",
+                "Grid",
+                "Platforms",
+                "Wpf",
+                "PhialeGrid.Wpf",
+                "Surface",
+                "GridSurfaceColumnHeaderBand.cs");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(headerBandCode, Does.Contain("CaptureMouse();"));
+                Assert.That(headerBandCode, Does.Not.Contain("BeginExternalMousePointerCapture"));
+                Assert.That(headerBandCode, Does.Contain("HandleExternalPointerPressed(input)"));
+                Assert.That(headerBandCode, Does.Contain("HandleExternalPointerMoved(input)"));
+                Assert.That(headerBandCode, Does.Contain("HandleExternalPointerReleased(input)"));
             });
         }
 

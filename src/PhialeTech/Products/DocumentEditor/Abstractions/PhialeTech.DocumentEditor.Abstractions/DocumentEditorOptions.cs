@@ -1,6 +1,6 @@
 namespace PhialeTech.DocumentEditor.Abstractions
 {
-    public sealed class DocumentEditorOptions
+    public sealed class DocumentEditorOptions : IDocumentEditorOverlayOptions
     {
         public string EntryPageRelativePath { get; set; } = "DocumentEditor/index.html";
 
@@ -20,6 +20,13 @@ namespace PhialeTech.DocumentEditor.Abstractions
 
         public string InitialDocumentJson { get; set; } = string.Empty;
 
+        public DocumentEditorOverlayMode OverlayMode { get; set; } = DocumentEditorOverlayMode.Window;
+
+        DocumentEditorOverlayMode? IDocumentEditorOverlayOptions.OverlayMode
+        {
+            get { return OverlayMode; }
+        }
+
         public DocumentEditorToolbarConfig Toolbar { get; set; } = DocumentEditorToolbarConfig.CreateDefault();
 
         public DocumentEditorOptions Clone()
@@ -35,6 +42,7 @@ namespace PhialeTech.DocumentEditor.Abstractions
                 InitialLanguageCode = string.IsNullOrWhiteSpace(InitialLanguageCode) ? "en" : InitialLanguageCode,
                 Placeholder = Placeholder ?? string.Empty,
                 InitialDocumentJson = InitialDocumentJson ?? string.Empty,
+                OverlayMode = OverlayMode,
                 Toolbar = (Toolbar ?? DocumentEditorToolbarConfig.CreateDefault()).Clone(),
             };
         }

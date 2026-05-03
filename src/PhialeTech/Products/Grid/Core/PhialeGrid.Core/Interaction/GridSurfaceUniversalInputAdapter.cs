@@ -192,6 +192,20 @@ namespace PhialeGrid.Core.Interaction
                 modifiers: modifiers);
         }
 
+        public GridRegionCommandInput CreateRegionMoveInput(
+            Regions.GridRegionKind regionKind,
+            Regions.GridRegionPlacement requestedPlacement,
+            DateTime timestamp,
+            GridInputModifiers modifiers = GridInputModifiers.None)
+        {
+            return new GridRegionCommandInput(
+                timestamp,
+                GridRegionCommandKind.Move,
+                regionKind,
+                requestedPlacement: requestedPlacement,
+                modifiers: modifiers);
+        }
+
         public GridHostScrollChangedInput CreateScrollChangedInput(UniversalScrollChangedEventArgs args, DateTime timestamp)
         {
             if (args == null)

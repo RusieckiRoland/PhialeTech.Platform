@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\..\Core\PhialeTech.YamlApp.Core\PhialeTech.YamlApp.Core.csproj" />
     <ProjectReference Include="..\..\..\Runtime\PhialeTech.YamlApp.Runtime\PhialeTech.YamlApp.Runtime.csproj" />
     <ProjectReference Include="..\..\..\..\..\Shared\UniversalInput.Contracts\UniversalInput.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Shared\Platforms\Wpf\PhialeTech.WebHost.Wpf\PhialeTech.WebHost.Wpf.csproj" />
     <ProjectReference Include="..\..\..\..\..\Shared\PhialeTech.Styles.Wpf\PhialeTech.Styles.Wpf.csproj" />
   </ItemGroup>
   <ItemGroup>

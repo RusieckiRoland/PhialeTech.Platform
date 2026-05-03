@@ -657,6 +657,136 @@ layout:
         }
 
         [Test]
+        public void Import_ShouldParse_DocumentEditorOverlayMode()
+        {
+            var yaml = @"
+id: DocumentEditorOverlayForm
+fields:
+  Notes:
+    control: YamlDocumentEditor
+    caption: notes.caption
+    overlayMode: Container
+layout:
+  type: Column
+  items:
+    - fieldRef: Notes
+";
+
+            var imported = Import(yaml);
+            var field = AsForm(imported.Definition).Fields.Single(item => item.Id == "Notes");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(imported.Success, Is.True, string.Join("\n", imported.Diagnostics));
+                Assert.That(field.GetType().Name, Is.EqualTo("YamlDocumentEditorFieldDefinition"));
+                var overlayMode = field.GetType().GetProperty("OverlayMode")?.GetValue(field, null);
+                Assert.That(overlayMode, Is.Not.Null);
+                Assert.That(overlayMode.ToString(), Is.EqualTo("Container"));
+            });
+        }
+
+        [Test]
+        public void ImportAndNormalize_ShouldPreserveExplicitOverlayScopes_OnLayoutContainers()
+        {
+            var yaml = @"
+id: OverlayScopeForm
+fields:
+  Notes:
+    control: YamlDocumentEditor
+layout:
+  type: Column
+  overlayScope: true
+  items:
+    - type: Container
+      id: ReviewNotes
+      overlayScope: true
+      items:
+        - type: Row
+          id: NotesRow
+          overlayScope: true
+          items:
+            - type: Column
+              id: NotesColumn
+              overlayScope: true
+              items:
+                - fieldRef: Notes
+";
+
+            var imported = Import(yaml);
+            var normalized = Normalize(imported);
+            var importedLayout = imported.Definition.Layout;
+            var importedContainer = (YamlContainerDefinition)importedLayout.Items.Single();
+            var importedRow = (YamlRowDefinition)importedContainer.Items.Single();
+            var importedColumn = (YamlColumnDefinition)importedRow.Items.Single();
+            var resolvedLayout = normalized.ResolvedDocument.Layout;
+            var resolvedContainer = (ResolvedContainerDefinition)resolvedLayout.Items.Single();
+            var resolvedRow = (ResolvedRowDefinition)resolvedContainer.Items.Single();
+            var resolvedColumn = (ResolvedColumnDefinition)resolvedRow.Items.Single();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(imported.Success, Is.True, string.Join("\n", imported.Diagnostics));
+                Assert.That(importedLayout.IsOverlayScope, Is.True);
+                Assert.That(importedContainer.IsOverlayScope, Is.True);
+                Assert.That(importedRow.IsOverlayScope, Is.True);
+                Assert.That(importedColumn.IsOverlayScope, Is.True);
+                Assert.That(normalized.Success, Is.True, string.Join("\n", normalized.Diagnostics));
+                Assert.That(resolvedLayout.IsOverlayScope, Is.True);
+                Assert.That(resolvedContainer.IsOverlayScope, Is.True);
+                Assert.That(resolvedRow.IsOverlayScope, Is.True);
+                Assert.That(resolvedColumn.IsOverlayScope, Is.True);
+            });
+        }
+
+        [Test]
+        public void Import_ShouldFail_WhenOverlayScopeIsNotBoolean()
+        {
+            var yaml = @"
+id: InvalidOverlayScopeForm
+fields:
+  Notes:
+    caption: notes
+layout:
+  type: Column
+  overlayScope: maybe
+  items:
+    - fieldRef: Notes
+";
+
+            var imported = Import(yaml);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(imported.Success, Is.False);
+                Assert.That(imported.Diagnostics.Any(d => d.Contains("overlayScope") && d.Contains("boolean")), Is.True);
+            });
+        }
+
+        [Test]
+        public void Import_ShouldFail_WhenOverlayScopeIsDeclaredOnFieldReference()
+        {
+            var yaml = @"
+id: InvalidLeafOverlayScopeForm
+fields:
+  Notes:
+    caption: notes
+layout:
+  type: Column
+  items:
+    - fieldRef: Notes
+      overlayScope: true
+";
+
+            var imported = Import(yaml);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(imported.Success, Is.False);
+                Assert.That(imported.Diagnostics.Any(d => d.Contains("Field reference 'Notes'") && d.Contains("overlayScope")), Is.True);
+            });
+        }
+
+        [Test]
         public void Import_ShouldFail_WhenFieldMaxLengthIsInvalid()
         {
             var yaml = @"

@@ -65,7 +65,7 @@ namespace PhialeGrid.Core.Regions.Tests
             var snapshot = new GridRegionLayoutSnapshot(new[]
             {
                 new GridRegionLayoutState(GridRegionKind.CoreGridSurface, GridRegionState.Open, null, false ),
-                new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false ),
+                new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
                 new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                 new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false ),
                 new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 330d, true),

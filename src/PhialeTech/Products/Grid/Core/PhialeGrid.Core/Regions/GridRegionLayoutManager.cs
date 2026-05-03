@@ -104,7 +104,7 @@ namespace PhialeGrid.Core.Regions
             return new GridRegionViewState(
                 regionKind,
                 definition.HostKind,
-                definition.Placement,
+                stored.PlacementOverride ?? definition.Placement,
                 definition.ContentKind,
                 effectiveState,
                 isAvailable,
@@ -174,7 +174,8 @@ namespace PhialeGrid.Core.Regions
                 regionKind,
                 current.State,
                 clampedSize,
-                current.IsActive && current.State == GridRegionState.Open);
+                current.IsActive && current.State == GridRegionState.Open,
+                current.PlacementOverride);
         }
 
         public void ActivateRegion(GridRegionKind regionKind)
@@ -198,8 +199,25 @@ namespace PhialeGrid.Core.Regions
                     current.RegionKind,
                     current.State,
                     current.Size,
-                    kind == regionKind);
+                    kind == regionKind,
+                current.PlacementOverride);
             }
+        }
+
+        public void MoveRegion(GridRegionKind regionKind, GridRegionPlacement placement)
+        {
+            var definition = GetDefinition(regionKind);
+            EnsureAvailable(regionKind);
+            GridRegionDefinition.ValidateRelocatedPlacement(definition, placement);
+
+            var current = _layoutByKind[regionKind];
+            _layoutByKind[regionKind] = new GridRegionLayoutState(
+                regionKind,
+                current.State,
+                current.Size,
+                current.IsActive,
+                placement == definition.Placement ? (GridRegionPlacement?)null : placement);
+            ValidateInvariantState();
         }
 
         public void Process(GridRegionCommandInput input)
@@ -240,6 +258,9 @@ namespace PhialeGrid.Core.Regions
                 case GridRegionCommandKind.Activate:
                     ActivateRegion(input.RegionKind);
                     return;
+                case GridRegionCommandKind.Move:
+                    MoveRegion(input.RegionKind, input.RequestedPlacement.Value);
+                    return;
                 default:
                     throw new NotSupportedException("Unsupported grid region command kind: " + input.CommandKind);
             }
@@ -277,7 +298,8 @@ namespace PhialeGrid.Core.Regions
                 definition.RegionKind,
                 definition.DefaultState,
                 definition.DefaultSize,
-                false);
+                false,
+                null);
         }
 
         private GridRegionDefinition GetDefinition(GridRegionKind regionKind)
@@ -311,7 +333,8 @@ namespace PhialeGrid.Core.Regions
                 regionKind,
                 state,
                 current.Size,
-                preserveActive && state == GridRegionState.Open);
+                preserveActive && state == GridRegionState.Open,
+                current.PlacementOverride);
 
             if (state != GridRegionState.Open)
             {
@@ -333,7 +356,8 @@ namespace PhialeGrid.Core.Regions
                 current.RegionKind,
                 current.State,
                 current.Size,
-                false);
+                false,
+                current.PlacementOverride);
         }
 
         private void ValidateInvariantState()
@@ -389,6 +413,11 @@ namespace PhialeGrid.Core.Regions
                     throw new InvalidOperationException(definition.RegionKind + " contains a size outside its allowed bounds.");
                 }
             }
+
+            if (state.PlacementOverride.HasValue)
+            {
+                GridRegionDefinition.ValidateRelocatedPlacement(definition, state.PlacementOverride.Value);
+            }
         }
 
         private static double ClampSize(GridRegionDefinition definition, double size)
@@ -428,7 +457,8 @@ namespace PhialeGrid.Core.Regions
                 state.RegionKind,
                 state.State,
                 state.Size,
-                state.IsActive);
+                state.IsActive,
+                state.PlacementOverride);
         }
     }
 }

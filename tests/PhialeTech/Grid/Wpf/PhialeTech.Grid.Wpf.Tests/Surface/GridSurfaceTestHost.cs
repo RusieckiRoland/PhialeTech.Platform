@@ -91,7 +91,13 @@ namespace PhialeGrid.Wpf.Tests.Surface
 
         public static void ClickPointViaRoutedUi(GridSurfaceHost surfaceHost, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
         {
-            ExecuteRoutedMouseInput(surfaceHost, modifiers, (probe, position) =>
+            ClickPointViaRoutedUi((FrameworkElement)surfaceHost, x, y, modifiers);
+        }
+
+        public static void ClickPointViaRoutedUi(FrameworkElement root, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
+        {
+            var surfaceHost = ResolveSurfaceHost(root);
+            ExecuteRoutedMouseInput(root, modifiers, (probe, position) =>
             {
                 RaisePreviewMouseDown(surfaceHost, probe, position);
                 RaisePreviewMouseUp(surfaceHost, probe, position);
@@ -100,7 +106,13 @@ namespace PhialeGrid.Wpf.Tests.Surface
 
         public static void DoubleClickPointViaRoutedUi(GridSurfaceHost surfaceHost, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
         {
-            ExecuteRoutedMouseInput(surfaceHost, modifiers, (probe, position) =>
+            DoubleClickPointViaRoutedUi((FrameworkElement)surfaceHost, x, y, modifiers);
+        }
+
+        public static void DoubleClickPointViaRoutedUi(FrameworkElement root, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
+        {
+            var surfaceHost = ResolveSurfaceHost(root);
+            ExecuteRoutedMouseInput(root, modifiers, (probe, position) =>
             {
                 RaisePreviewMouseDown(surfaceHost, probe, position, clickCount: 2);
                 RaisePreviewMouseUp(surfaceHost, probe, position);
@@ -153,7 +165,13 @@ namespace PhialeGrid.Wpf.Tests.Surface
 
         public static void PointerDownViaRoutedUi(GridSurfaceHost surfaceHost, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None, int clickCount = 1)
         {
-            ExecuteRoutedMouseInput(surfaceHost, modifiers, (probe, position) =>
+            PointerDownViaRoutedUi((FrameworkElement)surfaceHost, x, y, modifiers, clickCount);
+        }
+
+        public static void PointerDownViaRoutedUi(FrameworkElement root, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None, int clickCount = 1)
+        {
+            var surfaceHost = ResolveSurfaceHost(root);
+            ExecuteRoutedMouseInput(root, modifiers, (probe, position) =>
             {
                 RaisePreviewMouseDown(surfaceHost, probe, position, clickCount);
             }, x, y);
@@ -161,45 +179,62 @@ namespace PhialeGrid.Wpf.Tests.Surface
 
         public static void PointerMoveViaRoutedUi(GridSurfaceHost surfaceHost, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
         {
+            PointerMoveViaRoutedUi((FrameworkElement)surfaceHost, x, y, modifiers);
+        }
+
+        public static void PointerMoveViaRoutedUi(FrameworkElement root, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
+        {
+            var surfaceHost = ResolveSurfaceHost(root);
             lock (LiveInputSync)
             {
-                ActivateForInput(surfaceHost);
+                ActivateForInput(root);
                 try
                 {
                     PressModifiers(modifiers);
-                    RaisePreviewMouseMove(surfaceHost, surfaceHost, new Point(x, y));
+                    RaisePreviewMouseMove(surfaceHost, root, new Point(x, y));
                 }
                 finally
                 {
                     ReleaseModifiers(modifiers);
-                    FlushDispatcher(surfaceHost);
+                    FlushDispatcher(root);
                 }
             }
         }
 
         public static void PointerUpViaRoutedUi(GridSurfaceHost surfaceHost, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
         {
+            PointerUpViaRoutedUi((FrameworkElement)surfaceHost, x, y, modifiers);
+        }
+
+        public static void PointerUpViaRoutedUi(FrameworkElement root, double x, double y, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
+        {
+            var surfaceHost = ResolveSurfaceHost(root);
             lock (LiveInputSync)
             {
-                ActivateForInput(surfaceHost);
+                ActivateForInput(root);
                 try
                 {
                     PressModifiers(modifiers);
-                    RaisePreviewMouseUp(surfaceHost, surfaceHost, new Point(x, y));
+                    RaisePreviewMouseUp(surfaceHost, root, new Point(x, y));
                 }
                 finally
                 {
                     ReleaseModifiers(modifiers);
-                    FlushDispatcher(surfaceHost);
+                    FlushDispatcher(root);
                 }
             }
         }
 
         public static void DragPointViaRoutedUi(GridSurfaceHost surfaceHost, double pressX, double pressY, double moveX, double moveY, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
         {
-            PointerDownViaRoutedUi(surfaceHost, pressX, pressY, modifiers);
-            PointerMoveViaRoutedUi(surfaceHost, moveX, moveY, modifiers);
-            PointerUpViaRoutedUi(surfaceHost, moveX, moveY, modifiers);
+            DragPointViaRoutedUi((FrameworkElement)surfaceHost, pressX, pressY, moveX, moveY, modifiers);
+        }
+
+        public static void DragPointViaRoutedUi(FrameworkElement root, double pressX, double pressY, double moveX, double moveY, UniversalModifierKeys modifiers = UniversalModifierKeys.None)
+        {
+            PointerDownViaRoutedUi(root, pressX, pressY, modifiers);
+            PointerMoveViaRoutedUi(root, moveX, moveY, modifiers);
+            PointerUpViaRoutedUi(root, moveX, moveY, modifiers);
         }
 
         public static FrameworkElement FindVisibleElementAtPoint(GridSurfaceHost surfaceHost, double x, double y)
@@ -210,7 +245,13 @@ namespace PhialeGrid.Wpf.Tests.Surface
         public static T FindVisibleAncestorAtPoint<T>(GridSurfaceHost surfaceHost, double x, double y)
             where T : FrameworkElement
         {
-            var current = FindInputSourceAtPoint(surfaceHost, x, y) as DependencyObject;
+            return FindVisibleAncestorAtPoint<T>((FrameworkElement)surfaceHost, x, y);
+        }
+
+        public static T FindVisibleAncestorAtPoint<T>(FrameworkElement root, double x, double y)
+            where T : FrameworkElement
+        {
+            var current = FindInputSourceAtPoint(root, x, y) as DependencyObject;
             while (current != null)
             {
                 if (current is T match)
@@ -459,7 +500,7 @@ namespace PhialeGrid.Wpf.Tests.Surface
         }
 
         private static void ExecuteRoutedMouseInput(
-            GridSurfaceHost surfaceHost,
+            FrameworkElement root,
             UniversalModifierKeys modifiers,
             Action<FrameworkElement, Point> action,
             double x,
@@ -467,18 +508,18 @@ namespace PhialeGrid.Wpf.Tests.Surface
         {
             lock (LiveInputSync)
             {
-                ActivateForInput(surfaceHost);
+                ActivateForInput(root);
                 try
                 {
                     PressModifiers(modifiers);
                     FrameworkElement source = null;
-                    surfaceHost.Dispatcher.Invoke(() => source = FindInputSourceAtPoint(surfaceHost, x, y));
+                    root.Dispatcher.Invoke(() => source = FindInputSourceAtPoint(root, x, y));
                     action(source, new Point(x, y));
                 }
                 finally
                 {
                     ReleaseModifiers(modifiers);
-                    FlushDispatcher(surfaceHost);
+                    FlushDispatcher(root);
                 }
             }
         }
@@ -517,6 +558,38 @@ namespace PhialeGrid.Wpf.Tests.Surface
             });
 
             FlushDispatcher(root);
+        }
+
+        private static GridSurfaceHost ResolveSurfaceHost(FrameworkElement root)
+        {
+            if (root is GridSurfaceHost surfaceHost)
+            {
+                return surfaceHost;
+            }
+
+            var grid = FindAncestor<WpfGrid>(root);
+            if (grid != null)
+            {
+                return FindSurfaceHost(grid);
+            }
+
+            throw new AssertionException("Expected routed UI input root to belong to a live PhialeGrid surface.");
+        }
+
+        private static T FindAncestor<T>(DependencyObject candidate)
+            where T : DependencyObject
+        {
+            while (candidate != null)
+            {
+                if (candidate is T match)
+                {
+                    return match;
+                }
+
+                candidate = VisualTreeHelper.GetParent(candidate);
+            }
+
+            return null;
         }
 
         private static UIElement GetKeyboardTarget(GridSurfaceHost surfaceHost)

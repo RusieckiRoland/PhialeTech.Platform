@@ -1,5 +1,6 @@
 # PhialeGrid default Polish UI text
-grouping.drop_here=Przeciągnij nagłówek kolumny tutaj, aby grupować po tej kolumnie
+grouping.drop_here=- - Upuść kolumnę tutaj, aby grupować - -
+grouping.band_label=Grupuj po:
 grouping.empty=Brak aktywnego grupowania
 grouping.clear=Wyczyść grupowanie
 grouping.expand=Rozwiń grupę

@@ -55,6 +55,24 @@ namespace PhialeGis.Library.Tests.Demo
         }
 
         [Test]
+        public void OverviewCards_ShouldUseWpfScenarioLoadTracingCommand()
+        {
+            var xaml = File.ReadAllText(GetMainWindowPath());
+            var codeBehind = File.ReadAllText(Path.Combine(GetRepoRoot(), "demo", "PhialeTech", "Wpf", "PhialeTech.Components.Wpf", "MainWindow.xaml.cs"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(xaml, Does.Contain("SelectExampleWithTraceCommand"));
+                Assert.That(xaml, Does.Contain("CommandParameter=\"{Binding Id}\""));
+                Assert.That(codeBehind, Does.Contain("StartScenarioLoadTrace"));
+                Assert.That(codeBehind, Does.Contain("TraceNextScenarioRender"));
+                Assert.That(codeBehind, Does.Contain("SelectExampleWithGridBatch(exampleId)"));
+                Assert.That(codeBehind, Does.Contain("BeginScenarioSelectionGridBatch()"));
+                Assert.That(codeBehind, Does.Contain("CompleteScenarioSelectionGridBatch(\"activation-completed\")"));
+            });
+        }
+
+        [Test]
         public void TransferToolbar_ShowsExportImportAndRestoreActions_WithPreviewSurface()
         {
             var xaml = File.ReadAllText(GetMainWindowPath());
@@ -74,8 +92,10 @@ namespace PhialeGis.Library.Tests.Demo
 
             Assert.Multiple(() =>
             {
-                Assert.That(xaml, Does.Contain("Content=\"Dodaj\""));
-                Assert.That(xaml, Does.Contain("Content=\"Edytuj\""));
+                Assert.That(xaml, Does.Contain("HandleAddDemoRecordClick"));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding AddRecordText}\""));
+                Assert.That(xaml, Does.Contain("HandleBeginCurrentEditClick"));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding EditRecordText}\""));
                 Assert.That(xaml, Does.Contain("SelectionScenarioStatusText"));
                 Assert.That(xaml, Does.Contain("EditingScenarioStatusText"));
                 Assert.That(xaml, Does.Contain("ConstraintScenarioStatusText"));
@@ -115,10 +135,9 @@ namespace PhialeGis.Library.Tests.Demo
 
             Assert.That(xaml, Does.Contain("xmlns:selector=\"clr-namespace:PhialeTech.ActiveLayerSelector.Wpf.Controls;assembly=PhialeTech.ActiveLayerSelector.Wpf\""));
             Assert.That(xaml, Does.Contain("DemoActiveLayerSelector"));
-            Assert.That(xaml, Does.Contain("ActiveLayerSelectorComponentText"));
-            Assert.That(xaml, Does.Contain("ActiveLayerSelectorComponentButton"));
-            Assert.That(xaml, Does.Contain("HandleActiveLayerSelectorComponentClick"));
-            Assert.That(xaml, Does.Contain("HandleGridComponentClick"));
+            Assert.That(xaml, Does.Contain("DrawerGroupsItemsControl"));
+            Assert.That(xaml, Does.Contain("SelectDrawerGroupCommand"));
+            Assert.That(xaml, Does.Contain("CommandParameter=\"{Binding Id}\""));
             Assert.That(xaml, Does.Contain("ShowActiveLayerSelectorSurface"));
             Assert.That(xaml, Does.Contain("State=\"{Binding ActiveLayerSelectorState}\""));
         }
@@ -145,7 +164,8 @@ namespace PhialeGis.Library.Tests.Demo
 
             Assert.That(xaml, Does.Contain("DefinitionManagerSurfaceScrollViewer"));
             Assert.That(xaml, Does.Contain("ShowDefinitionManagerSurface"));
-            Assert.That(xaml, Does.Contain("HandleArchitectureComponentClick"));
+            Assert.That(xaml, Does.Contain("SelectDrawerGroupCommand"));
+            Assert.That(mainWindowCode, Does.Contain("HandleArchitectureComponentClick"));
             Assert.That(mainWindowCode, Does.Contain("definitionManager: _applicationServices.DefinitionManager"));
             Assert.That(appCode, Does.Contain("DemoApplicationServices.CreateDefault()"));
         }
@@ -179,8 +199,10 @@ namespace PhialeGis.Library.Tests.Demo
         public void MainWindow_ToolbarContainer_ShouldCollapseWhenScenarioHasNoToolbar()
         {
             var xaml = File.ReadAllText(GetMainWindowPath());
+            var viewModelCode = File.ReadAllText(Path.Combine(GetRepoRoot(), "demo", "PhialeTech", "Shared", "PhialeTech.Components.Shared", "ViewModels", "DemoShellViewModel.cs"));
 
-            Assert.That(xaml, Does.Contain("Path=\"HasDemoToolbar\""));
+            Assert.That(viewModelCode, Does.Contain("HasDemoToolbar"));
+            Assert.That(xaml, Does.Contain("ShowGridEditCommandBar"));
             Assert.That(xaml, Does.Contain("BooleanToVisibilityConverter"));
         }
 
@@ -347,7 +369,7 @@ namespace PhialeGis.Library.Tests.Demo
 
         private static string GetMainWindowPath()
         {
-            return Path.Combine(GetRepoRoot(), "demo", "PhialeTech", "Wpf", "PhialeTech.Components.Wpf", "MainWindow.xaml");
+            return Path.Combine(GetRepoRoot(), "src", "PhialeTech", "Shared", "PhialeTech.Styles.Wpf", "Themes.Linked", "Demo", "PhialeTech.Components.Wpf.MainWindow.xaml");
         }
 
         private static string GetRepoRoot()

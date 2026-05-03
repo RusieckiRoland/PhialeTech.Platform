@@ -9,4 +9,7 @@
     <RootNamespace>PhialeTech.YamlApp.Abstractions</RootNamespace>
     <Description>Stable public abstractions for the PhialeTech YamlApp product family.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\DocumentEditor\Abstractions\PhialeTech.DocumentEditor.Abstractions\PhialeTech.DocumentEditor.Abstractions.csproj" />
+  </ItemGroup>
 </Project>

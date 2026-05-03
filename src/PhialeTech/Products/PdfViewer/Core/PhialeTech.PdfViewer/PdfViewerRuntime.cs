@@ -19,6 +19,7 @@ namespace PhialeTech.PdfViewer
         private int _currentPage;
         private double _currentScaleFactor = 1d;
         private string _currentScaleValue = "page-width";
+        private string _theme;
 
         public PdfViewerRuntime(
             IWebComponentHost host,
@@ -28,6 +29,7 @@ namespace PhialeTech.PdfViewer
             _host = host ?? throw new ArgumentNullException(nameof(host));
             _workspace = workspace ?? throw new ArgumentNullException(nameof(workspace));
             _options = (options ?? new PdfViewerOptions()).Clone();
+            _theme = NormalizeTheme(_options.InitialTheme);
 
             _host.ReadyStateChanged += HandleHostReadyStateChanged;
             _host.MessageReceived += HandleHostMessageReceived;
@@ -44,6 +46,8 @@ namespace PhialeTech.PdfViewer
         public double CurrentScaleFactor => _currentScaleFactor;
 
         public string CurrentScaleValue => _currentScaleValue;
+
+        public string Theme => _theme;
 
         public event EventHandler<PdfViewerReadyStateChangedEventArgs> ReadyStateChanged;
 
@@ -129,6 +133,16 @@ namespace PhialeTech.PdfViewer
             await _host.PostMessageAsync(new { type = "pdf.print" }).ConfigureAwait(false);
         }
 
+        public async Task SetThemeAsync(string theme)
+        {
+            _theme = NormalizeTheme(theme);
+
+            if (!_host.IsInitialized)
+                return;
+
+            await _host.PostMessageAsync(new { type = "pdf.setTheme", theme = _theme }).ConfigureAwait(false);
+        }
+
         public void FocusViewer()
         {
             _host.FocusHost();
@@ -151,6 +165,7 @@ namespace PhialeTech.PdfViewer
             await _workspace.PrepareAsync().ConfigureAwait(false);
             await _host.InitializeAsync().ConfigureAwait(false);
             await _host.LoadEntryPageAsync(_options.EntryPageRelativePath).ConfigureAwait(false);
+            await _host.PostMessageAsync(new { type = "pdf.setTheme", theme = _theme }).ConfigureAwait(false);
         }
 
         private void HandleHostReadyStateChanged(object sender, WebComponentReadyStateChangedEventArgs e)
@@ -271,6 +286,14 @@ namespace PhialeTech.PdfViewer
             }
 
             return fallback;
+        }
+
+        private static string NormalizeTheme(string theme)
+        {
+            return string.Equals(theme, "dark", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(theme, "night", StringComparison.OrdinalIgnoreCase)
+                ? "dark"
+                : "light";
         }
     }
 }

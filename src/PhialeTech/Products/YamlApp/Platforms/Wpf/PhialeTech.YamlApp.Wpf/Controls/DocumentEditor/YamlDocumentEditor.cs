@@ -23,10 +23,10 @@ namespace PhialeTech.YamlApp.Wpf.Controls.DocumentEditor
             DependencyProperty.Register(nameof(LanguageCode), typeof(string), typeof(YamlDocumentEditor), new PropertyMetadata("en", OnLanguageCodeChanged));
 
         private readonly TextBlock _captionText;
-        private readonly Border _surfaceBorder;
+        private readonly Border _fieldChromeBorder;
         private readonly PhialeDocumentEditor _editor;
         private readonly TextBlock _supportText;
-        private readonly Button _restoreButton;
+        private readonly Grid _contentPanel;
         private readonly Grid _root;
         private YamlDocumentEditorFieldBinding _runtimeBinding;
         private bool _isSynchronizing;
@@ -48,46 +48,56 @@ namespace PhialeTech.YamlApp.Wpf.Controls.DocumentEditor
             };
             _captionText.SetResourceReference(ForegroundProperty, "Brush.Text.Primary");
 
-            _editor = new PhialeDocumentEditor(new PhialeTech.WebHost.Wpf.WpfWebComponentHostFactory(), new DocumentEditorOptions());
+            _editor = new PhialeDocumentEditor(new PhialeTech.WebHost.Wpf.WpfWebComponentHostFactory(), new DocumentEditorOptions
+            {
+                OverlayMode = DocumentEditorOverlayMode.Container
+            });
             _editor.HorizontalAlignment = HorizontalAlignment.Stretch;
             _editor.VerticalAlignment = VerticalAlignment.Stretch;
             _editor.MinWidth = 0d;
-            _editor.MinHeight = 0d;
+            _editor.MinHeight = 220d;
             _editor.ContentChanged += HandleEditorContentChanged;
             _editor.ThemeChanged += HandleEditorThemeChanged;
-
-            _surfaceBorder = new Border
-            {
-                Child = _editor,
-                MinHeight = 220,
-                MinWidth = 0d,
-                CornerRadius = new CornerRadius(12),
-                BorderThickness = new Thickness(1),
-                Padding = new Thickness(0),
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                SnapsToDevicePixels = true,
-                UseLayoutRounding = true,
-            };
 
             _supportText = new TextBlock
             {
                 Margin = new Thickness(0, 8, 0, 0),
                 Visibility = Visibility.Collapsed,
                 TextWrapping = TextWrapping.Wrap,
+                VerticalAlignment = VerticalAlignment.Center,
                 SnapsToDevicePixels = true,
                 UseLayoutRounding = true,
             };
             _supportText.SetResourceReference(ForegroundProperty, "Brush.Text.Secondary");
 
-            _restoreButton = new Button
+            _contentPanel = new Grid
             {
-                Content = "Restore previous",
-                Visibility = Visibility.Collapsed,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 8, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                SnapsToDevicePixels = true,
+                UseLayoutRounding = true,
             };
-            _restoreButton.Click += HandleRestoreButtonClick;
+            _contentPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            _contentPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1d, GridUnitType.Star) });
+            _contentPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            Grid.SetRow(_captionText, 0);
+            Grid.SetRow(_editor, 1);
+            Grid.SetRow(_supportText, 2);
+            _contentPanel.Children.Add(_captionText);
+            _contentPanel.Children.Add(_editor);
+            _contentPanel.Children.Add(_supportText);
+
+            _fieldChromeBorder = new Border
+            {
+                MinWidth = 0d,
+                Padding = new Thickness(12),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                SnapsToDevicePixels = true,
+                UseLayoutRounding = true,
+                Visibility = Visibility.Collapsed,
+            };
 
             _root = new Grid
             {
@@ -96,19 +106,8 @@ namespace PhialeTech.YamlApp.Wpf.Controls.DocumentEditor
                 SnapsToDevicePixels = true,
                 UseLayoutRounding = true,
             };
-            _root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            _root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1d, GridUnitType.Star) });
-            _root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            _root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            Grid.SetRow(_captionText, 0);
-            Grid.SetRow(_surfaceBorder, 1);
-            Grid.SetRow(_supportText, 2);
-            Grid.SetRow(_restoreButton, 3);
-            _root.Children.Add(_captionText);
-            _root.Children.Add(_surfaceBorder);
-            _root.Children.Add(_supportText);
-            _root.Children.Add(_restoreButton);
+            _root.Children.Add(_fieldChromeBorder);
+            _root.Children.Add(_contentPanel);
 
             Content = _root;
             Loaded += HandleLoaded;
@@ -197,16 +196,17 @@ namespace PhialeTech.YamlApp.Wpf.Controls.DocumentEditor
             _captionText.Text = state.Caption;
             _captionText.Visibility = string.IsNullOrWhiteSpace(state.Caption) ? Visibility.Collapsed : Visibility.Visible;
             _supportText.Text = state.ErrorMessage;
-            _supportText.Visibility = string.IsNullOrWhiteSpace(state.ErrorMessage) ? Visibility.Collapsed : Visibility.Visible;
-            _restoreButton.Visibility = state.ShowOldValueRestoreButton && !string.IsNullOrWhiteSpace(state.OldValue) ? Visibility.Visible : Visibility.Collapsed;
+            var hasError = !string.IsNullOrWhiteSpace(state.ErrorMessage);
+            _supportText.Visibility = hasError ? Visibility.Visible : Visibility.Collapsed;
             IsEnabled = state.IsEnabled;
             Visibility = state.IsVisible ? Visibility.Visible : Visibility.Collapsed;
 
-            ApplyChrome(state.FieldChromeMode, !string.IsNullOrWhiteSpace(state.ErrorMessage));
+            ApplyChrome(state.FieldChromeMode, hasError);
 
             try
             {
                 _isSynchronizing = true;
+                await _editor.SetOverlayModeAsync(state.OverlayMode).ConfigureAwait(true);
                 await _editor.SetReadOnlyAsync(!state.IsEnabled).ConfigureAwait(true);
                 if (!string.IsNullOrWhiteSpace(state.DocumentJson))
                 {
@@ -214,7 +214,7 @@ namespace PhialeTech.YamlApp.Wpf.Controls.DocumentEditor
                 }
                 else
                 {
-                    await _editor.ClearAsync().ConfigureAwait(true);
+                    await _editor.SetDocumentJsonAsync(string.Empty).ConfigureAwait(true);
                 }
             }
             finally
@@ -225,20 +225,38 @@ namespace PhialeTech.YamlApp.Wpf.Controls.DocumentEditor
 
         private void ApplyChrome(FieldChromeMode chromeMode, bool hasError)
         {
-            if (chromeMode == FieldChromeMode.InlineHint)
+            _fieldChromeBorder.Visibility = chromeMode == FieldChromeMode.Framed ? Visibility.Visible : Visibility.Collapsed;
+
+            if (chromeMode == FieldChromeMode.Framed)
             {
-                _surfaceBorder.Background = Brushes.Transparent;
-                _surfaceBorder.BorderThickness = new Thickness(0, 0, 0, 1);
-                _surfaceBorder.CornerRadius = new CornerRadius(0);
-                _surfaceBorder.SetResourceReference(Border.BorderBrushProperty, hasError ? "Brush.Danger.Border" : "Brush.Border.Default");
+                if (_contentPanel.Parent == _root)
+                {
+                    _root.Children.Remove(_contentPanel);
+                }
+
+                if (!ReferenceEquals(_fieldChromeBorder.Child, _contentPanel))
+                {
+                    _fieldChromeBorder.Child = _contentPanel;
+                }
+
+                _fieldChromeBorder.SetResourceReference(Border.BackgroundProperty, "Brush.Surface1");
+                _fieldChromeBorder.BorderThickness = new Thickness(1);
+                _fieldChromeBorder.CornerRadius = new CornerRadius(12);
+                _fieldChromeBorder.SetResourceReference(Border.BorderBrushProperty, hasError ? "Brush.Danger.Border" : "Brush.Border.Default");
                 _supportText.SetResourceReference(ForegroundProperty, hasError ? "Brush.Danger.Text" : "Brush.Text.Secondary");
                 return;
             }
 
-            _surfaceBorder.SetResourceReference(Border.BackgroundProperty, "Brush.Surface1");
-            _surfaceBorder.BorderThickness = new Thickness(1);
-            _surfaceBorder.CornerRadius = new CornerRadius(12);
-            _surfaceBorder.SetResourceReference(Border.BorderBrushProperty, hasError ? "Brush.Danger.Border" : "Brush.Border.Default");
+            if (ReferenceEquals(_fieldChromeBorder.Child, _contentPanel))
+            {
+                _fieldChromeBorder.Child = null;
+            }
+
+            if (!_root.Children.Contains(_contentPanel))
+            {
+                _root.Children.Add(_contentPanel);
+            }
+
             _supportText.SetResourceReference(ForegroundProperty, hasError ? "Brush.Danger.Text" : "Brush.Text.Secondary");
         }
 
@@ -255,11 +273,6 @@ namespace PhialeTech.YamlApp.Wpf.Controls.DocumentEditor
             }
 
             _runtimeBinding.UpdateDocumentJson(e.DocumentJson);
-        }
-
-        private void HandleRestoreButtonClick(object sender, RoutedEventArgs e)
-        {
-            _runtimeBinding?.RestoreOldValue();
         }
 
         private void HandleEditorThemeChanged(object sender, string theme)

@@ -40,6 +40,8 @@ namespace PhialeGrid.Core
         private IGridEditValidator _editValidatorForModel;
         private Func<string, string, string, object> _editValueParserForModel;
         private GridSurfaceSnapshot _lastSnapshot;
+        private int _snapshotUpdateBatchDepth;
+        private bool _hasPendingSnapshotUpdate;
 
         public event EventHandler<GridSnapshotChangedEventArgs> SnapshotChanged;
         public event EventHandler<GridFocusRequestEventArgs> FocusRequested;
@@ -334,6 +336,11 @@ namespace PhialeGrid.Core
         /// </summary>
         public void ProcessInput(GridInputEvent input)
         {
+            ProcessInput(input, GridHitTestSurfaceScope.FullSurface);
+        }
+
+        public void ProcessInput(GridInputEvent input, GridHitTestSurfaceScope surfaceScope)
+        {
             if (input == null)
             {
                 return;
@@ -342,7 +349,7 @@ namespace PhialeGrid.Core
             switch (input)
             {
                 case GridPointerPressedInput pointerPressed:
-                    HandlePointerPressed(pointerPressed);
+                    HandlePointerPressed(pointerPressed, surfaceScope);
                     break;
                 case GridPointerMovedInput pointerMoved:
                     HandlePointerMoved(pointerMoved);
@@ -431,6 +438,17 @@ namespace PhialeGrid.Core
         /// Pobiera ostatni snapshot.
         /// </summary>
         public GridSurfaceSnapshot GetCurrentSnapshot() => _lastSnapshot;
+
+        public IDisposable BeginSnapshotUpdateBatch(string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                throw new ArgumentException("Snapshot update batch reason is required.", nameof(reason));
+            }
+
+            _snapshotUpdateBatchDepth++;
+            return new SnapshotUpdateBatch(this);
+        }
 
         public bool CommitEdit()
         {
@@ -688,7 +706,7 @@ namespace PhialeGrid.Core
             return true;
         }
 
-        private void HandlePointerPressed(GridPointerPressedInput input)
+        private void HandlePointerPressed(GridPointerPressedInput input, GridHitTestSurfaceScope surfaceScope)
         {
             if (_lastSnapshot == null)
             {
@@ -701,7 +719,7 @@ namespace PhialeGrid.Core
 
             RequestFocusIfNeeded();
 
-            var hit = _hitTesting.HitTest(input.X, input.Y, _lastSnapshot);
+            var hit = _hitTesting.HitTest(input.X, input.Y, _lastSnapshot, surfaceScope);
             if (hit == null)
             {
                 return;
@@ -2196,6 +2214,34 @@ namespace PhialeGrid.Core
 
         private void UpdateSnapshot()
         {
+            if (_snapshotUpdateBatchDepth > 0)
+            {
+                _hasPendingSnapshotUpdate = true;
+                return;
+            }
+
+            UpdateSnapshotCore();
+        }
+
+        private void CompleteSnapshotUpdateBatch()
+        {
+            if (_snapshotUpdateBatchDepth <= 0)
+            {
+                throw new InvalidOperationException("Snapshot update batch was completed without an active batch.");
+            }
+
+            _snapshotUpdateBatchDepth--;
+            if (_snapshotUpdateBatchDepth > 0 || !_hasPendingSnapshotUpdate)
+            {
+                return;
+            }
+
+            _hasPendingSnapshotUpdate = false;
+            UpdateSnapshotCore();
+        }
+
+        private void UpdateSnapshotCore()
+        {
             SyncCurrentRecordToEditSessionContext();
 
             var layout = _layoutEngine.ComputeLayout(
@@ -2538,6 +2584,28 @@ namespace PhialeGrid.Core
             }
 
             return false;
+        }
+
+        private sealed class SnapshotUpdateBatch : IDisposable
+        {
+            private GridSurfaceCoordinator _owner;
+
+            public SnapshotUpdateBatch(GridSurfaceCoordinator owner)
+            {
+                _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            }
+
+            public void Dispose()
+            {
+                if (_owner == null)
+                {
+                    return;
+                }
+
+                var owner = _owner;
+                _owner = null;
+                owner.CompleteSnapshotUpdateBatch();
+            }
         }
     }
 

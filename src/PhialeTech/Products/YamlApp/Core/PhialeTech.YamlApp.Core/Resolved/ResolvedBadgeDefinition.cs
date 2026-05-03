@@ -24,7 +24,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
             BadgeVariant variant,
             BadgeSize size,
             IconPlacement iconPlacement)
-            : base(id, name, width, widthHint, visible, enabled, showOldValueRestoreButton, validationTrigger, interactionMode, densityMode, fieldChromeMode, captionPlacement)
+            : base(id, name, width, widthHint, false, visible, enabled, showOldValueRestoreButton, validationTrigger, interactionMode, densityMode, fieldChromeMode, captionPlacement)
         {
             TextKey = textKey;
             IconKey = iconKey;

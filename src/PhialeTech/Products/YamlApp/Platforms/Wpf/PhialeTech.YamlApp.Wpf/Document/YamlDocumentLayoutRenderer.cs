@@ -7,6 +7,7 @@ using PhialeTech.YamlApp.Core.Resolved;
 using PhialeTech.YamlApp.Runtime.Model;
 using PhialeTech.YamlApp.Wpf.Controls.Badges;
 using PhialeTech.YamlApp.Wpf.Controls.Buttons;
+using PhialeTech.WebHost.Wpf.Controls;
 
 namespace PhialeTech.YamlApp.Wpf.Document
 {
@@ -48,6 +49,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 documentState.Document.Layout.WidthHint,
                 documentState.Document.Layout.Visible,
                 documentState.Document.Layout.Enabled);
+            OverlayHost.SetIsScope(root, documentState.Document.Layout.IsOverlayScope);
 
             return root;
         }
@@ -177,6 +179,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
             }
 
             ApplyLayoutItemPresentation(element, container);
+            OverlayHost.SetIsScope(element, container.IsOverlayScope);
             return element;
         }
 
@@ -223,6 +226,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
         {
             var panel = BuildVerticalItemsPanel(documentState, column.Items, isCompactSpacing: false);
             ApplyLayoutItemPresentation(panel, column);
+            OverlayHost.SetIsScope(panel, column.IsOverlayScope);
             return panel;
         }
 
@@ -236,6 +240,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
             if (row.Items == null || row.Items.Count == 0)
             {
                 ApplyLayoutItemPresentation(grid, row);
+                OverlayHost.SetIsScope(grid, row.IsOverlayScope);
                 return grid;
             }
 
@@ -260,6 +265,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
             }
 
             ApplyLayoutItemPresentation(grid, row);
+            OverlayHost.SetIsScope(grid, row.IsOverlayScope);
             return grid;
         }
 

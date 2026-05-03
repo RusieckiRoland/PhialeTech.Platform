@@ -387,6 +387,4 @@ DawnCache/
 # Local synchronization helper scripts
 scripts/Sync-CriticalPlatform.ps1
 
-
 artifacts-temp/
-

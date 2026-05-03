@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using PhialeTech.DocumentEditor.Abstractions;
 using PhialeTech.YamlApp.Abstractions.Enums;
 using PhialeTech.YamlApp.Abstractions.Interfaces;
 using PhialeTech.YamlApp.Definitions.Fields;
@@ -296,6 +297,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 "width",
                 "widthHint",
                 "weight",
+                "overlayScope",
                 "visible",
                 "enabled",
                 "showOldValueRestoreButton",
@@ -310,6 +312,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 "densityMode",
                 "fieldChromeMode",
                 "captionPlacement",
+                "overlayMode",
                 "value",
                 "oldValue");
 
@@ -335,6 +338,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                     DensityMode = ReadNullableEnum<DensityMode>(fieldNode, "densityMode"),
                     FieldChromeMode = ReadNullableEnum<FieldChromeMode>(fieldNode, "fieldChromeMode"),
                     CaptionPlacement = ReadNullableEnum<CaptionPlacement>(fieldNode, "captionPlacement"),
+                    OverlayMode = ReadNullableEnum<DocumentEditorOverlayMode>(fieldNode, "overlayMode"),
                     Value = ReadScalar(fieldNode, "value"),
                     OldValue = ReadScalar(fieldNode, "oldValue")
                 }
@@ -395,6 +399,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             ValidateNullableEnumValue<DensityMode>(fieldNode, "densityMode", fieldScope, diagnostics);
             ValidateNullableEnumValue<FieldChromeMode>(fieldNode, "fieldChromeMode", fieldScope, diagnostics);
             ValidateNullableEnumValue<CaptionPlacement>(fieldNode, "captionPlacement", fieldScope, diagnostics);
+            ValidateNullableEnumValue<DocumentEditorOverlayMode>(fieldNode, "overlayMode", fieldScope, diagnostics);
             ValidateExclusiveWidth(fieldScope, field.Width, field.WidthHint, diagnostics);
 
             if (isDocumentEditorField)
@@ -679,6 +684,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 "width",
                 "widthHint",
                 "weight",
+                "overlayScope",
                 "visible",
                 "enabled",
                 "showOldValueRestoreButton",
@@ -696,6 +702,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 Width = ReadNullableDouble(layoutNode, "width"),
                 WidthHint = ReadNullableEnum<FieldWidthHint>(layoutNode, "widthHint"),
                 Weight = ReadNullableDouble(layoutNode, "weight"),
+                IsOverlayScope = ReadBoolean(layoutNode, "overlayScope"),
                 Visible = ReadNullableBoolean(layoutNode, "visible"),
                 Enabled = ReadNullableBoolean(layoutNode, "enabled"),
                 ShowOldValueRestoreButton = ReadNullableBoolean(layoutNode, "showOldValueRestoreButton"),
@@ -712,6 +719,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             ValidateNullableEnumValue<DensityMode>(layoutNode, "densityMode", "Layout", diagnostics);
             ValidateNullableEnumValue<FieldChromeMode>(layoutNode, "fieldChromeMode", "Layout", diagnostics);
             ValidateNullableEnumValue<CaptionPlacement>(layoutNode, "captionPlacement", "Layout", diagnostics);
+            ValidateNullableBooleanValue(layoutNode, "overlayScope", "Layout", diagnostics);
             ValidateExclusiveWidth("Layout", layout.Width, layout.WidthHint, diagnostics);
 
             var type = ReadScalar(layoutNode, "type");
@@ -770,6 +778,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 "width",
                 "widthHint",
                 "weight",
+                "overlayScope",
                 "visible",
                 "enabled",
                 "showOldValueRestoreButton",
@@ -786,6 +795,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
 
             if (TryGetMappingChild(itemNode, "field", out var inlineFieldNode))
             {
+                ValidateNoOverlayScopeOnLeafLayoutItem(itemNode, "Inline field layout item", diagnostics);
                 if (inlineFieldNode is YamlScalarNode inlineFieldScalar && !string.IsNullOrWhiteSpace(inlineFieldScalar.Value))
                 {
                     return new YamlFieldReferenceDefinition
@@ -814,6 +824,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             var fieldRef = ReadScalar(itemNode, "fieldRef");
             if (!string.IsNullOrWhiteSpace(fieldRef))
             {
+                ValidateNoOverlayScopeOnLeafLayoutItem(itemNode, string.Format(CultureInfo.InvariantCulture, "Field reference '{0}'", fieldRef), diagnostics);
                 return new YamlFieldReferenceDefinition
                 {
                     Id = ReadScalar(itemNode, "id"),
@@ -856,6 +867,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 Width = ReadNullableDouble(itemNode, "width"),
                 WidthHint = ReadNullableEnum<FieldWidthHint>(itemNode, "widthHint"),
                 Weight = ReadNullableDouble(itemNode, "weight"),
+                IsOverlayScope = ReadBoolean(itemNode, "overlayScope"),
                 Visible = ReadNullableBoolean(itemNode, "visible"),
                 Enabled = ReadNullableBoolean(itemNode, "enabled"),
                 ShowOldValueRestoreButton = ReadNullableBoolean(itemNode, "showOldValueRestoreButton"),
@@ -873,6 +885,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             ValidateNullableEnumValue<DensityMode>(itemNode, "densityMode", rowScope, diagnostics);
             ValidateNullableEnumValue<FieldChromeMode>(itemNode, "fieldChromeMode", rowScope, diagnostics);
             ValidateNullableEnumValue<CaptionPlacement>(itemNode, "captionPlacement", rowScope, diagnostics);
+            ValidateNullableBooleanValue(itemNode, "overlayScope", rowScope, diagnostics);
             ValidateExclusiveWidth(rowScope, row.Width, row.WidthHint, diagnostics);
 
             if (string.IsNullOrWhiteSpace(row.Name))
@@ -897,6 +910,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 Width = ReadNullableDouble(itemNode, "width"),
                 WidthHint = ReadNullableEnum<FieldWidthHint>(itemNode, "widthHint"),
                 Weight = ReadNullableDouble(itemNode, "weight"),
+                IsOverlayScope = ReadBoolean(itemNode, "overlayScope"),
                 Visible = ReadNullableBoolean(itemNode, "visible"),
                 Enabled = ReadNullableBoolean(itemNode, "enabled"),
                 ShowOldValueRestoreButton = ReadNullableBoolean(itemNode, "showOldValueRestoreButton"),
@@ -914,6 +928,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             ValidateNullableEnumValue<DensityMode>(itemNode, "densityMode", columnScope, diagnostics);
             ValidateNullableEnumValue<FieldChromeMode>(itemNode, "fieldChromeMode", columnScope, diagnostics);
             ValidateNullableEnumValue<CaptionPlacement>(itemNode, "captionPlacement", columnScope, diagnostics);
+            ValidateNullableBooleanValue(itemNode, "overlayScope", columnScope, diagnostics);
             ValidateExclusiveWidth(columnScope, column.Width, column.WidthHint, diagnostics);
 
             if (string.IsNullOrWhiteSpace(column.Name))
@@ -939,6 +954,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 Width = ReadNullableDouble(itemNode, "width"),
                 WidthHint = ReadNullableEnum<FieldWidthHint>(itemNode, "widthHint"),
                 Weight = ReadNullableDouble(itemNode, "weight"),
+                IsOverlayScope = ReadBoolean(itemNode, "overlayScope"),
                 ShowBorder = ReadBoolean(itemNode, "showBorder", true),
                 Variant = ReadNullableEnum<ContainerVariant>(itemNode, "variant"),
                 Visible = ReadNullableBoolean(itemNode, "visible"),
@@ -959,6 +975,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             ValidateNullableEnumValue<FieldChromeMode>(itemNode, "fieldChromeMode", containerScope, diagnostics);
             ValidateNullableEnumValue<CaptionPlacement>(itemNode, "captionPlacement", containerScope, diagnostics);
             ValidateNullableEnumValue<ContainerVariant>(itemNode, "variant", containerScope, diagnostics);
+            ValidateNullableBooleanValue(itemNode, "overlayScope", containerScope, diagnostics);
             ValidateExclusiveWidth(containerScope, container.Width, container.WidthHint, diagnostics);
 
             if (string.IsNullOrWhiteSpace(container.Name))
@@ -1411,6 +1428,39 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 scope,
                 value,
                 key));
+        }
+
+        private static void ValidateNullableBooleanValue(YamlMappingNode node, string key, string scope, IList<string> diagnostics)
+        {
+            var value = ReadScalar(node, key);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return;
+            }
+
+            bool parsed;
+            if (bool.TryParse(value, out parsed))
+            {
+                return;
+            }
+
+            diagnostics.Add(string.Format(
+                CultureInfo.InvariantCulture,
+                "{0} has invalid value '{1}' for '{2}'. Expected a boolean value.",
+                scope,
+                value,
+                key));
+        }
+
+        private static void ValidateNoOverlayScopeOnLeafLayoutItem(YamlMappingNode node, string scope, IList<string> diagnostics)
+        {
+            if (TryGetMappingChild(node, "overlayScope", out _))
+            {
+                diagnostics.Add(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{0} cannot define 'overlayScope'. Overlay scope can only be defined on layout, row, column, or container nodes.",
+                    scope));
+            }
         }
 
         private static void ValidateNumericRange(YamlMappingNode node, string scope, IList<string> diagnostics)

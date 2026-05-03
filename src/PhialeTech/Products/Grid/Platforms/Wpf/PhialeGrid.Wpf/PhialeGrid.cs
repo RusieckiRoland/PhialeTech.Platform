@@ -63,6 +63,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         }
 
         private const string GroupingDragFormat = "PhialeGrid.Wpf.ColumnId";
+        private const double RegionDragThreshold = 12d;
         private static readonly long AutoTouchPromotionWindowTicks = (long)(Stopwatch.Frequency * 0.8d);
         private const double ClassicColumnResizeStep = 24d;
         private const double TouchColumnResizeStep = 48d;
@@ -91,6 +92,16 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         private IReadOnlyList<GridSortDescriptor> _sortDescriptors = Array.Empty<GridSortDescriptor>();
         private IReadOnlyList<GridSummaryDescriptor> _summaryDescriptors = Array.Empty<GridSummaryDescriptor>();
         private GridLayoutState _layoutState;
+        private FrameworkElement _regionDragSource;
+        private GridRegionKind? _regionDragKind;
+        private Point _regionDragStartPoint;
+        private bool _isRegionDragArmed;
+        private bool _isRegionDragPreviewActive;
+        private GridRegionHostKind? _regionDragPreviewHostKind;
+        private GridRegionKind? _regionDragPreviewKind;
+        private int? _regionDragPreviousHostZIndex;
+        private Brush _regionDragPreviousHostBackground;
+        private Brush _regionDragPreviousPanelBackground;
         private IEnumerable _rowsView = Array.Empty<GridDisplayRowModel>();
         private INotifyCollectionChanged _observableItemsSource;
         private IReadOnlyList<object> _currentFilteredRows = Array.Empty<object>();
@@ -131,16 +142,28 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         private bool _systemThemeSubscriptionActive;
         private object _lastEditSessionRecordsReference;
         private object _lastEditSessionFieldDefinitionsReference;
+        private IReadOnlyList<object> _lastEditSessionRecordsSnapshot = Array.Empty<object>();
+        private IReadOnlyList<IEditSessionFieldDefinition> _lastEditSessionFieldDefinitionsSnapshot = Array.Empty<IEditSessionFieldDefinition>();
         private bool _suppressViewStateNotifications;
         private bool _suppressColumnFilterRefresh;
         private bool _pendingRebuildColumnBindingsWhileHidden;
         private bool _pendingRefreshRowsViewWhileHidden;
         private bool _pendingRefreshSurfaceRowIndicatorsWhileHidden;
+        private bool _pendingVisibleStateFlushScheduled;
+        private int _gridUpdateBatchDepth;
+        private bool _pendingRebuildColumnBindingsAfterBatch;
+        private bool _pendingRefreshRowsViewAfterBatch;
+        private bool _pendingRefreshSurfaceRowIndicatorsAfterBatch;
+        private bool _pendingApplyRegionLayoutAfterBatch;
+        private bool _pendingViewStateChangedAfterBatch;
+        private string _pendingCurrentCellRowKeyAfterBatch;
+        private string _pendingCurrentCellColumnKeyAfterBatch;
         private GridInteractionMode _autoInteractionMode = GridInteractionMode.Classic;
         private GridInteractionMode _resolvedInteractionMode = GridInteractionMode.Classic;
         private GridDensityMetrics _densityMetrics = GridInteractionConfiguration.ResolveDensityMetrics(GridDensity.Compact);
         private long _lastTouchInteractionTimestamp;
         private bool _isApplyingRegionLayout;
+        private bool _workspacePanelTabOverflowLayoutQueued;
 
         public static readonly DependencyProperty TopCommandContentProperty =
             DependencyProperty.Register(nameof(TopCommandContent), typeof(object), typeof(PhialeGrid), new PropertyMetadata(null, HandleRegionChromeChanged));
@@ -148,8 +171,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         public static readonly DependencyProperty SideToolContentProperty =
             DependencyProperty.Register(nameof(SideToolContent), typeof(object), typeof(PhialeGrid), new PropertyMetadata(null, HandleRegionChromeChanged));
 
+        public static readonly DependencyProperty ChangePanelContentProperty =
+            DependencyProperty.Register(nameof(ChangePanelContent), typeof(object), typeof(PhialeGrid), new PropertyMetadata(null, HandleRegionChromeChanged));
+
+        public static readonly DependencyProperty ValidationPanelContentProperty =
+            DependencyProperty.Register(nameof(ValidationPanelContent), typeof(object), typeof(PhialeGrid), new PropertyMetadata(null, HandleRegionChromeChanged));
+
         public static readonly DependencyProperty SideToolRegionTitleProperty =
-            DependencyProperty.Register(nameof(SideToolRegionTitle), typeof(string), typeof(PhialeGrid), new PropertyMetadata("Tools", HandleSideToolRegionTitleChanged));
+            DependencyProperty.Register(nameof(SideToolRegionTitle), typeof(string), typeof(PhialeGrid), new PropertyMetadata("Grid options", HandleSideToolRegionTitleChanged));
 
         public static readonly DependencyProperty SideToolRegionUsesDrawerChromeProperty =
             DependencyProperty.Register(nameof(SideToolRegionUsesDrawerChrome), typeof(bool), typeof(PhialeGrid), new PropertyMetadata(false, HandleRegionChromeChanged));
@@ -240,10 +269,6 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             _editSessionContext = _internalEditSessionContext;
             InitializeComponent();
             _regionLayoutAdapter = CreateRegionLayoutAdapter();
-            InputManager.Current.PreProcessInput += DebugObserveRuntimeMouseDown;
-            InputManager.Current.PreNotifyInput += DebugObserveRuntimePreNotifyMouseDown;
-            InputManager.Current.PostNotifyInput += DebugObserveRuntimePostNotifyMouseDown;
-            AddHandler(UIElement.PreviewMouseDownEvent, new MouseButtonEventHandler(DebugObserveGridPreviewMouseDown), true);
             AddHandler(UIElement.PreviewMouseRightButtonDownEvent, new MouseButtonEventHandler(HandleHeaderPreviewMouseRightButtonDown), true);
             AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(HandleHeaderPreviewMouseRightButtonDown), true);
             AddHandler(FrameworkElement.ContextMenuOpeningEvent, new ContextMenuEventHandler(HandleHeaderContextMenuOpening), true);
@@ -263,6 +288,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             _surfaceCoordinator.ColumnGroupingDragRequested += HandleSurfaceColumnGroupingDragRequested;
             _surfaceCoordinator.RowActionRequested += HandleSurfaceRowActionRequested;
             SurfaceHost.Initialize(_surfaceCoordinator);
+            SurfaceColumnHeaderBand.InputSurfaceHost = SurfaceHost;
             SurfaceHost.ViewportScrollChanged += HandleSurfaceViewportScrollChanged;
             SurfaceHost.HostGeometryChanged += HandleSurfaceHostGeometryChanged;
             FilterScrollViewer.ScrollChanged += HandleFilterScrollViewerScrollChanged;
@@ -442,6 +468,18 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             set => SetValue(SideToolContentProperty, value);
         }
 
+        public object ChangePanelContent
+        {
+            get => GetValue(ChangePanelContentProperty);
+            set => SetValue(ChangePanelContentProperty, value);
+        }
+
+        public object ValidationPanelContent
+        {
+            get => GetValue(ValidationPanelContentProperty);
+            set => SetValue(ValidationPanelContentProperty, value);
+        }
+
         public string SideToolRegionTitle
         {
             get => (string)GetValue(SideToolRegionTitleProperty);
@@ -506,7 +544,11 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             }
         }
 
+        public string GroupingBandLabelText => GetText(GridTextKeys.GroupingBandLabel);
+
         public string GroupingDropText => GetText(GridTextKeys.GroupingDropHere);
+
+        public string GroupingDragDataFormat => GroupingDragFormat;
 
         public string GroupingEmptyText => GetText(GridTextKeys.GroupingEmpty);
 
@@ -514,7 +556,11 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public string GroupingCollapseAllText => GetText(GridTextKeys.GroupingCollapseAll);
 
-        public string ToolsRegionTitleText => string.IsNullOrWhiteSpace(SideToolRegionTitle) ? "Tools" : SideToolRegionTitle;
+        public string ToolsRegionTitleText => string.IsNullOrWhiteSpace(SideToolRegionTitle) ? "Grid options" : SideToolRegionTitle;
+
+        public string ChangePanelTitleText => "Changes";
+
+        public string ValidationPanelTitleText => "Validation";
 
         public string SummaryRegionTitleText => "Summaries";
 
@@ -526,6 +572,10 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public string SideToolRegionToggleText => GetChromeState(GridRegionKind.SideToolRegion).ToggleText;
 
+        public string ChangePanelRegionToggleText => GetChromeState(GridRegionKind.ChangePanelRegion).ToggleText;
+
+        public string ValidationPanelRegionToggleText => GetChromeState(GridRegionKind.ValidationPanelRegion).ToggleText;
+
         public bool CanToggleTopCommandStrip => GetChromeState(GridRegionKind.TopCommandRegion).CanCollapse;
 
         public bool CanCollapseGroupingRegion => GetChromeState(GridRegionKind.GroupingRegion).CanCollapse;
@@ -534,6 +584,10 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public bool CanCollapseSideToolRegion => GetChromeState(GridRegionKind.SideToolRegion).CanCollapse;
 
+        public bool CanCollapseChangePanelRegion => GetChromeState(GridRegionKind.ChangePanelRegion).CanCollapse;
+
+        public bool CanCollapseValidationPanelRegion => GetChromeState(GridRegionKind.ValidationPanelRegion).CanCollapse;
+
         public bool CanCloseTopCommandStrip => GetChromeState(GridRegionKind.TopCommandRegion).CanClose;
 
         public bool CanCloseGroupingRegion => GetChromeState(GridRegionKind.GroupingRegion).CanClose;
@@ -541,6 +595,28 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         public bool CanCloseSummaryBottomRegion => GetChromeState(GridRegionKind.SummaryBottomRegion).CanClose;
 
         public bool CanCloseSideToolRegion => GetChromeState(GridRegionKind.SideToolRegion).CanClose;
+
+        public bool CanCloseChangePanelRegion => GetChromeState(GridRegionKind.ChangePanelRegion).CanClose;
+
+        public bool CanCloseValidationPanelRegion => GetChromeState(GridRegionKind.ValidationPanelRegion).CanClose;
+
+        public Visibility ToolsPanelToolsTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SideToolRegion, GridRegionKind.SideToolRegion);
+
+        public Visibility ToolsPanelChangesTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SideToolRegion, GridRegionKind.ChangePanelRegion);
+
+        public Visibility ToolsPanelValidationTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SideToolRegion, GridRegionKind.ValidationPanelRegion);
+
+        public Visibility ChangesPanelToolsTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ChangePanelRegion, GridRegionKind.SideToolRegion);
+
+        public Visibility ChangesPanelChangesTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ChangePanelRegion, GridRegionKind.ChangePanelRegion);
+
+        public Visibility ChangesPanelValidationTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ChangePanelRegion, GridRegionKind.ValidationPanelRegion);
+
+        public Visibility ValidationPanelToolsTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ValidationPanelRegion, GridRegionKind.SideToolRegion);
+
+        public Visibility ValidationPanelChangesTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ValidationPanelRegion, GridRegionKind.ChangePanelRegion);
+
+        public Visibility ValidationPanelValidationTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ValidationPanelRegion, GridRegionKind.ValidationPanelRegion);
 
         public string FilterLabelText => GetText(GridTextKeys.FilterLabel);
 
@@ -630,6 +706,8 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public double SurfaceVerticalScrollBarGutterWidth => SurfaceHost?.VerticalScrollBarGutterWidth ?? 0d;
 
+        public double SurfaceHorizontalScrollBarGutterHeight => SurfaceHost?.HorizontalScrollBarGutterHeight ?? 0d;
+
         public double ResolvedRowStateWidth => ResolvedRowIndicatorWidth + ResolvedSelectionCheckboxWidth;
 
         public double ResolvedRowNumbersWidth => ShowNb
@@ -703,6 +781,17 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             return encoded;
         }
 
+        internal string DiagnosticsGridIdForTests => GetDiagnosticsGridId();
+
+        public IDisposable BeginGridUpdateBatch(string reason)
+        {
+            _gridUpdateBatchDepth++;
+            LogDiagnostics("Grid update batch started. Reason='" + (reason ?? string.Empty) + "', Depth=" + _gridUpdateBatchDepth + ".");
+            var editStateBatch = _editSessionContext?.BeginStateChangeBatch("grid-update-batch:" + (reason ?? string.Empty));
+            var surfaceSnapshotBatch = _surfaceCoordinator.BeginSnapshotUpdateBatch("grid-update-batch:" + (reason ?? string.Empty));
+            return new GridUpdateBatchScope(this, reason, editStateBatch, surfaceSnapshotBatch);
+        }
+
         public GridViewState ExportViewState()
         {
             return GridViewStateConverter.FromSnapshot(BuildStateSnapshot());
@@ -767,8 +856,42 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public void SetRegionVisibility(GridRegionKind regionKind, bool isVisible)
         {
+            if (IsResolvedRegionVisibilityEqual(regionKind, isVisible))
+            {
+                LogDiagnostics("SetRegionVisibility skipped because requested visibility is already active. Region=" + regionKind + ", IsVisible=" + isVisible + ".");
+                return;
+            }
+
             HandleRegionCommand(_surfaceInputAdapter.CreateRegionStateInput(
                 isVisible ? GridRegionCommandKind.Open : GridRegionCommandKind.Close,
+                regionKind,
+                DateTime.UtcNow));
+        }
+
+        public void OpenWorkspacePanel(GridRegionKind regionKind)
+        {
+            if (ResolveRegionHostKind(regionKind) != GridRegionHostKind.WorkspacePanel)
+            {
+                throw new InvalidOperationException(regionKind + " is not a workspace panel.");
+            }
+
+            EnsureWorkspacePanelOpen(regionKind);
+            HandleRegionCommand(_surfaceInputAdapter.CreateRegionStateInput(
+                GridRegionCommandKind.Activate,
+                regionKind,
+                DateTime.UtcNow));
+        }
+
+        private void EnsureWorkspacePanelOpen(GridRegionKind regionKind)
+        {
+            var regionState = ResolveRequiredRegionState(regionKind);
+            if (regionState.State == GridRegionState.Open)
+            {
+                return;
+            }
+
+            HandleRegionCommand(_surfaceInputAdapter.CreateRegionStateInput(
+                GridRegionCommandKind.Open,
                 regionKind,
                 DateTime.UtcNow));
         }
@@ -798,6 +921,13 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             }
 
             LogDiagnostics($"ApplyStateSnapshot started. LayoutColumns={snapshot.Layout?.Columns?.Count ?? 0}, Groups={snapshot.Groups?.Count ?? 0}, Sorts={snapshot.Sorts?.Count ?? 0}, SearchLength={snapshot.GlobalSearchText?.Length ?? 0}.");
+            var currentSnapshot = BuildStateSnapshot();
+            if (AreStateSnapshotsEquivalent(currentSnapshot, snapshot))
+            {
+                LogDiagnostics("ApplyStateSnapshot skipped because restored state is equivalent to the current grid state. " + GetGridSessionDescription() + ".");
+                return;
+            }
+
             ExecuteWithoutViewStateNotifications(() =>
             {
                 _layoutState = new GridLayoutState(snapshot.Layout.Columns);
@@ -842,14 +972,24 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         private void ApplyRegionLayout()
         {
+            var applyCounter = PhialeGridDiagnostics.IncrementGridCounter(GetDiagnosticsGridId(), "ApplyRegionLayout");
+            if (ShouldDeferVisualWorkBecauseBatched())
+            {
+                _pendingApplyRegionLayoutAfterBatch = true;
+                LogDiagnostics("ApplyRegionLayout deferred because grid update batch is active. Count=" + applyCounter.Count + ". " + GetGridSessionDescription() + ".");
+                return;
+            }
+
             if (_isApplyingRegionLayout)
             {
                 return;
             }
 
+            var stopwatch = Stopwatch.StartNew();
             _isApplyingRegionLayout = true;
             try
             {
+                PhialeGridDiagnostics.IncrementGridCounter(GetDiagnosticsGridId(), "ApplyRegionLayoutExecuted");
                 _surfaceCoordinator.SetRegionCapabilityPolicy(CapabilityPolicy);
                 _regionLayoutAdapter.Apply(
                     _surfaceCoordinator.ExportResolvedRegionStates(),
@@ -859,14 +999,23 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 OnPropertyChanged(nameof(GroupingRegionToggleText));
                 OnPropertyChanged(nameof(SummaryBottomRegionToggleText));
                 OnPropertyChanged(nameof(SideToolRegionToggleText));
+                OnPropertyChanged(nameof(ChangePanelRegionToggleText));
+                OnPropertyChanged(nameof(ValidationPanelRegionToggleText));
                 OnPropertyChanged(nameof(CanToggleTopCommandStrip));
                 OnPropertyChanged(nameof(CanCollapseGroupingRegion));
                 OnPropertyChanged(nameof(CanCollapseSummaryBottomRegion));
                 OnPropertyChanged(nameof(CanCollapseSideToolRegion));
+                OnPropertyChanged(nameof(CanCollapseChangePanelRegion));
+                OnPropertyChanged(nameof(CanCollapseValidationPanelRegion));
                 OnPropertyChanged(nameof(CanCloseTopCommandStrip));
                 OnPropertyChanged(nameof(CanCloseGroupingRegion));
                 OnPropertyChanged(nameof(CanCloseSummaryBottomRegion));
                 OnPropertyChanged(nameof(CanCloseSideToolRegion));
+                OnPropertyChanged(nameof(CanCloseChangePanelRegion));
+                OnPropertyChanged(nameof(CanCloseValidationPanelRegion));
+                RaiseWorkspacePanelTabVisibilityChanged();
+                QueueWorkspacePanelTabOverflowLayout();
+                LogDiagnostics("ApplyRegionLayout finished in " + stopwatch.ElapsedMilliseconds + " ms. Count=" + applyCounter.Count + ". " + GetGridSessionDescription() + ".");
             }
             finally
             {
@@ -874,43 +1023,541 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             }
         }
 
+        private void RaiseWorkspacePanelTabVisibilityChanged()
+        {
+            OnPropertyChanged(nameof(ToolsPanelToolsTabVisibility));
+            OnPropertyChanged(nameof(ToolsPanelChangesTabVisibility));
+            OnPropertyChanged(nameof(ToolsPanelValidationTabVisibility));
+            OnPropertyChanged(nameof(ChangesPanelToolsTabVisibility));
+            OnPropertyChanged(nameof(ChangesPanelChangesTabVisibility));
+            OnPropertyChanged(nameof(ChangesPanelValidationTabVisibility));
+            OnPropertyChanged(nameof(ValidationPanelToolsTabVisibility));
+            OnPropertyChanged(nameof(ValidationPanelChangesTabVisibility));
+            OnPropertyChanged(nameof(ValidationPanelValidationTabVisibility));
+        }
+
+        private void HandleWorkspacePanelTabOverflowLayoutChanged(object sender, SizeChangedEventArgs e)
+        {
+            QueueWorkspacePanelTabOverflowLayout();
+        }
+
+        private void QueueWorkspacePanelTabOverflowLayout()
+        {
+            if (_workspacePanelTabOverflowLayoutQueued)
+            {
+                return;
+            }
+
+            _workspacePanelTabOverflowLayoutQueued = true;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _workspacePanelTabOverflowLayoutQueued = false;
+                UpdateWorkspacePanelTabOverflows();
+            }), DispatcherPriority.Loaded);
+        }
+
+        private void UpdateWorkspacePanelTabOverflows()
+        {
+            UpdateWorkspacePanelTabOverflow(
+                GridRegionKind.SideToolRegion,
+                SideToolRegionExpandedShell,
+                ToolsPanelExpandedTabStrip,
+                ToolsPanelOverflowTabButton,
+                ToolsPanelToolsTabButton,
+                ToolsPanelChangesTabButton,
+                ToolsPanelValidationTabButton);
+            UpdateWorkspacePanelTabOverflow(
+                GridRegionKind.ChangePanelRegion,
+                ChangePanelExpandedShell,
+                ChangesPanelExpandedTabStrip,
+                ChangesPanelOverflowTabButton,
+                ChangesPanelToolsTabButton,
+                ChangesPanelChangesTabButton,
+                ChangesPanelValidationTabButton);
+            UpdateWorkspacePanelTabOverflow(
+                GridRegionKind.ValidationPanelRegion,
+                ValidationPanelExpandedShell,
+                ValidationPanelExpandedTabStrip,
+                ValidationPanelOverflowTabButton,
+                ValidationPanelToolsTabButton,
+                ValidationPanelChangesTabButton,
+                ValidationPanelValidationTabButton);
+        }
+
+        private void UpdateWorkspacePanelTabOverflow(
+            GridRegionKind hostRegionKind,
+            FrameworkElement shell,
+            StackPanel tabStrip,
+            Button overflowButton,
+            params Button[] tabButtons)
+        {
+            if (shell == null || tabStrip == null || overflowButton == null || tabButtons == null || shell.Visibility != Visibility.Visible)
+            {
+                return;
+            }
+
+            var logicalTabs = tabButtons
+                .Where(button => button != null && ResolveWorkspacePanelTabVisibility(hostRegionKind, ResolveRegionKindFromTag(button)) == Visibility.Visible)
+                .ToArray();
+            foreach (var button in tabButtons.Where(button => button != null))
+            {
+                button.Visibility = Visibility.Collapsed;
+            }
+
+            overflowButton.Visibility = Visibility.Collapsed;
+            overflowButton.ContextMenu = null;
+
+            if (logicalTabs.Length == 0)
+            {
+                return;
+            }
+
+            var availableWidth = ResolveWorkspacePanelTabAvailableWidth(shell, tabStrip);
+            var tabWidths = logicalTabs.ToDictionary(button => button, ResolveDesiredOuterWidth);
+            var allTabsWidth = tabWidths.Values.Sum();
+            if (allTabsWidth <= availableWidth)
+            {
+                foreach (var button in logicalTabs)
+                {
+                    button.Visibility = Visibility.Visible;
+                }
+
+                return;
+            }
+
+            var overflowWidth = ResolveDesiredOuterWidth(overflowButton);
+            var availableTabsWidth = Math.Max(0d, availableWidth - overflowWidth);
+            var visibleTabs = new HashSet<Button>();
+            var activeTab = logicalTabs.FirstOrDefault(button => ResolveRegionKindFromTag(button) == hostRegionKind);
+            var usedWidth = 0d;
+
+            if (activeTab != null)
+            {
+                visibleTabs.Add(activeTab);
+                usedWidth += tabWidths[activeTab];
+            }
+
+            foreach (var button in logicalTabs)
+            {
+                if (ReferenceEquals(button, activeTab))
+                {
+                    continue;
+                }
+
+                var nextWidth = tabWidths[button];
+                if (usedWidth + nextWidth <= availableTabsWidth)
+                {
+                    visibleTabs.Add(button);
+                    usedWidth += nextWidth;
+                }
+            }
+
+            var overflowTabs = logicalTabs.Where(button => !visibleTabs.Contains(button)).ToArray();
+            foreach (var button in logicalTabs)
+            {
+                button.Visibility = visibleTabs.Contains(button) ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            if (overflowTabs.Length == 0)
+            {
+                return;
+            }
+
+            overflowButton.ContextMenu = BuildWorkspacePanelTabOverflowMenu(overflowTabs);
+            overflowButton.Visibility = Visibility.Visible;
+        }
+
+        private double ResolveWorkspacePanelTabAvailableWidth(FrameworkElement shell, FrameworkElement tabStrip)
+        {
+            if (shell.ActualWidth <= 0d)
+            {
+                return 0d;
+            }
+
+            var leftOffset = Math.Max(0d, tabStrip.Margin.Left);
+            var rightOffset = Math.Max(0d, tabStrip.Margin.Right);
+            return Math.Max(0d, shell.ActualWidth - leftOffset - rightOffset);
+        }
+
+        private double ResolveDesiredOuterWidth(FrameworkElement element)
+        {
+            var previousVisibility = element.Visibility;
+            if (previousVisibility != Visibility.Visible)
+            {
+                element.Visibility = Visibility.Visible;
+            }
+
+            element.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            var width = element.DesiredSize.Width + element.Margin.Left + element.Margin.Right;
+            element.Visibility = previousVisibility;
+            return Math.Max(0d, width);
+        }
+
+        private ContextMenu BuildWorkspacePanelTabOverflowMenu(IEnumerable<Button> overflowTabs)
+        {
+            var menu = new ContextMenu
+            {
+                Style = TryFindResource("PgColumnContextMenuStyle") as Style,
+            };
+
+            foreach (var tab in overflowTabs)
+            {
+                var menuItem = new MenuItem
+                {
+                    Header = tab.Content,
+                    Tag = tab.Tag,
+                    Style = TryFindResource("PgColumnContextMenuItemStyle") as Style,
+                };
+                menuItem.Click += HandleOpenWorkspacePanelTabClick;
+                menu.Items.Add(menuItem);
+            }
+
+            return menu;
+        }
+
+        private void HandleWorkspacePanelTabOverflowClick(object sender, RoutedEventArgs e)
+        {
+            if (!(sender is Button button) || button.ContextMenu == null || button.ContextMenu.Items.Count == 0)
+            {
+                return;
+            }
+
+            button.ContextMenu.PlacementTarget = button;
+            button.ContextMenu.Placement = PlacementMode.Top;
+            button.ContextMenu.IsOpen = true;
+            e.Handled = true;
+        }
+
+        private Visibility ResolveWorkspacePanelTabVisibility(GridRegionKind hostRegionKind, GridRegionKind targetRegionKind)
+        {
+            var states = _surfaceCoordinator.ExportResolvedRegionStates();
+            var hostState = states.SingleOrDefault(state => state.RegionKind == hostRegionKind);
+            var targetState = states.SingleOrDefault(state => state.RegionKind == targetRegionKind);
+            if (hostState == null || targetState == null)
+            {
+                throw new InvalidOperationException("Missing required Core workspace panel region state.");
+            }
+
+            if (hostState.HostKind != GridRegionHostKind.WorkspacePanel ||
+                targetState.HostKind != GridRegionHostKind.WorkspacePanel)
+            {
+                throw new InvalidOperationException("Workspace panel tabs can only bind workspace panel regions.");
+            }
+
+            return targetState.State != GridRegionState.Closed && targetState.Placement == hostState.Placement
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
+        private bool IsResolvedRegionVisibilityEqual(GridRegionKind regionKind, bool isVisible)
+        {
+            var regionState = _surfaceCoordinator.ExportResolvedRegionStates()
+                .SingleOrDefault(region => region.RegionKind == regionKind);
+            if (regionState == null)
+            {
+                throw new InvalidOperationException("Missing required Core region state for " + regionKind + ".");
+            }
+
+            return (regionState.State != GridRegionState.Closed) == isVisible;
+        }
+
+        private static bool AreStateSnapshotsEquivalent(GridStateSnapshot left, GridStateSnapshot right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right;
+            }
+
+            return AreColumnListsEquivalent(left.Layout?.Columns, right.Layout?.Columns) &&
+                AreSortDescriptorsEquivalent(left.Sorts, right.Sorts) &&
+                AreFilterGroupsEquivalent(left.Filters, right.Filters) &&
+                AreGroupDescriptorsEquivalent(left.Groups, right.Groups) &&
+                AreSummaryDescriptorsEquivalent(left.Summaries, right.Summaries) &&
+                AreRegionLayoutsEquivalent(left.RegionLayout, right.RegionLayout) &&
+                string.Equals(left.GlobalSearchText ?? string.Empty, right.GlobalSearchText ?? string.Empty, StringComparison.Ordinal) &&
+                Nullable.Equals(left.SelectCurrentRow, right.SelectCurrentRow) &&
+                Nullable.Equals(left.MultiSelect, right.MultiSelect) &&
+                Nullable.Equals(left.ShowRowNumbers, right.ShowRowNumbers) &&
+                Nullable.Equals(left.RowNumberingMode, right.RowNumberingMode);
+        }
+
+        private static bool AreColumnListsEquivalent(IReadOnlyList<GridColumnDefinition> left, IReadOnlyList<GridColumnDefinition> right)
+        {
+            if ((left?.Count ?? 0) != (right?.Count ?? 0))
+            {
+                return false;
+            }
+
+            for (var index = 0; index < (left?.Count ?? 0); index++)
+            {
+                if (!AreColumnsEquivalent(left[index], right[index]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool AreColumnsEquivalent(GridColumnDefinition left, GridColumnDefinition right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right;
+            }
+
+            return string.Equals(left.Id, right.Id, StringComparison.Ordinal) &&
+                string.Equals(left.Header, right.Header, StringComparison.Ordinal) &&
+                left.Width.Equals(right.Width) &&
+                left.MinWidth.Equals(right.MinWidth) &&
+                left.IsVisible == right.IsVisible &&
+                left.IsFrozen == right.IsFrozen &&
+                left.IsEditable == right.IsEditable &&
+                left.DisplayIndex == right.DisplayIndex &&
+                left.ValueType == right.ValueType &&
+                left.EditorKind == right.EditorKind &&
+                left.EditorItemsMode == right.EditorItemsMode &&
+                string.Equals(left.EditMask, right.EditMask, StringComparison.Ordinal) &&
+                string.Equals(left.ValueKind, right.ValueKind, StringComparison.Ordinal) &&
+                left.EditorItems.SequenceEqual(right.EditorItems, StringComparer.Ordinal);
+        }
+
+        private static bool AreSortDescriptorsEquivalent(IReadOnlyList<GridSortDescriptor> left, IReadOnlyList<GridSortDescriptor> right)
+        {
+            if ((left?.Count ?? 0) != (right?.Count ?? 0))
+            {
+                return false;
+            }
+
+            for (var index = 0; index < (left?.Count ?? 0); index++)
+            {
+                if (!string.Equals(left[index].ColumnId, right[index].ColumnId, StringComparison.Ordinal) ||
+                    left[index].Direction != right[index].Direction)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool AreGroupDescriptorsEquivalent(IReadOnlyList<GridGroupDescriptor> left, IReadOnlyList<GridGroupDescriptor> right)
+        {
+            if ((left?.Count ?? 0) != (right?.Count ?? 0))
+            {
+                return false;
+            }
+
+            for (var index = 0; index < (left?.Count ?? 0); index++)
+            {
+                if (!string.Equals(left[index].ColumnId, right[index].ColumnId, StringComparison.Ordinal) ||
+                    left[index].Direction != right[index].Direction)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool AreSummaryDescriptorsEquivalent(IReadOnlyList<GridSummaryDescriptor> left, IReadOnlyList<GridSummaryDescriptor> right)
+        {
+            if ((left?.Count ?? 0) != (right?.Count ?? 0))
+            {
+                return false;
+            }
+
+            for (var index = 0; index < (left?.Count ?? 0); index++)
+            {
+                if (!string.Equals(left[index].ColumnId, right[index].ColumnId, StringComparison.Ordinal) ||
+                    left[index].Type != right[index].Type ||
+                    left[index].ValueType != right[index].ValueType)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool AreFilterGroupsEquivalent(GridFilterGroup left, GridFilterGroup right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right;
+            }
+
+            if (left.LogicalOperator != right.LogicalOperator || left.Filters.Count != right.Filters.Count)
+            {
+                return false;
+            }
+
+            for (var index = 0; index < left.Filters.Count; index++)
+            {
+                var leftFilter = left.Filters[index];
+                var rightFilter = right.Filters[index];
+                if (!string.Equals(leftFilter.ColumnId, rightFilter.ColumnId, StringComparison.Ordinal) ||
+                    leftFilter.Operator != rightFilter.Operator ||
+                    !object.Equals(leftFilter.Value, rightFilter.Value) ||
+                    !object.Equals(leftFilter.SecondValue, rightFilter.SecondValue))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool AreRegionLayoutsEquivalent(GridRegionLayoutSnapshot left, GridRegionLayoutSnapshot right)
+        {
+            if ((left?.Regions?.Count ?? 0) != (right?.Regions?.Count ?? 0))
+            {
+                return false;
+            }
+
+            var rightByKind = right.Regions.ToDictionary(region => region.RegionKind);
+            foreach (var leftRegion in left.Regions)
+            {
+                if (!rightByKind.TryGetValue(leftRegion.RegionKind, out var rightRegion) ||
+                    leftRegion.State != rightRegion.State ||
+                    leftRegion.IsActive != rightRegion.IsActive ||
+                    leftRegion.PlacementOverride != rightRegion.PlacementOverride ||
+                    !Nullable.Equals(leftRegion.Size, rightRegion.Size))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         private WpfGridRegionLayoutAdapter CreateRegionLayoutAdapter()
         {
             return new WpfGridRegionLayoutAdapter(
                 new[]
                 {
-                    new WpfGridRegionStripBinding(
+                    new WpfGridWorkspaceBandBinding(
                         GridRegionKind.TopCommandRegion,
                         TopCommandStripRow,
                         TopCommandStripUtilityRow,
-                        TopCommandStripHost,
+                        RegionLayoutFrame,
+                        BottomWorkspaceBandHost,
+                        TopCommandBand,
                         TopCommandStripContentHost,
-                        44d),
-                    new WpfGridRegionStripBinding(
+                        ResolveRequiredRegionDefaultSize(GridRegionKind.TopCommandRegion),
+                        false),
+                    new WpfGridWorkspaceBandBinding(
                         GridRegionKind.GroupingRegion,
                         GroupingRegionRow,
-                        GroupingRegionSplitterRow,
+                        GroupingBandUtilityRow,
+                        TopWorkspaceBandHost,
+                        BottomWorkspaceBandHost,
                         GroupingRegionHost,
-                        GroupingRegionContentScrollViewer,
-                        56d),
-                    new WpfGridRegionStripBinding(
+                        GroupingBandContentHost,
+                        56d,
+                        true),
+                    new WpfGridWorkspaceBandBinding(
                         GridRegionKind.SummaryBottomRegion,
                         SummaryBottomRegionRow,
                         SummaryBottomRegionSplitterRow,
+                        TopWorkspaceBandHost,
+                        BottomWorkspaceBandHost,
                         SummaryBottomRegionHost,
                         SummaryBottomRegionContentScrollViewer,
-                        56d),
+                        56d,
+                        true),
                 },
-                new WpfGridRegionPaneBinding(
-                    GridRegionKind.SideToolRegion,
-                    SideToolRegionSplitterColumn,
-                    SideToolRegionColumn,
-                    SideToolRegionHost,
-                    SideToolRegionContentScrollViewer,
-                    SideToolRegionCollapsedRail,
-                    SideToolRegionExpandedShell,
-                    SideToolRegionExpandedShellTransform,
-                    320d));
+                new[]
+                {
+                    new WpfGridWorkspacePanelBinding(
+                        GridRegionKind.SideToolRegion,
+                        RegionSurfaceColumn,
+                        LeftWorkspacePanelSplitterColumn,
+                        LeftWorkspacePanelColumn,
+                        SideToolRegionSplitterColumn,
+                        SideToolRegionColumn,
+                        new FrameworkElement[]
+                        {
+                            TopWorkspaceBandHost,
+                            RegionLayoutFrame,
+                            SummaryBottomRegionSplitter,
+                            BottomWorkspaceBandHost,
+                            BottomStatusStripHost,
+                        },
+                        SideToolRegionSplitter,
+                        SideToolRegionHost,
+                        SideToolRegionContentScrollViewer,
+                        SideToolRegionCollapsedRail,
+                        SideToolRegionExpandedShell,
+                        SideToolRegionExpandedShellTransform,
+                        ResolveRequiredRegionDefaultSize(GridRegionKind.SideToolRegion)),
+                    new WpfGridWorkspacePanelBinding(
+                        GridRegionKind.ChangePanelRegion,
+                        RegionSurfaceColumn,
+                        LeftWorkspacePanelSplitterColumn,
+                        LeftWorkspacePanelColumn,
+                        SideToolRegionSplitterColumn,
+                        SideToolRegionColumn,
+                        new FrameworkElement[]
+                        {
+                            TopWorkspaceBandHost,
+                            RegionLayoutFrame,
+                            SummaryBottomRegionSplitter,
+                            BottomWorkspaceBandHost,
+                            BottomStatusStripHost,
+                        },
+                        ChangePanelRegionSplitter,
+                        ChangePanelRegionHost,
+                        ChangePanelContentScrollViewer,
+                        ChangePanelCollapsedRail,
+                        ChangePanelExpandedShell,
+                        ChangePanelExpandedShellTransform,
+                        ResolveRequiredRegionDefaultSize(GridRegionKind.ChangePanelRegion)),
+                    new WpfGridWorkspacePanelBinding(
+                        GridRegionKind.ValidationPanelRegion,
+                        RegionSurfaceColumn,
+                        LeftWorkspacePanelSplitterColumn,
+                        LeftWorkspacePanelColumn,
+                        SideToolRegionSplitterColumn,
+                        SideToolRegionColumn,
+                        new FrameworkElement[]
+                        {
+                            TopWorkspaceBandHost,
+                            RegionLayoutFrame,
+                            SummaryBottomRegionSplitter,
+                            BottomWorkspaceBandHost,
+                            BottomStatusStripHost,
+                        },
+                        ValidationPanelRegionSplitter,
+                        ValidationPanelRegionHost,
+                        ValidationPanelContentScrollViewer,
+                        ValidationPanelCollapsedRail,
+                        ValidationPanelExpandedShell,
+                        ValidationPanelExpandedShellTransform,
+                        ResolveRequiredRegionDefaultSize(GridRegionKind.ValidationPanelRegion)),
+                });
+        }
+
+        private static double ResolveRequiredRegionDefaultSize(GridRegionKind regionKind)
+        {
+            var definition = GridRegionDefinitionCatalog.CreateDefault()
+                .FirstOrDefault(candidate => candidate.RegionKind == regionKind);
+            if (definition == null || !definition.DefaultSize.HasValue)
+            {
+                throw new InvalidOperationException("Missing required Core default size for " + regionKind + ".");
+            }
+
+            return definition.DefaultSize.Value;
+        }
+
+        private double ResolveRequiredDimensionResource(string resourceKey)
+        {
+            if (TryFindResource(resourceKey) is double value)
+            {
+                return value;
+            }
+
+            throw new InvalidOperationException("Missing required grid dimension resource '" + resourceKey + "'.");
         }
 
         private WpfGridRegionRenderSnapshot BuildRegionRenderSnapshot()
@@ -922,12 +1569,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     [GridRegionKind.GroupingRegion] = true,
                     [GridRegionKind.SummaryBottomRegion] = HasSummaries,
                     [GridRegionKind.SideToolRegion] = WpfGridRegionContentResolver.HasRenderableContent(SideToolRegionContentPresenter),
+                    [GridRegionKind.ChangePanelRegion] = WpfGridRegionContentResolver.HasRenderableContent(ChangePanelContentPresenter),
+                    [GridRegionKind.ValidationPanelRegion] = WpfGridRegionContentResolver.HasRenderableContent(ValidationPanelContentPresenter),
                 },
                 new Dictionary<GridRegionKind, WpfGridRegionRenderDirectives>
                 {
-                    [GridRegionKind.TopCommandRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: false, allowResize: false),
-                    [GridRegionKind.GroupingRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: HasNoGroups, allowResize: HasGroups),
-                    [GridRegionKind.SummaryBottomRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: true, allowResize: false),
+                    [GridRegionKind.TopCommandRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: false),
+                    [GridRegionKind.GroupingRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: true),
+                    [GridRegionKind.SummaryBottomRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: true),
                 },
                 SideToolRegionUsesDrawerChrome);
         }
@@ -974,29 +1623,502 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         private void HandleRegionToggleButtonClick(object sender, RoutedEventArgs e)
         {
-            ToggleRegionCollapsed(ResolveRegionKindFromTag(sender));
+            var regionKind = ResolveRegionKindFromTag(sender);
+            if (ResolveRegionHostKind(regionKind) == GridRegionHostKind.WorkspacePanel)
+            {
+                if (ResolveRequiredRegionState(regionKind).State == GridRegionState.Collapsed)
+                {
+                    OpenWorkspacePanel(regionKind);
+                    return;
+                }
+
+                ToggleWorkspacePanelsCollapsed();
+                return;
+            }
+
+            ToggleRegionCollapsed(regionKind);
         }
 
         private void HandleRegionCloseButtonClick(object sender, RoutedEventArgs e)
         {
-            HideRegion(ResolveRegionKindFromTag(sender));
+            var regionKind = ResolveRegionKindFromTag(sender);
+            if (ResolveRegionHostKind(regionKind) == GridRegionHostKind.WorkspacePanel)
+            {
+                HideWorkspacePanelAndActivateNext(regionKind);
+                return;
+            }
+
+            HideRegion(regionKind);
+        }
+
+        private void HandleOpenWorkspacePanelTabClick(object sender, RoutedEventArgs e)
+        {
+            OpenWorkspacePanel(ResolveRegionKindFromTag(sender));
+            e.Handled = true;
+        }
+
+        private void HideWorkspacePanels()
+        {
+            foreach (var regionKind in ResolveWorkspacePanelRegionKinds())
+            {
+                if (!IsResolvedRegionVisibilityEqual(regionKind, false))
+                {
+                    HideRegion(regionKind);
+                }
+            }
+        }
+
+        private void HideWorkspacePanelAndActivateNext(GridRegionKind regionKind)
+        {
+            var states = _surfaceCoordinator.ExportResolvedRegionStates();
+            var closingState = states.Single(state => state.RegionKind == regionKind);
+            HideRegion(regionKind);
+            if (!closingState.IsActive)
+            {
+                return;
+            }
+
+            var nextRegion = states
+                .Where(state =>
+                    state.HostKind == GridRegionHostKind.WorkspacePanel &&
+                    state.RegionKind != regionKind &&
+                    state.State == GridRegionState.Open)
+                .OrderBy(state => state.RegionKind)
+                .Select(state => (GridRegionKind?)state.RegionKind)
+                .FirstOrDefault();
+            if (nextRegion.HasValue)
+            {
+                HandleRegionCommand(_surfaceInputAdapter.CreateRegionStateInput(
+                    GridRegionCommandKind.Activate,
+                    nextRegion.Value,
+                    DateTime.UtcNow));
+            }
+        }
+
+        private void ToggleWorkspacePanelsCollapsed()
+        {
+            var hasOpenPanel = _surfaceCoordinator.ExportResolvedRegionStates()
+                .Any(state => state.HostKind == GridRegionHostKind.WorkspacePanel && state.State == GridRegionState.Open);
+            foreach (var regionKind in ResolveWorkspacePanelRegionKinds())
+            {
+                var state = _surfaceCoordinator.ExportResolvedRegionStates().Single(candidate => candidate.RegionKind == regionKind);
+                if (hasOpenPanel && state.State == GridRegionState.Open)
+                {
+                    ToggleRegionCollapsed(regionKind);
+                }
+                else if (!hasOpenPanel && state.State == GridRegionState.Collapsed)
+                {
+                    ToggleRegionCollapsed(regionKind);
+                }
+            }
+        }
+
+        private static IReadOnlyList<GridRegionKind> ResolveWorkspacePanelRegionKinds()
+        {
+            return new[]
+            {
+                GridRegionKind.SideToolRegion,
+                GridRegionKind.ChangePanelRegion,
+                GridRegionKind.ValidationPanelRegion,
+            };
+        }
+
+        private void HandleRegionDragMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!(sender is FrameworkElement source))
+            {
+                throw new InvalidOperationException("Region drag source must be a FrameworkElement.");
+            }
+
+            if (IsRegionDragStartedFromInteractiveChild(e.OriginalSource))
+            {
+                return;
+            }
+
+            _regionDragKind = ResolveRegionKindFromTag(sender);
+            _regionDragSource = source;
+            _regionDragStartPoint = e.GetPosition(this);
+            _isRegionDragArmed = true;
+            if (!source.CaptureMouse())
+            {
+                ClearRegionDragState();
+                throw new InvalidOperationException("Region drag source could not capture the mouse.");
+            }
+        }
+
+        private void HandleRegionDragMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_isRegionDragArmed || _regionDragSource == null || e.LeftButton != MouseButtonState.Pressed)
+            {
+                return;
+            }
+
+            var currentPoint = e.GetPosition(this);
+            if (Math.Abs(currentPoint.X - _regionDragStartPoint.X) >= RegionDragThreshold ||
+                Math.Abs(currentPoint.Y - _regionDragStartPoint.Y) >= RegionDragThreshold)
+            {
+                BeginRegionDragPreview(_regionDragKind.Value);
+                UpdateRegionDragPreview(currentPoint - _regionDragStartPoint, e.GetPosition(RegionLayoutFrame), e.GetPosition(GridRootFrame));
+                _regionDragSource.Cursor = Cursors.SizeAll;
+            }
+        }
+
+        private void HandleRegionDragMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_isRegionDragArmed || !_regionDragKind.HasValue)
+            {
+                ClearRegionDragState();
+                return;
+            }
+
+            try
+            {
+                var currentPoint = e.GetPosition(this);
+                if (Math.Abs(currentPoint.X - _regionDragStartPoint.X) < RegionDragThreshold &&
+                    Math.Abs(currentPoint.Y - _regionDragStartPoint.Y) < RegionDragThreshold)
+                {
+                    return;
+                }
+
+                MoveRegion(_regionDragKind.Value, ResolveRegionPlacementForDrag(_regionDragKind.Value, e.GetPosition(RegionLayoutFrame), e.GetPosition(GridRootFrame)));
+            }
+            finally
+            {
+                ClearRegionDragState();
+            }
+        }
+
+        private void MoveRegion(GridRegionKind regionKind, GridRegionPlacement placement)
+        {
+            HandleRegionCommand(_surfaceInputAdapter.CreateRegionMoveInput(
+                regionKind,
+                placement,
+                DateTime.UtcNow));
+        }
+
+        private GridRegionViewState ResolveRequiredRegionState(GridRegionKind regionKind)
+        {
+            var regionState = _surfaceCoordinator.ExportResolvedRegionStates()
+                .SingleOrDefault(region => region.RegionKind == regionKind);
+            if (regionState == null)
+            {
+                throw new InvalidOperationException("Missing required Core region state for " + regionKind + ".");
+            }
+
+            return regionState;
+        }
+
+        private GridRegionPlacement ResolveHorizontalRegionPlacement(Point point)
+        {
+            if (RegionLayoutFrame == null || RegionLayoutFrame.ActualWidth <= 0d)
+            {
+                throw new InvalidOperationException("Region layout frame must be measured before resolving region placement.");
+            }
+
+            return point.X < RegionLayoutFrame.ActualWidth / 2d
+                ? GridRegionPlacement.Left
+                : GridRegionPlacement.Right;
+        }
+
+        private GridRegionPlacement ResolveVerticalRegionPlacement(Point point)
+        {
+            if (GridRootFrame == null || GridRootFrame.ActualHeight <= 0d)
+            {
+                throw new InvalidOperationException("Grid root frame must be measured before resolving workspace band placement.");
+            }
+
+            return point.Y < GridRootFrame.ActualHeight / 2d
+                ? GridRegionPlacement.Top
+                : GridRegionPlacement.Bottom;
+        }
+
+        private GridRegionPlacement ResolveRegionPlacementForDrag(GridRegionKind regionKind, Point regionFramePoint, Point rootFramePoint)
+        {
+            switch (ResolveRegionHostKind(regionKind))
+            {
+                case GridRegionHostKind.WorkspacePanel:
+                    return ResolveHorizontalRegionPlacement(regionFramePoint);
+                case GridRegionHostKind.WorkspaceBand:
+                    return ResolveVerticalRegionPlacement(rootFramePoint);
+                default:
+                    throw new InvalidOperationException(regionKind + " cannot be moved by workspace drag.");
+            }
+        }
+
+        private void HandleRegionDragLostMouseCapture(object sender, MouseEventArgs e)
+        {
+            if (!_isRegionDragArmed)
+            {
+                return;
+            }
+
+            ClearRegionDragState();
+        }
+
+        private GridRegionHostKind ResolveRegionHostKind(GridRegionKind regionKind)
+        {
+            var state = _surfaceCoordinator.ExportResolvedRegionStates()
+                .SingleOrDefault(candidate => candidate.RegionKind == regionKind);
+            if (state == null)
+            {
+                throw new InvalidOperationException("Missing resolved region state for " + regionKind + ".");
+            }
+
+            return state.HostKind;
+        }
+
+        private void ClearRegionDragState()
+        {
+            EndRegionDragPreview();
+
+            var dragSource = _regionDragSource;
+            _regionDragSource = null;
+            _regionDragKind = null;
+            _isRegionDragArmed = false;
+
+            if (dragSource != null)
+            {
+                dragSource.Cursor = null;
+                if (dragSource.IsMouseCaptured)
+                {
+                    dragSource.ReleaseMouseCapture();
+                }
+            }
+        }
+
+        private static bool IsRegionDragStartedFromInteractiveChild(object originalSource)
+        {
+            var dependencyObject = originalSource as DependencyObject;
+            while (dependencyObject != null)
+            {
+                if (dependencyObject is ButtonBase)
+                {
+                    return true;
+                }
+
+                dependencyObject = VisualTreeHelper.GetParent(dependencyObject);
+            }
+
+            return false;
+        }
+
+        private void BeginRegionDragPreview(GridRegionKind regionKind)
+        {
+            if (_isRegionDragPreviewActive)
+            {
+                return;
+            }
+
+            var hostKind = ResolveRegionHostKind(regionKind);
+            if (hostKind != GridRegionHostKind.WorkspacePanel && hostKind != GridRegionHostKind.WorkspaceBand)
+            {
+                return;
+            }
+
+            _isRegionDragPreviewActive = true;
+            _regionDragPreviewHostKind = hostKind;
+            _regionDragPreviewKind = regionKind;
+            Panel.SetZIndex(RegionDockPreviewOverlay, 10);
+            Panel.SetZIndex(WorkspaceBandDockPreviewOverlay, 10);
+            ApplyRegionDockPreviewVisibility(hostKind);
+
+            if (hostKind == GridRegionHostKind.WorkspacePanel)
+            {
+                ResolveWorkspacePanelDragChrome(regionKind, out var host, out var panel, out var expandedShell, out _);
+                _regionDragPreviousHostZIndex = Panel.GetZIndex(host);
+                _regionDragPreviousHostBackground = host.Background;
+                _regionDragPreviousPanelBackground = panel.Background;
+                Panel.SetZIndex(host, 20);
+                host.Background = Brushes.Transparent;
+                panel.Background = Brushes.Transparent;
+                expandedShell.BeginAnimation(OpacityProperty, null);
+                expandedShell.Opacity = 0.92d;
+            }
+        }
+
+        private void UpdateRegionDragPreview(Vector dragDelta, Point currentRegionFramePoint)
+        {
+            UpdateRegionDragPreview(dragDelta, currentRegionFramePoint, currentRegionFramePoint);
+        }
+
+        private void UpdateRegionDragPreview(Vector dragDelta, Point currentRegionFramePoint, Point currentRootFramePoint)
+        {
+            if (!_isRegionDragPreviewActive)
+            {
+                return;
+            }
+
+            if (_regionDragPreviewHostKind == GridRegionHostKind.WorkspacePanel)
+            {
+                if (!_regionDragPreviewKind.HasValue)
+                {
+                    throw new InvalidOperationException("Workspace panel drag preview requires a region kind.");
+                }
+
+                ResolveWorkspacePanelDragChrome(_regionDragPreviewKind.Value, out _, out _, out _, out var expandedShellTransform);
+                expandedShellTransform.BeginAnimation(TranslateTransform.XProperty, null);
+                expandedShellTransform.X = dragDelta.X;
+                UpdateRegionDockPreview(ResolveHorizontalRegionPlacement(currentRegionFramePoint));
+                return;
+            }
+
+            if (_regionDragPreviewHostKind == GridRegionHostKind.WorkspaceBand)
+            {
+                UpdateRegionDockPreview(ResolveVerticalRegionPlacement(currentRootFramePoint));
+            }
+        }
+
+        private void UpdateRegionDockPreview(GridRegionPlacement placement)
+        {
+            RegionDockPreviewLeft.Opacity = placement == GridRegionPlacement.Left ? 0.62d : 0.24d;
+            RegionDockPreviewRight.Opacity = placement == GridRegionPlacement.Right ? 0.62d : 0.24d;
+            RegionDockPreviewTop.Opacity = placement == GridRegionPlacement.Top ? 0.62d : 0.24d;
+            RegionDockPreviewBottom.Opacity = placement == GridRegionPlacement.Bottom ? 0.62d : 0.24d;
+        }
+
+        private void ApplyRegionDockPreviewVisibility(GridRegionHostKind hostKind)
+        {
+            var isWorkspacePanel = hostKind == GridRegionHostKind.WorkspacePanel;
+            RegionDockPreviewOverlay.Visibility = isWorkspacePanel ? Visibility.Visible : Visibility.Collapsed;
+            WorkspaceBandDockPreviewOverlay.Visibility = isWorkspacePanel ? Visibility.Collapsed : Visibility.Visible;
+            RegionDockPreviewLeft.Visibility = isWorkspacePanel ? Visibility.Visible : Visibility.Collapsed;
+            RegionDockPreviewRight.Visibility = isWorkspacePanel ? Visibility.Visible : Visibility.Collapsed;
+            RegionDockPreviewTop.Visibility = isWorkspacePanel ? Visibility.Collapsed : Visibility.Visible;
+            RegionDockPreviewBottom.Visibility = isWorkspacePanel ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void EndRegionDragPreview()
+        {
+            if (!_isRegionDragPreviewActive)
+            {
+                return;
+            }
+
+            _isRegionDragPreviewActive = false;
+            RegionDockPreviewOverlay.Visibility = Visibility.Collapsed;
+            WorkspaceBandDockPreviewOverlay.Visibility = Visibility.Collapsed;
+            RegionDockPreviewLeft.Opacity = 0.24d;
+            RegionDockPreviewRight.Opacity = 0.24d;
+            RegionDockPreviewTop.Opacity = 0.24d;
+            RegionDockPreviewBottom.Opacity = 0.24d;
+            RegionDockPreviewLeft.Visibility = Visibility.Collapsed;
+            RegionDockPreviewRight.Visibility = Visibility.Collapsed;
+            RegionDockPreviewTop.Visibility = Visibility.Collapsed;
+            RegionDockPreviewBottom.Visibility = Visibility.Collapsed;
+
+            var wasWorkspacePanelDrag = _regionDragPreviewHostKind == GridRegionHostKind.WorkspacePanel;
+            var previewKind = _regionDragPreviewKind;
+            _regionDragPreviewHostKind = null;
+            _regionDragPreviewKind = null;
+
+            if (_regionDragPreviousHostZIndex.HasValue)
+            {
+                if (!previewKind.HasValue)
+                {
+                    throw new InvalidOperationException("Workspace panel drag preview requires a region kind.");
+                }
+
+                ResolveWorkspacePanelDragChrome(previewKind.Value, out var host, out var panel, out _, out _);
+                Panel.SetZIndex(host, _regionDragPreviousHostZIndex.Value);
+                host.Background = _regionDragPreviousHostBackground;
+                panel.Background = _regionDragPreviousPanelBackground;
+            }
+
+            _regionDragPreviousHostZIndex = null;
+            _regionDragPreviousHostBackground = null;
+            _regionDragPreviousPanelBackground = null;
+            if (!wasWorkspacePanelDrag)
+            {
+                return;
+            }
+
+            if (!previewKind.HasValue)
+            {
+                throw new InvalidOperationException("Workspace panel drag preview requires a region kind.");
+            }
+
+            ResolveWorkspacePanelDragChrome(previewKind.Value, out _, out _, out var expandedShell, out var expandedShellTransform);
+            expandedShell.BeginAnimation(
+                OpacityProperty,
+                new DoubleAnimation
+                {
+                    To = 1d,
+                    Duration = TimeSpan.FromMilliseconds(120d),
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                },
+                HandoffBehavior.SnapshotAndReplace);
+            expandedShellTransform.BeginAnimation(
+                TranslateTransform.XProperty,
+                new DoubleAnimation
+                {
+                    To = 0d,
+                    Duration = TimeSpan.FromMilliseconds(160d),
+                    EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.25d }
+                },
+                HandoffBehavior.SnapshotAndReplace);
+        }
+
+        private void ResolveWorkspacePanelDragChrome(
+            GridRegionKind regionKind,
+            out Grid host,
+            out Grid panel,
+            out FrameworkElement expandedShell,
+            out TranslateTransform expandedShellTransform)
+        {
+            switch (regionKind)
+            {
+                case GridRegionKind.SideToolRegion:
+                    host = SideToolRegionHost;
+                    panel = ToolsPanel;
+                    expandedShell = SideToolRegionExpandedShell;
+                    expandedShellTransform = SideToolRegionExpandedShellTransform;
+                    return;
+                case GridRegionKind.ChangePanelRegion:
+                    host = ChangePanelRegionHost;
+                    panel = ChangesPanel;
+                    expandedShell = ChangePanelExpandedShell;
+                    expandedShellTransform = ChangePanelExpandedShellTransform;
+                    return;
+                case GridRegionKind.ValidationPanelRegion:
+                    host = ValidationPanelRegionHost;
+                    panel = ValidationPanel;
+                    expandedShell = ValidationPanelExpandedShell;
+                    expandedShellTransform = ValidationPanelExpandedShellTransform;
+                    return;
+                default:
+                    throw new InvalidOperationException(regionKind + " is not a workspace panel.");
+            }
         }
 
         private void HandleRegionSplitterDragCompleted(object sender, DragCompletedEventArgs e)
         {
-            switch (ResolveRegionKindFromTag(sender))
+            try
             {
-                case GridRegionKind.GroupingRegion:
-                    PersistRowRegionSize(GridRegionKind.GroupingRegion, GroupingRegionRow);
-                    return;
-                case GridRegionKind.SummaryBottomRegion:
-                    PersistRowRegionSize(GridRegionKind.SummaryBottomRegion, SummaryBottomRegionRow);
-                    return;
-                case GridRegionKind.SideToolRegion:
-                    PersistColumnRegionSize(GridRegionKind.SideToolRegion, SideToolRegionColumn);
-                    return;
-                default:
-                    throw new InvalidOperationException("Unsupported region splitter binding.");
+                switch (ResolveRegionKindFromTag(sender))
+                {
+                    case GridRegionKind.GroupingRegion:
+                        PersistRowRegionSize(GridRegionKind.GroupingRegion, GroupingRegionRow);
+                        return;
+                    case GridRegionKind.SummaryBottomRegion:
+                        PersistRowRegionSize(GridRegionKind.SummaryBottomRegion, SummaryBottomRegionRow);
+                        return;
+                    case GridRegionKind.SideToolRegion:
+                        PersistColumnRegionSize(GridRegionKind.SideToolRegion, ResolveWorkspacePanelSizeColumn(GridRegionKind.SideToolRegion));
+                        return;
+                    case GridRegionKind.ChangePanelRegion:
+                        PersistColumnRegionSize(GridRegionKind.ChangePanelRegion, ResolveWorkspacePanelSizeColumn(GridRegionKind.ChangePanelRegion));
+                        return;
+                    case GridRegionKind.ValidationPanelRegion:
+                        PersistColumnRegionSize(GridRegionKind.ValidationPanelRegion, ResolveWorkspacePanelSizeColumn(GridRegionKind.ValidationPanelRegion));
+                        return;
+                    default:
+                        throw new InvalidOperationException("Unsupported region splitter binding.");
+                }
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is ArgumentOutOfRangeException)
+            {
+                LogDiagnostics("Region splitter resize ignored. " + ex.Message);
+                ApplyRegionLayout();
             }
         }
 
@@ -1007,7 +2129,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 throw new ArgumentNullException(nameof(row));
             }
 
-            var requestedSize = ResolvePersistedRegionSize(row.Height, row.ActualHeight);
+            var requestedSize = ResolvePersistedRegionSize(regionKind, row.Height, row.ActualHeight);
             HandleRegionCommand(_surfaceInputAdapter.CreateRegionResizeInput(
                 regionKind,
                 requestedSize,
@@ -1021,11 +2143,26 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 throw new ArgumentNullException(nameof(column));
             }
 
-            var requestedSize = ResolvePersistedRegionSize(column.Width, column.ActualWidth);
+            var requestedSize = ResolvePersistedRegionSize(regionKind, column.Width, column.ActualWidth);
             HandleRegionCommand(_surfaceInputAdapter.CreateRegionResizeInput(
                 regionKind,
                 requestedSize,
                 DateTime.UtcNow));
+        }
+
+        private ColumnDefinition ResolveWorkspacePanelSizeColumn(GridRegionKind regionKind)
+        {
+            var state = _surfaceCoordinator.ExportResolvedRegionStates()
+                .Single(region => region.RegionKind == regionKind);
+            switch (state.Placement)
+            {
+                case GridRegionPlacement.Left:
+                    return LeftWorkspacePanelColumn;
+                case GridRegionPlacement.Right:
+                    return SideToolRegionColumn;
+                default:
+                    throw new InvalidOperationException("WPF workspace panel size persistence supports Left and Right placements.");
+            }
         }
 
         private void HandleRegionCommand(string commandId)
@@ -1046,15 +2183,43 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             RaiseViewStateChanged();
         }
 
-        private static double ResolvePersistedRegionSize(GridLength configuredSize, double actualSize)
+        private static double ResolvePersistedRegionSize(GridRegionKind regionKind, GridLength configuredSize, double actualSize)
         {
             var requestedSize = configuredSize.IsAbsolute ? configuredSize.Value : actualSize;
-            if (requestedSize <= 0d || double.IsNaN(requestedSize) || double.IsInfinity(requestedSize))
+            var definition = GridRegionDefinitionCatalog.CreateDefault()
+                .FirstOrDefault(candidate => candidate.RegionKind == regionKind);
+            if (requestedSize > 0d && !double.IsNaN(requestedSize) && !double.IsInfinity(requestedSize))
             {
-                throw new InvalidOperationException("Region resize must resolve to a positive pixel size.");
+                return ClampPersistedRegionSize(definition, requestedSize);
             }
 
-            return requestedSize;
+            if (definition?.MinSize is double minSize && minSize > 0d)
+            {
+                return minSize;
+            }
+
+            if (definition?.DefaultSize is double defaultSize && defaultSize > 0d)
+            {
+                return defaultSize;
+            }
+
+            throw new InvalidOperationException("Region resize must resolve to a positive pixel size.");
+        }
+
+        private static double ClampPersistedRegionSize(GridRegionDefinition definition, double requestedSize)
+        {
+            var resolved = requestedSize;
+            if (definition?.MinSize is double minSize)
+            {
+                resolved = Math.Max(resolved, minSize);
+            }
+
+            if (definition?.MaxSize is double maxSize)
+            {
+                resolved = Math.Min(resolved, maxSize);
+            }
+
+            return resolved;
         }
 
         private void ExecuteWithoutViewStateNotifications(Action action)
@@ -1405,6 +2570,13 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             if (!TryResolveOrRevealSurfaceRowKey(rowId, out var rowKey))
             {
                 return false;
+            }
+
+            if (ShouldDeferVisualWorkBecauseBatched() && !_surfaceRowsByKey.ContainsKey(rowKey))
+            {
+                _pendingCurrentCellRowKeyAfterBatch = rowKey;
+                _pendingCurrentCellColumnKeyAfterBatch = columnId;
+                return true;
             }
 
             _surfaceCoordinator.SetCurrentCell(rowKey, columnId);
@@ -1767,9 +2939,6 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 _systemThemeSubscriptionActive = false;
             }
 
-            InputManager.Current.PreProcessInput -= DebugObserveRuntimeMouseDown;
-            InputManager.Current.PreNotifyInput -= DebugObserveRuntimePreNotifyMouseDown;
-            InputManager.Current.PostNotifyInput -= DebugObserveRuntimePostNotifyMouseDown;
         }
 
         private void HandleIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -1781,26 +2950,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
             LogDiagnostics($"HandleIsVisibleChanged entered visible state. PendingRebuild={_pendingRebuildColumnBindingsWhileHidden}, PendingRefresh={_pendingRefreshRowsViewWhileHidden}, PendingIndicators={_pendingRefreshSurfaceRowIndicatorsWhileHidden}. {GetGridSessionDescription()}.");
 
-            if (_pendingRebuildColumnBindingsWhileHidden)
-            {
-                _pendingRebuildColumnBindingsWhileHidden = false;
-                _pendingRefreshRowsViewWhileHidden = false;
-                _pendingRefreshSurfaceRowIndicatorsWhileHidden = false;
-                RebuildColumnBindings();
-                return;
-            }
-
-            if (_pendingRefreshRowsViewWhileHidden)
-            {
-                _pendingRefreshRowsViewWhileHidden = false;
-                RefreshRowsView();
-            }
-
-            if (_pendingRefreshSurfaceRowIndicatorsWhileHidden)
-            {
-                _pendingRefreshSurfaceRowIndicatorsWhileHidden = false;
-                RefreshSurfaceRowIndicators();
-            }
+            SchedulePendingVisibleStateFlush();
         }
 
         private static void HandleItemsSourceChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
@@ -1971,11 +3121,10 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             ApplyEditSessionContextBindings();
         }
 
-        private void ApplyEditSessionContextBindings()
+        private void ApplyEditSessionContextBindings(bool refreshRows = true)
         {
-            _lastEditSessionRecordsReference = _editSessionContext?.Records;
-            _lastEditSessionFieldDefinitionsReference = _editSessionContext?.FieldDefinitions;
-            LogDiagnostics($"ApplyEditSessionContextBindings started. UsesExternalContext={UsesExternalEditSessionContext()}, Records={_editSessionContext?.Records?.Count ?? 0}, Fields={_editSessionContext?.FieldDefinitions?.Count ?? 0}.");
+            CaptureEditSessionStructuralSnapshot();
+            LogDiagnostics($"ApplyEditSessionContextBindings started. UsesExternalContext={UsesExternalEditSessionContext()}, Records={_editSessionContext?.Records?.Count ?? 0}, Fields={_editSessionContext?.FieldDefinitions?.Count ?? 0}, RefreshRows={refreshRows}.");
 
             if (UsesExternalEditSessionContext())
             {
@@ -1985,7 +3134,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 LogDiagnostics($"ApplyEditSessionContextBindings rebuilt columns from external context. BaselineColumns={_baselineColumns.Count}.");
             }
 
-            if (IsLoaded)
+            if (refreshRows && IsLoaded)
             {
                 RefreshRowsView();
                 LogDiagnostics("ApplyEditSessionContextBindings refreshed rows view because grid is loaded.");
@@ -2119,30 +3268,35 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 .Select(pair => CreateSurfaceRowDefinition(pair.Key, pair.Value))
                 .ToArray();
 
-            _surfaceCoordinator.ColumnHeaderHeight = 30d;
-            _surfaceCoordinator.FilterRowHeight = IsFilterRowVisible ? 32d : 0d;
-            _surfaceCoordinator.RowHeaderWidth = ResolvedRowHeaderWidth;
-            _surfaceCoordinator.RowIndicatorWidth = ResolvedRowIndicatorWidth;
-            _surfaceCoordinator.RowMarkerWidth = ResolvedRowMarkerWidth;
-            _surfaceCoordinator.SelectionCheckboxWidth = ResolvedSelectionCheckboxWidth;
-            _surfaceCoordinator.DataTopInset = 0d;
-            _surfaceCoordinator.FrozenColumnCount = layoutColumns.Count(column => column.IsFrozen);
-            _surfaceCoordinator.FrozenRowCount = 0;
-            _surfaceCoordinator.EnableCellSelection = EnableCellSelection;
-            _surfaceCoordinator.EnableRangeSelection = EnableRangeSelection && EnableCellSelection;
-            _surfaceCoordinator.SelectionMode = ResolveSurfaceSelectionMode();
-            _surfaceCoordinator.ShowCurrentRecordIndicator = ShowCurrentRecordIndicator;
-            _surfaceCoordinator.SelectCurrentRow = SelectCurrentRow;
-            _surfaceCoordinator.MultiSelect = MultiSelect;
-            _surfaceCoordinator.ShowRowNumbers = ShowNb;
-            _surfaceCoordinator.RowNumberingMode = RowNumberingMode;
-            _surfaceCoordinator.Initialize(layoutColumns, rowDefinitions);
-            _surfaceCoordinator.Sorts = BuildEffectiveSorts();
-            _surfaceCoordinator.SetStateProjection(_editSessionContext.SurfaceStateProjection);
-            var rowIndicatorProjection = BuildRowIndicatorProjection(keyedRows);
-            _surfaceCoordinator.SetEditedRows(rowIndicatorProjection.EditedRowKeys);
-            _surfaceCoordinator.SetInvalidRows(rowIndicatorProjection.InvalidRowKeys);
-            _surfaceCoordinator.SetRowIndicatorToolTips(rowIndicatorProjection.ToolTips);
+            using (_surfaceCoordinator.BeginSnapshotUpdateBatch("surface-renderer-snapshot-sync"))
+            {
+                _surfaceCoordinator.ColumnHeaderHeight = ResolveRequiredDimensionResource("PgGridColumnHeaderHeight");
+                _surfaceCoordinator.FilterRowHeight = IsFilterRowVisible
+                    ? ResolveRequiredDimensionResource("PgGridFilterRowHeight")
+                    : 0d;
+                _surfaceCoordinator.RowHeaderWidth = ResolvedRowHeaderWidth;
+                _surfaceCoordinator.RowIndicatorWidth = ResolvedRowIndicatorWidth;
+                _surfaceCoordinator.RowMarkerWidth = ResolvedRowMarkerWidth;
+                _surfaceCoordinator.SelectionCheckboxWidth = ResolvedSelectionCheckboxWidth;
+                _surfaceCoordinator.DataTopInset = 0d;
+                _surfaceCoordinator.FrozenColumnCount = layoutColumns.Count(column => column.IsFrozen);
+                _surfaceCoordinator.FrozenRowCount = 0;
+                _surfaceCoordinator.EnableCellSelection = EnableCellSelection;
+                _surfaceCoordinator.EnableRangeSelection = EnableRangeSelection && EnableCellSelection;
+                _surfaceCoordinator.SelectionMode = ResolveSurfaceSelectionMode();
+                _surfaceCoordinator.ShowCurrentRecordIndicator = ShowCurrentRecordIndicator;
+                _surfaceCoordinator.SelectCurrentRow = SelectCurrentRow;
+                _surfaceCoordinator.MultiSelect = MultiSelect;
+                _surfaceCoordinator.ShowRowNumbers = ShowNb;
+                _surfaceCoordinator.RowNumberingMode = RowNumberingMode;
+                _surfaceCoordinator.Initialize(layoutColumns, rowDefinitions);
+                _surfaceCoordinator.Sorts = BuildEffectiveSorts();
+                _surfaceCoordinator.SetStateProjection(_editSessionContext.SurfaceStateProjection);
+                var rowIndicatorProjection = BuildRowIndicatorProjection(keyedRows);
+                _surfaceCoordinator.SetEditedRows(rowIndicatorProjection.EditedRowKeys);
+                _surfaceCoordinator.SetInvalidRows(rowIndicatorProjection.InvalidRowKeys);
+                _surfaceCoordinator.SetRowIndicatorToolTips(rowIndicatorProjection.ToolTips);
+            }
             stopwatch.Stop();
             LogDiagnostics($"SyncSurfaceRendererSnapshot finished in {stopwatch.ElapsedMilliseconds} ms. Count={snapshotCounter.Count}, SourceRows={sourceRows?.Count ?? 0}, LayoutColumns={layoutColumns.Length}, RowDefinitions={rowDefinitions.Length}. {GetGridSessionDescription()}.");
         }
@@ -2409,161 +3563,6 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             PromoteAutoInteractionMode(GridInputOrigin.Mouse);
         }
 
-        private void DebugObserveGridPreviewMouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e == null || e.ChangedButton != MouseButton.Left)
-            {
-                return;
-            }
-
-            var originalSource = e.OriginalSource as DependencyObject;
-            var source = e.Source as DependencyObject;
-            var directlyOver = Mouse.DirectlyOver as DependencyObject;
-            var currentSnapshot = SurfaceHost?.CurrentSnapshot;
-
-            if (!ShouldLogRuntimeMouseObservation(originalSource, source, directlyOver, Mouse.Captured as DependencyObject, Keyboard.FocusedElement as DependencyObject))
-            {
-                return;
-            }
-
-            _ = currentSnapshot;
-            LogDiagnostics(
-                $"GridPreviewMouseDown Handled={e.Handled}, RoutedEvent='{e.RoutedEvent?.Name ?? "<null>"}', Original='{DescribeRuntimeInputSource(originalSource)}', Source='{DescribeRuntimeInputSource(source)}', DirectlyOver='{DescribeRuntimeInputSource(directlyOver)}', Captured='{DescribeRuntimeInputSource(Mouse.Captured as DependencyObject)}', Focused='{DescribeRuntimeInputSource(Keyboard.FocusedElement as DependencyObject)}'.");
-        }
-
-        private void DebugObserveRuntimeMouseDown(object sender, PreProcessInputEventArgs e)
-        {
-            if (!(e?.StagingItem?.Input is MouseButtonEventArgs mouseArgs) ||
-                mouseArgs.ChangedButton != MouseButton.Left ||
-                mouseArgs.ButtonState != MouseButtonState.Pressed)
-            {
-                return;
-            }
-
-            var originalSource = mouseArgs.OriginalSource as DependencyObject;
-            if (originalSource == null || !IsDescendantOfThisGrid(originalSource))
-            {
-                return;
-            }
-
-            var directlyOver = Mouse.DirectlyOver as DependencyObject;
-            var source = mouseArgs.Source as DependencyObject;
-            var currentSnapshot = SurfaceHost?.CurrentSnapshot;
-            var captured = Mouse.Captured as DependencyObject;
-            var focused = Keyboard.FocusedElement as DependencyObject;
-
-            if (!ShouldLogRuntimeMouseObservation(originalSource, source, directlyOver, captured, focused))
-            {
-                return;
-            }
-
-            _ = currentSnapshot;
-            LogDiagnostics(
-                $"RuntimeMouseDown.PreProcess Handled={mouseArgs.Handled}, RoutedEvent='{mouseArgs.RoutedEvent?.Name ?? "<null>"}', Original='{DescribeRuntimeInputSource(originalSource)}', Source='{DescribeRuntimeInputSource(source)}', DirectlyOver='{DescribeRuntimeInputSource(directlyOver)}', Captured='{DescribeRuntimeInputSource(captured)}', Focused='{DescribeRuntimeInputSource(focused)}'.");
-        }
-
-        private void DebugObserveRuntimePreNotifyMouseDown(object sender, NotifyInputEventArgs e)
-        {
-            if (!(e?.StagingItem?.Input is MouseButtonEventArgs mouseArgs) ||
-                mouseArgs.ChangedButton != MouseButton.Left ||
-                mouseArgs.ButtonState != MouseButtonState.Pressed)
-            {
-                return;
-            }
-
-            var originalSource = mouseArgs.OriginalSource as DependencyObject;
-            var source = mouseArgs.Source as DependencyObject;
-            var directlyOver = Mouse.DirectlyOver as DependencyObject;
-            var currentSnapshot = SurfaceHost?.CurrentSnapshot;
-            var captured = Mouse.Captured as DependencyObject;
-            var focused = Keyboard.FocusedElement as DependencyObject;
-
-            if (!ShouldLogRuntimeMouseObservation(originalSource, source, directlyOver, captured, focused))
-            {
-                return;
-            }
-
-            _ = currentSnapshot;
-            LogDiagnostics(
-                $"RuntimeMouseDown.PreNotify Handled={mouseArgs.Handled}, RoutedEvent='{mouseArgs.RoutedEvent?.Name ?? "<null>"}', Original='{DescribeRuntimeInputSource(originalSource)}', Source='{DescribeRuntimeInputSource(source)}', DirectlyOver='{DescribeRuntimeInputSource(directlyOver)}', Captured='{DescribeRuntimeInputSource(captured)}', Focused='{DescribeRuntimeInputSource(focused)}'.");
-        }
-
-        private void DebugObserveRuntimePostNotifyMouseDown(object sender, NotifyInputEventArgs e)
-        {
-            if (!(e?.StagingItem?.Input is MouseButtonEventArgs mouseArgs) ||
-                mouseArgs.ChangedButton != MouseButton.Left ||
-                mouseArgs.ButtonState != MouseButtonState.Pressed)
-            {
-                return;
-            }
-
-            var originalSource = mouseArgs.OriginalSource as DependencyObject;
-            var source = mouseArgs.Source as DependencyObject;
-            var directlyOver = Mouse.DirectlyOver as DependencyObject;
-            var currentSnapshot = SurfaceHost?.CurrentSnapshot;
-            var captured = Mouse.Captured as DependencyObject;
-            var focused = Keyboard.FocusedElement as DependencyObject;
-
-            if (!ShouldLogRuntimeMouseObservation(originalSource, source, directlyOver, captured, focused))
-            {
-                return;
-            }
-
-            _ = currentSnapshot;
-            LogDiagnostics(
-                $"RuntimeMouseDown.PostNotify Handled={mouseArgs.Handled}, RoutedEvent='{mouseArgs.RoutedEvent?.Name ?? "<null>"}', Original='{DescribeRuntimeInputSource(originalSource)}', Source='{DescribeRuntimeInputSource(source)}', DirectlyOver='{DescribeRuntimeInputSource(directlyOver)}', Captured='{DescribeRuntimeInputSource(captured)}', Focused='{DescribeRuntimeInputSource(focused)}'.");
-        }
-
-        private bool ShouldLogRuntimeMouseObservation(params DependencyObject[] sources)
-        {
-            if (sources == null)
-            {
-                return false;
-            }
-
-            foreach (var source in sources)
-            {
-                if (IsDescendantOfThisGrid(source))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static string DescribeRuntimeInputSource(DependencyObject source)
-        {
-            if (source == null)
-            {
-                return "<null>";
-            }
-
-            if (source is FrameworkElement frameworkElement && !string.IsNullOrWhiteSpace(frameworkElement.Name))
-            {
-                return source.GetType().Name + "#" + frameworkElement.Name;
-            }
-
-            return source.GetType().Name;
-        }
-
-        private bool IsDescendantOfThisGrid(DependencyObject source)
-        {
-            while (source != null)
-            {
-                if (ReferenceEquals(source, this))
-                {
-                    return true;
-                }
-
-                source = source is Visual || source is System.Windows.Media.Media3D.Visual3D
-                    ? VisualTreeHelper.GetParent(source)
-                    : LogicalTreeHelper.GetParent(source);
-            }
-
-            return false;
-        }
-
         private void HandlePreviewKeyInput(object sender, KeyEventArgs e)
         {
             PromoteAutoInteractionMode(GridInputOrigin.Keyboard);
@@ -2653,6 +3652,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         {
             var grid = (PhialeGrid)dependencyObject;
             grid.OnPropertyChanged(nameof(ToolsRegionTitleText));
+            grid.QueueWorkspacePanelTabOverflowLayout();
         }
 
         private static void HandleReadOnlyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
@@ -2742,14 +3742,31 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 var fieldsChanged = !ReferenceEquals(_lastEditSessionFieldDefinitionsReference, _editSessionContext.FieldDefinitions);
                 if (recordsChanged || fieldsChanged)
                 {
-                    LogDiagnostics($"HandleEditSessionContextStateChanged detected structural change. RecordsChanged={recordsChanged}, FieldsChanged={fieldsChanged}.");
-                    ApplyEditSessionContextBindings();
-                    return;
+                    var structuralChange = EvaluateEditSessionStructuralChange();
+                    if (structuralChange.HasDataStructureChanged)
+                    {
+                        LogDiagnostics($"HandleEditSessionContextStateChanged detected data structural content change. RecordsReferenceChanged={recordsChanged}, FieldsReferenceChanged={fieldsChanged}, Reason='{structuralChange.Reason}'.");
+                        ApplyEditSessionContextBindings();
+                        return;
+                    }
+
+                    if (structuralChange.HasColumnPresentationChanged)
+                    {
+                        LogDiagnostics($"HandleEditSessionContextStateChanged detected edit-session column presentation change without data refresh. RecordsReferenceChanged={recordsChanged}, FieldsReferenceChanged={fieldsChanged}, Reason='{structuralChange.Reason}'.");
+                        ApplyEditSessionContextBindings(refreshRows: false);
+                        return;
+                    }
+
+                    CaptureEditSessionStructuralSnapshot();
+                    LogDiagnostics($"HandleEditSessionContextStateChanged skipped structural refresh because external context content is equivalent. RecordsReferenceChanged={recordsChanged}, FieldsReferenceChanged={fieldsChanged}, Reason='{structuralChange.Reason}'.");
                 }
             }
 
-            _surfaceCoordinator.SetStateProjection(_editSessionContext.SurfaceStateProjection);
-            RefreshSurfaceRowIndicators();
+            using (_surfaceCoordinator.BeginSnapshotUpdateBatch("edit-session-state-change"))
+            {
+                _surfaceCoordinator.SetStateProjection(_editSessionContext.SurfaceStateProjection);
+                RefreshSurfaceRowIndicators();
+            }
             RaiseStatusPropertyChanges();
         }
 
@@ -2767,6 +3784,239 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         private bool UsesExternalEditSessionContext()
         {
             return !ReferenceEquals(_editSessionContext, _internalEditSessionContext);
+        }
+
+        private void CaptureEditSessionStructuralSnapshot()
+        {
+            var records = _editSessionContext?.Records ?? Array.Empty<object>();
+            var fields = _editSessionContext?.FieldDefinitions ?? Array.Empty<IEditSessionFieldDefinition>();
+            _lastEditSessionRecordsReference = records;
+            _lastEditSessionFieldDefinitionsReference = fields;
+            _lastEditSessionRecordsSnapshot = records.ToArray();
+            _lastEditSessionFieldDefinitionsSnapshot = fields.ToArray();
+        }
+
+        private EditSessionStructuralChangeEvaluation EvaluateEditSessionStructuralChange()
+        {
+            var currentRecords = _editSessionContext?.Records ?? Array.Empty<object>();
+            var currentFields = _editSessionContext?.FieldDefinitions ?? Array.Empty<IEditSessionFieldDefinition>();
+            if (!AreRecordSequencesStructurallyEquivalent(_lastEditSessionRecordsSnapshot, currentRecords))
+            {
+                return EditSessionStructuralChangeEvaluation.DataStructureChanged("record sequence changed");
+            }
+
+            var fieldComparison = CompareEditSessionFieldDefinitions(_lastEditSessionFieldDefinitionsSnapshot, currentFields);
+            if (!fieldComparison.AreDataSchemasEquivalent)
+            {
+                return EditSessionStructuralChangeEvaluation.DataStructureChanged(fieldComparison.Reason);
+            }
+
+            if (!fieldComparison.AreColumnPresentationsEquivalent)
+            {
+                return EditSessionStructuralChangeEvaluation.ColumnPresentationChanged(fieldComparison.Reason);
+            }
+
+            return EditSessionStructuralChangeEvaluation.Equivalent(fieldComparison.Reason);
+        }
+
+        private bool AreRecordSequencesStructurallyEquivalent(IReadOnlyList<object> left, IReadOnlyList<object> right)
+        {
+            if ((left?.Count ?? 0) != (right?.Count ?? 0))
+            {
+                return false;
+            }
+
+            for (var index = 0; index < (left?.Count ?? 0); index++)
+            {
+                var leftRecord = left[index];
+                var rightRecord = right[index];
+                if (ReferenceEquals(leftRecord, rightRecord))
+                {
+                    continue;
+                }
+
+                var leftRowId = ResolveRowId(leftRecord);
+                var rightRowId = ResolveRowId(rightRecord);
+                if (string.IsNullOrWhiteSpace(leftRowId) ||
+                    string.IsNullOrWhiteSpace(rightRowId) ||
+                    !string.Equals(leftRowId, rightRowId, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static EditSessionFieldDefinitionComparison CompareEditSessionFieldDefinitions(IReadOnlyList<IEditSessionFieldDefinition> left, IReadOnlyList<IEditSessionFieldDefinition> right)
+        {
+            if ((left?.Count ?? 0) != (right?.Count ?? 0))
+            {
+                return EditSessionFieldDefinitionComparison.DataSchemaChanged("field count changed");
+            }
+
+            for (var index = 0; index < (left?.Count ?? 0); index++)
+            {
+                var comparison = CompareEditSessionFieldDefinition(left[index], right[index]);
+                if (!comparison.AreDataSchemasEquivalent || !comparison.AreColumnPresentationsEquivalent)
+                {
+                    return comparison.WithReason("field[" + index.ToString(CultureInfo.InvariantCulture) + "]: " + comparison.Reason);
+                }
+            }
+
+            return EditSessionFieldDefinitionComparison.Equivalent("field definitions equivalent");
+        }
+
+        private static EditSessionFieldDefinitionComparison CompareEditSessionFieldDefinition(IEditSessionFieldDefinition left, IEditSessionFieldDefinition right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right
+                    ? EditSessionFieldDefinitionComparison.Equivalent("both fields null")
+                    : EditSessionFieldDefinitionComparison.DataSchemaChanged("one field is null");
+            }
+
+            if (!string.Equals(left.FieldId, right.FieldId, StringComparison.Ordinal))
+            {
+                return EditSessionFieldDefinitionComparison.DataSchemaChanged("field id changed");
+            }
+
+            if (!string.Equals(left.FieldPath, right.FieldPath, StringComparison.Ordinal))
+            {
+                return EditSessionFieldDefinitionComparison.DataSchemaChanged("field path changed");
+            }
+
+            if (left.ValueType != right.ValueType)
+            {
+                return EditSessionFieldDefinitionComparison.DataSchemaChanged("value type changed");
+            }
+
+            if (!string.Equals(left.ValueKind, right.ValueKind, StringComparison.Ordinal) ||
+                left.EditorKind != right.EditorKind ||
+                left.EditorItemsMode != right.EditorItemsMode ||
+                !string.Equals(left.EditMask, right.EditMask, StringComparison.Ordinal) ||
+                !left.EditorItems.SequenceEqual(right.EditorItems, StringComparer.Ordinal))
+            {
+                return EditSessionFieldDefinitionComparison.DataSchemaChanged("editor schema changed");
+            }
+
+            if (left.IsWeakAttribute != right.IsWeakAttribute)
+            {
+                return EditSessionFieldDefinitionComparison.DataSchemaChanged("weak attribute semantics changed");
+            }
+
+            if (!AreValidationConstraintsEquivalent(left.ValidationConstraints, right.ValidationConstraints))
+            {
+                return EditSessionFieldDefinitionComparison.DataSchemaChanged("validation constraints changed");
+            }
+
+            if (!AreFieldGridColumnSchemasEquivalent(left.GridColumnDefinition, right.GridColumnDefinition))
+            {
+                return EditSessionFieldDefinitionComparison.DataSchemaChanged("grid column schema changed");
+            }
+
+            if (!string.Equals(left.DisplayName, right.DisplayName, StringComparison.Ordinal) ||
+                left.IsVisibleInGrid != right.IsVisibleInGrid ||
+                left.IsVisibleInExpandedDetails != right.IsVisibleInExpandedDetails ||
+                !AreColumnsEquivalent(left.GridColumnDefinition, right.GridColumnDefinition))
+            {
+                return EditSessionFieldDefinitionComparison.ColumnPresentationChanged("grid column presentation changed");
+            }
+
+            return EditSessionFieldDefinitionComparison.Equivalent("field equivalent");
+        }
+
+        private static bool AreFieldGridColumnSchemasEquivalent(GridColumnDefinition left, GridColumnDefinition right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right;
+            }
+
+            return string.Equals(left.Id, right.Id, StringComparison.Ordinal) &&
+                left.ValueType == right.ValueType &&
+                left.EditorKind == right.EditorKind &&
+                left.EditorItemsMode == right.EditorItemsMode &&
+                string.Equals(left.EditMask, right.EditMask, StringComparison.Ordinal) &&
+                string.Equals(left.ValueKind, right.ValueKind, StringComparison.Ordinal) &&
+                left.EditorItems.SequenceEqual(right.EditorItems, StringComparer.Ordinal);
+        }
+
+        private static bool AreValidationConstraintsEquivalent(GridFieldValidationConstraints left, GridFieldValidationConstraints right)
+        {
+            if (left == null || right == null)
+            {
+                return left == right;
+            }
+
+            return left.Equals(right);
+        }
+
+        private struct EditSessionStructuralChangeEvaluation
+        {
+            private EditSessionStructuralChangeEvaluation(bool hasDataStructureChanged, bool hasColumnPresentationChanged, string reason)
+            {
+                HasDataStructureChanged = hasDataStructureChanged;
+                HasColumnPresentationChanged = hasColumnPresentationChanged;
+                Reason = reason ?? string.Empty;
+            }
+
+            public bool HasDataStructureChanged { get; }
+
+            public bool HasColumnPresentationChanged { get; }
+
+            public string Reason { get; }
+
+            public static EditSessionStructuralChangeEvaluation DataStructureChanged(string reason)
+            {
+                return new EditSessionStructuralChangeEvaluation(true, false, reason);
+            }
+
+            public static EditSessionStructuralChangeEvaluation ColumnPresentationChanged(string reason)
+            {
+                return new EditSessionStructuralChangeEvaluation(false, true, reason);
+            }
+
+            public static EditSessionStructuralChangeEvaluation Equivalent(string reason)
+            {
+                return new EditSessionStructuralChangeEvaluation(false, false, reason);
+            }
+        }
+
+        private struct EditSessionFieldDefinitionComparison
+        {
+            private EditSessionFieldDefinitionComparison(bool areDataSchemasEquivalent, bool areColumnPresentationsEquivalent, string reason)
+            {
+                AreDataSchemasEquivalent = areDataSchemasEquivalent;
+                AreColumnPresentationsEquivalent = areColumnPresentationsEquivalent;
+                Reason = reason ?? string.Empty;
+            }
+
+            public bool AreDataSchemasEquivalent { get; }
+
+            public bool AreColumnPresentationsEquivalent { get; }
+
+            public string Reason { get; }
+
+            public EditSessionFieldDefinitionComparison WithReason(string reason)
+            {
+                return new EditSessionFieldDefinitionComparison(AreDataSchemasEquivalent, AreColumnPresentationsEquivalent, reason);
+            }
+
+            public static EditSessionFieldDefinitionComparison DataSchemaChanged(string reason)
+            {
+                return new EditSessionFieldDefinitionComparison(false, false, reason);
+            }
+
+            public static EditSessionFieldDefinitionComparison ColumnPresentationChanged(string reason)
+            {
+                return new EditSessionFieldDefinitionComparison(true, false, reason);
+            }
+
+            public static EditSessionFieldDefinitionComparison Equivalent(string reason)
+            {
+                return new EditSessionFieldDefinitionComparison(true, true, reason);
+            }
         }
 
         private IEditSessionContext CurrentEditSessionContext => _editSessionContext ?? _internalEditSessionContext;
@@ -2855,6 +4105,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         private void RefreshLocalizedState()
         {
+            OnPropertyChanged(nameof(GroupingBandLabelText));
             OnPropertyChanged(nameof(GroupingDropText));
             OnPropertyChanged(nameof(GroupingEmptyText));
             OnPropertyChanged(nameof(GroupingExpandAllText));
@@ -2896,11 +4147,201 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             return IsLoaded && !IsVisible;
         }
 
+        private bool ShouldDeferVisualWorkBecauseBatched()
+        {
+            return _gridUpdateBatchDepth > 0;
+        }
+
+        private void CompleteGridUpdateBatch(string reason)
+        {
+            if (_gridUpdateBatchDepth <= 0)
+            {
+                throw new InvalidOperationException("Grid update batch completion was requested without a matching active batch.");
+            }
+
+            _gridUpdateBatchDepth--;
+            LogDiagnostics("Grid update batch completed. Reason='" + (reason ?? string.Empty) + "', RemainingDepth=" + _gridUpdateBatchDepth + ".");
+            if (_gridUpdateBatchDepth != 0)
+            {
+                return;
+            }
+
+            FlushPendingGridUpdateBatchWork(reason);
+        }
+
+        private void FlushPendingGridUpdateBatchWork(string reason)
+        {
+            var rebuildColumns = _pendingRebuildColumnBindingsAfterBatch;
+            var refreshRows = _pendingRefreshRowsViewAfterBatch;
+            var refreshIndicators = _pendingRefreshSurfaceRowIndicatorsAfterBatch;
+            var applyRegionLayout = _pendingApplyRegionLayoutAfterBatch;
+            var raiseViewStateChanged = _pendingViewStateChangedAfterBatch;
+
+            _pendingRebuildColumnBindingsAfterBatch = false;
+            _pendingRefreshRowsViewAfterBatch = false;
+            _pendingRefreshSurfaceRowIndicatorsAfterBatch = false;
+            _pendingApplyRegionLayoutAfterBatch = false;
+            _pendingViewStateChangedAfterBatch = false;
+            var pendingCurrentCellRowKey = _pendingCurrentCellRowKeyAfterBatch;
+            var pendingCurrentCellColumnKey = _pendingCurrentCellColumnKeyAfterBatch;
+            _pendingCurrentCellRowKeyAfterBatch = null;
+            _pendingCurrentCellColumnKeyAfterBatch = null;
+
+            ConsumePendingHiddenVisualWorkIfVisible(ref rebuildColumns, ref refreshRows, ref refreshIndicators);
+
+            LogDiagnostics(
+                "Grid update batch flush started. Reason='" + (reason ?? string.Empty) +
+                "', RebuildColumns=" + rebuildColumns +
+                ", RefreshRows=" + refreshRows +
+                ", RefreshIndicators=" + refreshIndicators +
+                ", ApplyRegionLayout=" + applyRegionLayout +
+                ", ViewStateChanged=" + raiseViewStateChanged + ".");
+
+            if (rebuildColumns)
+            {
+                RebuildColumnBindings(refreshRows);
+            }
+            else if (refreshRows)
+            {
+                RefreshRowsView();
+            }
+
+            if (!string.IsNullOrWhiteSpace(pendingCurrentCellRowKey))
+            {
+                _surfaceCoordinator.SetCurrentCell(pendingCurrentCellRowKey, pendingCurrentCellColumnKey);
+            }
+
+            if (refreshIndicators && !refreshRows)
+            {
+                RefreshSurfaceRowIndicators();
+            }
+
+            if (applyRegionLayout)
+            {
+                ApplyRegionLayout();
+            }
+
+            if (raiseViewStateChanged)
+            {
+                RaiseViewStateChangedCore();
+            }
+
+            LogDiagnostics("Grid update batch flush completed. Reason='" + (reason ?? string.Empty) + "'.");
+        }
+
+        private void SchedulePendingVisibleStateFlush()
+        {
+            if (_pendingVisibleStateFlushScheduled ||
+                (!_pendingRebuildColumnBindingsWhileHidden &&
+                 !_pendingRefreshRowsViewWhileHidden &&
+                 !_pendingRefreshSurfaceRowIndicatorsWhileHidden))
+            {
+                return;
+            }
+
+            _pendingVisibleStateFlushScheduled = true;
+            Dispatcher.BeginInvoke(
+                new Action(() =>
+                {
+                    _pendingVisibleStateFlushScheduled = false;
+                    FlushPendingVisibleStateWork();
+                }),
+                DispatcherPriority.ContextIdle);
+            LogDiagnostics("Pending visible-state flush scheduled.");
+        }
+
+        private void FlushPendingVisibleStateWork()
+        {
+            if (!IsVisible)
+            {
+                LogDiagnostics("Pending visible-state flush skipped because grid is not visible.");
+                return;
+            }
+
+            var rebuildColumns = false;
+            var refreshRows = false;
+            var refreshIndicators = false;
+            ConsumePendingHiddenVisualWorkIfVisible(ref rebuildColumns, ref refreshRows, ref refreshIndicators);
+
+            LogDiagnostics(
+                "Pending visible-state flush started. RebuildColumns=" + rebuildColumns +
+                ", RefreshRows=" + refreshRows +
+                ", RefreshIndicators=" + refreshIndicators + ".");
+
+            if (rebuildColumns)
+            {
+                RebuildColumnBindings(refreshRows);
+            }
+            else if (refreshRows)
+            {
+                RefreshRowsView();
+            }
+
+            if (refreshIndicators && !refreshRows)
+            {
+                RefreshSurfaceRowIndicators();
+            }
+
+            LogDiagnostics("Pending visible-state flush completed.");
+        }
+
+        private void ConsumePendingHiddenVisualWorkIfVisible(ref bool rebuildColumns, ref bool refreshRows, ref bool refreshIndicators)
+        {
+            if (!IsVisible)
+            {
+                return;
+            }
+
+            var consumedRebuildColumns = _pendingRebuildColumnBindingsWhileHidden;
+            var consumedRefreshRows = _pendingRefreshRowsViewWhileHidden;
+            var consumedRefreshIndicators = _pendingRefreshSurfaceRowIndicatorsWhileHidden;
+
+            if (consumedRebuildColumns)
+            {
+                rebuildColumns = true;
+            }
+
+            if (consumedRefreshRows)
+            {
+                refreshRows = true;
+            }
+
+            if (consumedRefreshIndicators)
+            {
+                refreshIndicators = true;
+            }
+
+            if (consumedRebuildColumns || consumedRefreshRows || consumedRefreshIndicators)
+            {
+                LogDiagnostics(
+                    "Consumed hidden visual work. RebuildColumns=" + consumedRebuildColumns +
+                    ", RefreshRows=" + consumedRefreshRows +
+                    ", RefreshIndicators=" + consumedRefreshIndicators + ".");
+            }
+
+            _pendingRebuildColumnBindingsWhileHidden = false;
+            _pendingRefreshRowsViewWhileHidden = false;
+            _pendingRefreshSurfaceRowIndicatorsWhileHidden = false;
+        }
+
         private void RebuildColumnBindings(bool refreshRows = true)
         {
             var gridId = GetDiagnosticsGridId();
             var rebuildCounter = PhialeGridDiagnostics.IncrementGridCounter(gridId, "RebuildColumnBindings");
             var stopwatch = Stopwatch.StartNew();
+            if (ShouldDeferVisualWorkBecauseBatched())
+            {
+                _pendingRebuildColumnBindingsAfterBatch = true;
+                if (refreshRows)
+                {
+                    _pendingRefreshRowsViewAfterBatch = true;
+                }
+
+                stopwatch.Stop();
+                LogDiagnostics($"RebuildColumnBindings deferred because grid update batch is active. Count={rebuildCounter.Count}, RefreshRows={refreshRows}. {GetGridSessionDescription()}.");
+                return;
+            }
+
             if (ShouldDeferVisualWorkBecauseHidden())
             {
                 _pendingRebuildColumnBindingsWhileHidden = true;
@@ -2965,6 +4406,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             var gridId = GetDiagnosticsGridId();
             var refreshCounter = PhialeGridDiagnostics.IncrementGridCounter(gridId, "RefreshRowsView");
             var stopwatch = Stopwatch.StartNew();
+            if (ShouldDeferVisualWorkBecauseBatched())
+            {
+                _pendingRefreshRowsViewAfterBatch = true;
+                stopwatch.Stop();
+                LogDiagnostics($"RefreshRowsView deferred because grid update batch is active. Count={refreshCounter.Count}. {GetGridSessionDescription()}.");
+                return;
+            }
+
             if (!IsLoaded)
             {
                 stopwatch.Stop();
@@ -2980,6 +4429,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 return;
             }
 
+            PhialeGridDiagnostics.IncrementGridCounter(gridId, "RefreshRowsViewExecuted");
             var sourceRows = ApplyGlobalSearch(EnumerateEffectiveItemsSource().ToArray());
             if (sourceRows.Length == 0)
             {
@@ -3052,17 +4502,19 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
             _virtualizedRows = null;
             _currentFilteredRows = Array.Empty<object>();
-            _virtualizedGroupedRows = CreateVirtualizedGroupedRows(sourceRows, _collapseGroupsOnNextRefresh);
+            var groupedSurfaceResult = BuildGroupedSurfaceResult(sourceRows, _collapseGroupsOnNextRefresh);
             _collapseGroupsOnNextRefresh = false;
-            RowsView = CreateRowsView(_virtualizedGroupedRows);
-            HasRows = _virtualizedGroupedRows.Count > 0;
-            _currentGroupIds = _virtualizedGroupedRows.GroupIds;
-            _topLevelGroupCount = _virtualizedGroupedRows.TopLevelGroupCount;
-            _totalRowCount = _virtualizedGroupedRows.TotalItemCount;
-            _displayedRowCount = _virtualizedGroupedRows.Count;
-            _currentSummary = _virtualizedGroupedRows.Summary;
+            _virtualizedGroupedRows = null;
+            var groupedDisplayRows = CreateGroupedDisplayRows(groupedSurfaceResult.Rows);
+            RowsView = CreateRowsView(groupedDisplayRows);
+            HasRows = groupedDisplayRows.Count > 0;
+            _currentGroupIds = groupedSurfaceResult.GroupIds;
+            _topLevelGroupCount = groupedSurfaceResult.TopLevelGroupCount;
+            _totalRowCount = groupedSurfaceResult.TotalItemCount;
+            _displayedRowCount = groupedSurfaceResult.VisibleRowCount;
+            _currentSummary = groupedSurfaceResult.Summary;
             UpdateSummaryItems(_currentSummary);
-            SyncSurfaceRendererSnapshot(BuildGroupedSurfaceRows(sourceRows));
+            SyncSurfaceRendererSnapshot(groupedSurfaceResult.Rows);
             RefreshSelectionCounters();
             RaiseStatusPropertyChanges();
             SyncFilterScrollOffset();
@@ -3126,21 +4578,74 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         private IReadOnlyList<object> BuildGroupedSurfaceRows(IReadOnlyList<object> sourceRows)
         {
+            return BuildGroupedSurfaceResult(sourceRows, false).Rows.Cast<object>().ToArray();
+        }
+
+        private GridGroupedQueryResult<object> BuildGroupedSurfaceResult(IReadOnlyList<object> sourceRows, bool collapseGroupsOnFirstLoad)
+        {
+            var groupedQueryCounter = PhialeGridDiagnostics.IncrementGridCounter(GetDiagnosticsGridId(), "BuildGroupedSurfaceResult");
+            var stopwatch = Stopwatch.StartNew();
             if (sourceRows == null || sourceRows.Count == 0 || _groupDescriptors.Count == 0)
             {
-                return Array.Empty<object>();
+                stopwatch.Stop();
+                LogDiagnostics($"BuildGroupedSurfaceResult skipped for empty grouped input. Count={groupedQueryCounter.Count}. {GetGridSessionDescription()}.");
+                return new GridGroupedQueryResult<object>(
+                    Array.Empty<GridGroupFlatRow<object>>(),
+                    0,
+                    0,
+                    0,
+                    Array.Empty<string>(),
+                    GridSummarySet.Empty);
             }
 
             var queryEngine = new GridQueryEngine<object>(new DelegateGridRowAccessor<object>(ResolveRowValue));
-            var request = new GridGroupedQueryRequest(
+            var request = CreateGroupedSurfaceQueryRequest(sourceRows.Count);
+            var result = queryEngine.ExecuteGroupedWindow(sourceRows, request);
+            if (collapseGroupsOnFirstLoad && result.GroupIds.Count > 0)
+            {
+                foreach (var groupId in result.GroupIds)
+                {
+                    _groupExpansionState.SetExpanded(groupId, false);
+                }
+
+                result = queryEngine.ExecuteGroupedWindow(sourceRows, CreateGroupedSurfaceQueryRequest(sourceRows.Count));
+            }
+
+            stopwatch.Stop();
+            LogDiagnostics($"BuildGroupedSurfaceResult finished in {stopwatch.ElapsedMilliseconds} ms. Count={groupedQueryCounter.Count}, Rows={result.Rows.Count}, VisibleRows={result.VisibleRowCount}, TotalItems={result.TotalItemCount}, Groups={result.TopLevelGroupCount}. {GetGridSessionDescription()}.");
+            return result;
+        }
+
+        private GridGroupedQueryRequest CreateGroupedSurfaceQueryRequest(int sourceRowCount)
+        {
+            return new GridGroupedQueryRequest(
                 0,
-                EstimateGroupedSurfaceRowCount(sourceRows.Count, _groupDescriptors.Count),
+                EstimateGroupedSurfaceRowCount(sourceRowCount, _groupDescriptors.Count),
                 BuildEffectiveSorts(),
                 BuildFilterGroup(),
                 _groupDescriptors,
                 _summaryDescriptors,
                 _groupExpansionState);
-            return queryEngine.ExecuteGroupedWindow(sourceRows, request).Rows.Cast<object>().ToArray();
+        }
+
+        private IList CreateGroupedDisplayRows(IReadOnlyList<GridGroupFlatRow<object>> groupedRows)
+        {
+            if (groupedRows == null || groupedRows.Count == 0)
+            {
+                return Array.Empty<GridDisplayRowModel>();
+            }
+
+            var displayRows = new GridDisplayRowModel[groupedRows.Count];
+            var displayColumnId = ResolveGroupedSurfaceDisplayColumnId();
+            for (var index = 0; index < groupedRows.Count; index++)
+            {
+                var row = groupedRows[index];
+                displayRows[index] = row.Kind == GridGroupFlatRowKind.GroupHeader
+                    ? (GridDisplayRowModel)new GridGroupHeaderRowModel(row.GroupId, row.GroupColumnId, row.GroupKey, row.GroupItemCount, row.Level, row.IsExpanded, displayColumnId)
+                    : new GridDataRowModel(this, row.Item, row.Level);
+            }
+
+            return displayRows;
         }
 
         private static int EstimateGroupedSurfaceRowCount(int sourceRowCount, int groupCount)
@@ -3274,13 +4779,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         private void RebuildGroupChips()
         {
+            var lastIndex = _groupDescriptors.Count - 1;
             _groupChips = new ObservableCollection<GridGroupChipModel>(
-                _groupDescriptors.Select(group =>
+                _groupDescriptors.Select((group, index) =>
                 {
                     var column = _visibleColumns.FirstOrDefault(candidate => string.Equals(candidate.ColumnId, group.ColumnId, StringComparison.OrdinalIgnoreCase));
                     var header = column == null ? group.ColumnId : column.Header;
-                    var arrow = group.Direction == GridSortDirection.Ascending ? "↑" : "↓";
-                    return new GridGroupChipModel(group.ColumnId, header + " " + arrow);
+                    var directionGlyph = group.Direction == GridSortDirection.Ascending ? "↑" : "↓";
+                    return new GridGroupChipModel(group.ColumnId, header, directionGlyph, index < lastIndex);
                 }));
 
             OnPropertyChanged(nameof(GroupChips));
@@ -5041,6 +6547,12 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 return false;
             }
 
+            if (ShouldDeferVisualWorkBecauseBatched())
+            {
+                rowKey = rowId;
+                return true;
+            }
+
             rowKey = ResolveSurfaceRowKeys(new[] { rowId }).FirstOrDefault();
             return !string.IsNullOrWhiteSpace(rowKey);
         }
@@ -5193,63 +6705,6 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             return IsSelectableRowItem(row);
         }
 
-        private void HandleGroupingDragEnter(object sender, DragEventArgs e)
-        {
-            if (!AllowsGroupingDrag)
-            {
-                e.Effects = DragDropEffects.None;
-                e.Handled = true;
-                return;
-            }
-
-            e.Effects = e.Data.GetDataPresent(GroupingDragFormat) ? DragDropEffects.Move : DragDropEffects.None;
-            e.Handled = true;
-        }
-
-        private void HandleGroupingDragLeave(object sender, DragEventArgs e)
-        {
-            e.Handled = true;
-        }
-
-        private void HandleGroupingDragOver(object sender, DragEventArgs e)
-        {
-            if (!AllowsGroupingDrag)
-            {
-                e.Effects = DragDropEffects.None;
-                e.Handled = true;
-                return;
-            }
-
-            e.Effects = e.Data.GetDataPresent(GroupingDragFormat) ? DragDropEffects.Move : DragDropEffects.None;
-            e.Handled = true;
-        }
-
-        private void HandleGroupingDrop(object sender, DragEventArgs e)
-        {
-            if (!AllowsGroupingDrag)
-            {
-                e.Handled = true;
-                return;
-            }
-
-            var columnId = e.Data.GetData(GroupingDragFormat) as string;
-            if (string.IsNullOrWhiteSpace(columnId))
-            {
-                return;
-            }
-
-            _groupDescriptors = _groupingController.ApplyDrop(
-                _groupDescriptors,
-                new GridGroupingDragPayload(columnId),
-                GridGroupingDropTarget.GroupingPanel);
-
-            _collapseGroupsOnNextRefresh = _groupDescriptors.Count > 0;
-            RebuildGroupChips();
-            RefreshRowsView();
-            SyncGroupsProperty();
-            QueueHeaderVisualRefresh();
-        }
-
         private void QueueHeaderVisualRefresh()
         {
             if (SurfaceHost == null || !IsLoaded)
@@ -5283,18 +6738,34 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             OnPropertyChanged(nameof(SurfaceFilterRowHeight));
             OnPropertyChanged(nameof(SurfaceTopChromeHeight));
             OnPropertyChanged(nameof(SurfaceVerticalScrollBarGutterWidth));
+            OnPropertyChanged(nameof(SurfaceHorizontalScrollBarGutterHeight));
         }
 
-        private void HandleRemoveGroupClick(object sender, RoutedEventArgs e)
+        private void HandleGroupingBandRemoveGroupRequested(object sender, PhialeGroupingBandColumnEventArgs e)
         {
-            var columnId = (sender as FrameworkElement)?.Tag as string;
-            RemoveColumnGrouping(columnId);
+            RemoveColumnGrouping(e.ColumnId);
+            e.Handled = true;
         }
 
-        private void HandleToggleDirectionClick(object sender, RoutedEventArgs e)
+        private void HandleGroupingBandToggleDirectionRequested(object sender, PhialeGroupingBandColumnEventArgs e)
         {
-            var columnId = (sender as FrameworkElement)?.Tag as string;
-            HandleToggleGroupingDirection(columnId);
+            HandleToggleGroupingDirection(e.ColumnId);
+            e.Handled = true;
+        }
+
+        private void HandleGroupingBandColumnDropped(object sender, PhialeGroupingBandColumnEventArgs e)
+        {
+            _groupDescriptors = _groupingController.ApplyDrop(
+                _groupDescriptors,
+                new GridGroupingDragPayload(e.ColumnId),
+                GridGroupingDropTarget.GroupingPanel);
+
+            _collapseGroupsOnNextRefresh = _groupDescriptors.Count > 0;
+            RebuildGroupChips();
+            RefreshRowsView();
+            SyncGroupsProperty();
+            QueueHeaderVisualRefresh();
+            e.Handled = true;
         }
 
         private void HandleExpandAllGroupsClick(object sender, RoutedEventArgs e)
@@ -5836,6 +7307,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         {
             var indicatorCounter = PhialeGridDiagnostics.IncrementGridCounter(GetDiagnosticsGridId(), "RefreshSurfaceRowIndicators");
             var stopwatch = Stopwatch.StartNew();
+            if (ShouldDeferVisualWorkBecauseBatched())
+            {
+                _pendingRefreshSurfaceRowIndicatorsAfterBatch = true;
+                stopwatch.Stop();
+                LogDiagnostics($"RefreshSurfaceRowIndicators deferred because grid update batch is active. Count={indicatorCounter.Count}. {GetGridSessionDescription()}.");
+                return;
+            }
+
             if (ShouldDeferVisualWorkBecauseHidden())
             {
                 _pendingRefreshSurfaceRowIndicatorsWhileHidden = true;
@@ -5851,10 +7330,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 return;
             }
 
+            PhialeGridDiagnostics.IncrementGridCounter(GetDiagnosticsGridId(), "RefreshSurfaceRowIndicatorsExecuted");
             var rowIndicatorProjection = BuildRowIndicatorProjection(_surfaceRowsByKey);
-            _surfaceCoordinator.SetEditedRows(rowIndicatorProjection.EditedRowKeys);
-            _surfaceCoordinator.SetInvalidRows(rowIndicatorProjection.InvalidRowKeys);
-            _surfaceCoordinator.SetRowIndicatorToolTips(rowIndicatorProjection.ToolTips);
+            using (_surfaceCoordinator.BeginSnapshotUpdateBatch("surface-row-indicator-refresh"))
+            {
+                _surfaceCoordinator.SetEditedRows(rowIndicatorProjection.EditedRowKeys);
+                _surfaceCoordinator.SetInvalidRows(rowIndicatorProjection.InvalidRowKeys);
+                _surfaceCoordinator.SetRowIndicatorToolTips(rowIndicatorProjection.ToolTips);
+            }
             stopwatch.Stop();
             LogDiagnostics($"RefreshSurfaceRowIndicators finished in {stopwatch.ElapsedMilliseconds} ms. Count={indicatorCounter.Count}, SurfaceRows={_surfaceRowsByKey.Count}. {GetGridSessionDescription()}.");
         }
@@ -6410,6 +7893,18 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 return;
             }
 
+            if (ShouldDeferVisualWorkBecauseBatched())
+            {
+                _pendingViewStateChangedAfterBatch = true;
+                LogDiagnostics("ViewStateChanged deferred because grid update batch is active. " + GetGridSessionDescription() + ".");
+                return;
+            }
+
+            RaiseViewStateChangedCore();
+        }
+
+        private void RaiseViewStateChangedCore()
+        {
             ViewStateChanged?.Invoke(this, EventArgs.Empty);
         }
 
@@ -6477,6 +7972,36 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             public IReadOnlyCollection<string> InvalidRowKeys { get; }
 
             public IReadOnlyDictionary<string, string> ToolTips { get; }
+        }
+
+        private sealed class GridUpdateBatchScope : IDisposable
+        {
+            private PhialeGrid _owner;
+            private readonly string _reason;
+            private readonly IDisposable _editStateBatch;
+            private readonly IDisposable _surfaceSnapshotBatch;
+
+            public GridUpdateBatchScope(PhialeGrid owner, string reason, IDisposable editStateBatch, IDisposable surfaceSnapshotBatch)
+            {
+                _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+                _reason = reason ?? string.Empty;
+                _editStateBatch = editStateBatch;
+                _surfaceSnapshotBatch = surfaceSnapshotBatch;
+            }
+
+            public void Dispose()
+            {
+                var owner = _owner;
+                if (owner == null)
+                {
+                    return;
+                }
+
+                _owner = null;
+                _editStateBatch?.Dispose();
+                owner.CompleteGridUpdateBatch(_reason);
+                _surfaceSnapshotBatch?.Dispose();
+            }
         }
 
         private sealed class SurfaceGridDataBridge : IGridCellValueProvider, IGridEditCellAccessor
@@ -8029,14 +9554,25 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
     public sealed class GridGroupChipModel
     {
         public GridGroupChipModel(string columnId, string displayText)
+            : this(columnId, displayText, string.Empty, false)
+        {
+        }
+
+        public GridGroupChipModel(string columnId, string displayText, string directionGlyph, bool hasFollowingGroup)
         {
             ColumnId = columnId;
             DisplayText = displayText;
+            DirectionGlyph = directionGlyph;
+            HasFollowingGroup = hasFollowingGroup;
         }
 
         public string ColumnId { get; }
 
         public string DisplayText { get; }
+
+        public string DirectionGlyph { get; }
+
+        public bool HasFollowingGroup { get; }
     }
 
     public sealed class GridSummaryDisplayItem

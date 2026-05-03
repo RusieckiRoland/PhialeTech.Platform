@@ -1,0 +1,46 @@
+<UserControl x:Class="PhialeTech.PhialeGrid.Wpf.Controls.PhialeChangePanel"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:grid="clr-namespace:PhialeTech.PhialeGrid.Wpf.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="360"
+             d:DesignWidth="280">
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Bottom"
+                    Margin="{DynamicResource PgWorkspacePanelSectionMargin}">
+            <Button Style="{DynamicResource PgWorkspacePanelLinkButtonStyle}"
+                    Content="Show only changed rows" />
+            <TextBlock Margin="{DynamicResource PgWorkspacePanelInlineButtonMargin}"
+                       Style="{DynamicResource PgWorkspacePanelBodyTextStyle}"
+                       Text="Review and commit your changes." />
+        </StackPanel>
+
+        <StackPanel>
+            <TextBlock Style="{DynamicResource PgWorkspacePanelHeaderTextStyle}"
+                       Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=PendingEditCount, StringFormat={}{0} changed rows}" />
+
+            <ItemsControl Margin="{DynamicResource PgWorkspacePanelContentMargin}"
+                          ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=PendingEditRowIds}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{DynamicResource PgWorkspacePanelCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Style="{DynamicResource PgWorkspacePanelCaptionTextStyle}"
+                                           Text="{Binding StringFormat={}Row {0}}" />
+                                <TextBlock Margin="{DynamicResource PgWorkspacePanelInlineButtonMargin}"
+                                           Style="{DynamicResource PgWorkspacePanelBodyTextStyle}"
+                                           Text="{Binding}" />
+                                <Button Style="{DynamicResource PgWorkspacePanelLinkButtonStyle}"
+                                        Content="Go to row"
+                                        Click="HandleGoToRowClick" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </DockPanel>
+</UserControl>
