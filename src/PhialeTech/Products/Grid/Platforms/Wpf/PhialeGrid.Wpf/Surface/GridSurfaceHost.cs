@@ -74,6 +74,12 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
 
         public GridSurfaceCoordinator Coordinator => _coordinator;
 
+        public IGridRowDetailContentFactory RowDetailContentFactory
+        {
+            get { return SurfacePanel.RowDetailContentFactory; }
+            set { SurfacePanel.RowDetailContentFactory = value; }
+        }
+
         public double HorizontalOffset => ScrollViewer.HorizontalOffset;
 
         public double VerticalOffset => ScrollViewer.VerticalOffset;
@@ -888,6 +894,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
         private static bool ShouldBypassSurfaceInput(DependencyObject source)
         {
             return FindAncestor<Presenters.GridMasterDetailPresenter>(source) != null ||
+                FindAncestor<Presenters.GridRowDetailPresenter>(source) != null ||
                 IsRowIndicatorInputSource(source) ||
                 FindAncestor<ScrollBar>(source) != null ||
                 FindAncestor<Thumb>(source) != null ||

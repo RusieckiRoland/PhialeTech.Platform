@@ -44,6 +44,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Controls\PhialeWorkspacePlayground.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\..\Localization\PhialeGrid.Localization\Languages\*.lang" Link="PhialeGrid.Localization\Languages\%(Filename)%(Extension)">

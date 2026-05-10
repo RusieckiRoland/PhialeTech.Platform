@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <PackageId>PhialeTech.Styles.Avalonia</PackageId>
+    <AssemblyName>PhialeTech.Styles.Avalonia</AssemblyName>
+    <RootNamespace>PhialeTech.Styles.Avalonia</RootNamespace>
+    <Description>Shared Avalonia style library mirroring the PhialeTech WPF demo styles.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.7" />
+  </ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Themes\Demo.Theme.Day.axaml" />
+    <AvaloniaResource Include="Themes\Demo.Theme.Night.axaml" />
+    <AvaloniaResource Include="Themes\Demo.Controls.axaml" />
+  </ItemGroup>
+</Project>

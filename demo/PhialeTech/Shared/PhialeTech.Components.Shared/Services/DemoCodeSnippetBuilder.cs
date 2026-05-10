@@ -155,6 +155,11 @@ namespace PhialeTech.Components.Shared.Services
             builder.AppendLine("using PhialeTech.Components.Shared.Services;");
             builder.AppendLine("using PhialeTech.Components.Shared.ViewModels;");
             builder.AppendLine("using PhialeTech.PhialeGrid.Wpf.Controls;");
+            if (exampleId == "custom-detail")
+            {
+                builder.AppendLine("using PhialeGrid.Core.Details;");
+                builder.AppendLine("using PhialeTech.PhialeGrid.Wpf.Surface;");
+            }
             builder.AppendLine();
             builder.AppendLine("namespace Demo.Snippets");
             builder.AppendLine("{");
@@ -173,6 +178,10 @@ namespace PhialeTech.Components.Shared.Services
             else if (exampleId == "master-detail")
             {
                 builder.AppendLine("            ConfigureMasterDetail();");
+            }
+            else if (exampleId == "custom-detail")
+            {
+                builder.AppendLine("            ConfigureCustomRowDetails();");
             }
             else if (exampleId == "state-persistence")
             {
@@ -296,7 +305,9 @@ namespace PhialeTech.Components.Shared.Services
 
         private static IReadOnlyList<DemoCodeFileViewModel> BuildMonacoEditorFiles(string platformKey)
         {
-            if (!string.Equals(platformKey, "Wpf", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(platformKey, "Wpf", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(platformKey, "WinUI", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(platformKey, "WinUI3", StringComparison.OrdinalIgnoreCase))
             {
                 return Array.Empty<DemoCodeFileViewModel>();
             }
@@ -304,7 +315,7 @@ namespace PhialeTech.Components.Shared.Services
             return new[]
             {
                 new DemoCodeFileViewModel("Example.xaml", BuildMonacoEditorMarkup()),
-                new DemoCodeFileViewModel("MonacoEditorHost.cs", BuildMonacoEditorHostFile()),
+                new DemoCodeFileViewModel("MonacoEditorHost.cs", BuildMonacoEditorHostFile(platformKey)),
             };
         }
 
@@ -623,7 +634,7 @@ namespace PhialeTech.Components.Shared.Services
                 "  items:",
                 "    - type: container",
                 "      captionKey: Primary identity",
-                "      showBorder: true",
+                "      containerChrome: Framed",
                 "      items:",
                 "        - type: row",
                 "          items:",
@@ -672,22 +683,41 @@ namespace PhialeTech.Components.Shared.Services
                 "      extends: firstName",
                 "    - id: lastName",
                 "      extends: lastName",
+                "    - id: age",
+                "      extends: age",
                 "    - id: notes",
-                "      extends: notes",
+                "      extends: documentNotes",
+                "    - id: developer.firstName",
+                "      extends: firstName",
+                "    - id: developer.lastName",
+                "      extends: lastName",
                 "  layout:",
                 "    type: Column",
+                "    overlayScope: true",
                 "    items:",
                 "      - type: Container",
                 "        caption: Reviewer",
-                "        showBorder: true",
+                "        containerChrome: Framed",
                 "        items:",
                 "          - type: Row",
                 "            items:",
                 "              - fieldRef: firstName",
                 "              - fieldRef: lastName",
                 "      - type: Container",
+                "        caption: Developer data",
+                "        containerChrome: Framed",
+                "        containerBehavior: Collapsible",
+                "        collapsedText: \"{developer.lastName} {developer.firstName}, {age}\"",
+                "        variant: Compact",
+                "        items:",
+                "          - type: Row",
+                "            items:",
+                "              - fieldRef: developer.lastName",
+                "              - fieldRef: developer.firstName",
+                "              - fieldRef: age",
+                "      - type: Container",
                 "        caption: Review notes",
-                "        showBorder: true",
+                "        containerChrome: None",
                 "        items:",
                 "          - fieldRef: notes",
             });
@@ -1577,8 +1607,39 @@ namespace PhialeTech.Components.Shared.Services
             });
         }
 
-        private static string BuildMonacoEditorHostFile()
+        private static string BuildMonacoEditorHostFile(string platformKey)
         {
+            if (string.Equals(platformKey, "WinUI", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(platformKey, "WinUI3", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Join(Environment.NewLine, new[]
+                {
+                    "using Microsoft.UI.Xaml.Controls;",
+                    "using PhialeTech.MonacoEditor.WinUI.Controls;",
+                    string.Empty,
+                    "namespace Demo",
+                    "{",
+                    "    public sealed class MonacoEditorHost : UserControl",
+                    "    {",
+                    "        private readonly PhialeMonacoEditor _editor;",
+                    string.Empty,
+                    "        public MonacoEditorHost()",
+                    "        {",
+                    "            _editor = new PhialeMonacoEditor();",
+                    "            Content = _editor;",
+                    "            Loaded += async (_, __) =>",
+                    "            {",
+                    "                await _editor.InitializeAsync();",
+                    "                await _editor.SetLanguageAsync(\"yaml\");",
+                    "                await _editor.SetThemeAsync(\"light\");",
+                    "                await _editor.SetValueAsync(\"id: demo\\nname: Monaco editor\");",
+                    "            };",
+                    "        }",
+                    "    }",
+                    "}",
+                });
+            }
+
             return string.Join(Environment.NewLine, new[]
             {
                 "using System.Windows.Controls;",
@@ -3009,7 +3070,7 @@ namespace PhialeTech.Components.Shared.Services
                     string.Empty,
                     "private void HandleRemoveSummaryClick(object sender, RoutedEventArgs e)",
                     "{",
-                    "    if (!(sender is FrameworkElement frameworkElement) || !(frameworkElement.Tag is DemoConfiguredSummaryViewModel summary))",
+                    "    if (!(sender is FrameworkElement frameworkElement) || !(frameworkElement.Tag is DemoConfiguredSummaryChipViewModel summary))",
                     "    {",
                     "        return;",
                     "    }",
@@ -3133,6 +3194,49 @@ namespace PhialeTech.Components.Shared.Services
                     "        detailHeaderPlacementMode: _showDetailFieldsOutside",
                     "            ? GridMasterDetailHeaderPlacementMode.Outside",
                     "            : GridMasterDetailHeaderPlacementMode.Inside);",
+                    "}",
+                });
+            }
+
+            if (exampleId == "custom-detail")
+            {
+                return string.Join(Environment.NewLine, new[]
+                {
+                    "private void ConfigureCustomRowDetails()",
+                    "{",
+                    "    DemoGrid.RowDetailProvider = new DemoRowDetailProvider();",
+                    "    DemoGrid.RowDetailContentFactory = new DemoRowDetailContentFactory();",
+                    "}",
+                    string.Empty,
+                    "private sealed class DemoRowDetailProvider : IGridRowDetailProvider",
+                    "{",
+                    "    public bool HasDetail(GridRowDetailRequest request) => true;",
+                    string.Empty,
+                    "    public GridRowDetailDescriptor CreateDetail(GridRowDetailRequest request)",
+                    "    {",
+                    "        return new GridRowDetailDescriptor(",
+                    "            request.RowKey + \":detail\",",
+                    "            request.RowKey,",
+                    "            GridRowDetailHeightPolicy.Fixed(112),",
+                    "            new[] { \"ObjectName\", \"Municipality\", \"Status\" });",
+                    "    }",
+                    "}",
+                    string.Empty,
+                    "private sealed class DemoRowDetailContentFactory : IGridRowDetailContentFactory",
+                    "{",
+                    "    public FrameworkElement CreateContent(GridRowDetailWpfContext context)",
+                    "    {",
+                    "        var panel = new StackPanel();",
+                    "        foreach (var columnId in (string[])context.ContentDescriptor)",
+                    "        {",
+                    "            panel.Children.Add(new TextBlock",
+                    "            {",
+                    "                Text = context.CoreContext.Fields[columnId].DisplayName + \": \" + context.CoreContext.Values[columnId]",
+                    "            });",
+                    "        }",
+                    string.Empty,
+                    "        return panel;",
+                    "    }",
                     "}",
                 });
             }
@@ -3520,3 +3624,4 @@ namespace PhialeTech.Components.Shared.Services
         }
     }
 }
+

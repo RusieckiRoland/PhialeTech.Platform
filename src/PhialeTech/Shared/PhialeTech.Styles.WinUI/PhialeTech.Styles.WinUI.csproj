@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>disable</Nullable>
+    <PackageId>PhialeTech.Styles.WinUI</PackageId>
+    <AssemblyName>PhialeTech.Styles.WinUI</AssemblyName>
+    <RootNamespace>PhialeTech.Styles.WinUI</RootNamespace>
+    <Description>Shared WinUI style library mirroring the PhialeTech WPF demo styles.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250916003" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Themes\Demo.Theme.Day.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Themes\Demo.Theme.Night.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Update="Themes\Demo.Controls.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+</Project>

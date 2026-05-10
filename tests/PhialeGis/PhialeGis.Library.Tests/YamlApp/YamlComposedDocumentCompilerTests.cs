@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using NUnit.Framework;
 using PhialeTech.Yaml.Library;
+using PhialeTech.YamlApp.Abstractions.Enums;
 using PhialeTech.YamlApp.Core.Normalization;
 using PhialeTech.YamlApp.Definitions.Documents;
 using PhialeTech.YamlApp.Definitions.Fields;
@@ -278,6 +279,75 @@ document:
                 Assert.That(compiledForm.Actions.Any(a => string.Equals(a.Id, "cancel", StringComparison.OrdinalIgnoreCase)), Is.True);
                 Assert.That(compiledForm.ActionAreas.Any(a => string.Equals(a.Id, "headerActions", StringComparison.OrdinalIgnoreCase)), Is.True);
                 Assert.That(compiledForm.ActionAreas.Any(a => string.Equals(a.Id, "footerPrimary", StringComparison.OrdinalIgnoreCase)), Is.True);
+                Assert.That(compiledForm.Layout.HeightMode, Is.EqualTo(LayoutHeightMode.Auto));
+                Assert.That(normalized.ResolvedDocument.Layout.HeightMode, Is.EqualTo(LayoutHeightMode.Auto));
+            });
+        }
+
+        [Test]
+        [Category("Unit")]
+        public void Compile_ShouldAllowDerivedDocumentToOverrideInheritedLayoutHeightMode()
+        {
+            var yaml = @"
+namespace: application.forms
+imports:
+  - domain.person
+  - application.forms.actionShells
+
+document:
+  id: full-height-review-request
+  kind: Form
+  extends: review-sticky-header-footer
+  fields:
+    - id: firstName
+      extends: firstName
+  layout:
+    type: Column
+    heightMode: Fill
+    items:
+      - fieldRef: firstName
+";
+
+            var compiler = new YamlComposedDocumentCompiler();
+            var compiled = compiler.Compile(yaml, new[] { typeof(YamlLibraryMarker).Assembly }, "en");
+            var normalized = new YamlDocumentDefinitionNormalizer().Normalize(compiled.Definition);
+            var compiledForm = AsForm(compiled.Definition);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(compiled.Success, Is.True, string.Join(Environment.NewLine, compiled.Diagnostics));
+                Assert.That(normalized.Success, Is.True, string.Join(Environment.NewLine, normalized.Diagnostics));
+                Assert.That(compiledForm.Layout.HeightMode, Is.EqualTo(LayoutHeightMode.Fill));
+                Assert.That(normalized.ResolvedDocument.Layout.HeightMode, Is.EqualTo(LayoutHeightMode.Fill));
+            });
+        }
+
+        [Test]
+        [Category("Unit")]
+        public void Compile_ShouldResolveGeneratedFormHeightMode_FromYamlLibraryHierarchy()
+        {
+            var yaml = @"
+namespace: application.forms.tests
+imports:
+  - application.forms
+
+document:
+  id: derived-generated-form
+  kind: Form
+  extends: yaml-generated-form
+";
+
+            var compiler = new YamlComposedDocumentCompiler();
+            var compiled = compiler.Compile(yaml, new[] { typeof(YamlLibraryMarker).Assembly }, "en");
+            var normalized = new YamlDocumentDefinitionNormalizer().Normalize(compiled.Definition);
+            var compiledForm = AsForm(compiled.Definition);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(compiled.Success, Is.True, string.Join(Environment.NewLine, compiled.Diagnostics));
+                Assert.That(normalized.Success, Is.True, string.Join(Environment.NewLine, normalized.Diagnostics));
+                Assert.That(compiledForm.Layout.HeightMode, Is.EqualTo(LayoutHeightMode.Auto));
+                Assert.That(normalized.ResolvedDocument.Layout.HeightMode, Is.EqualTo(LayoutHeightMode.Auto));
             });
         }
 
@@ -382,6 +452,47 @@ documents:
                 Assert.That(field.MinValue, Is.EqualTo(18));
                 Assert.That(field.MaxValue, Is.Null);
                 Assert.That(field.CaptionKey, Is.EqualTo("Age"));
+            });
+        }
+
+        [Test]
+        [Category("Unit")]
+        public void Compile_ShouldResolveDocumentNotesDefinition_FromYamlLibrary()
+        {
+            var yaml = @"
+namespace: application.forms
+imports:
+  - domain.person
+
+documents:
+  - id: yaml-generated-form
+    name: YAML generated form
+    fields:
+      - id: notes
+        extends: documentNotes
+    layout:
+      type: Column
+      items:
+        - fieldRef: notes
+";
+
+            var compiler = new YamlComposedDocumentCompiler();
+            var compiled = compiler.Compile(yaml, new[] { typeof(YamlLibraryMarker).Assembly }, "en");
+            var normalized = new YamlDocumentDefinitionNormalizer().Normalize(compiled.Definition);
+            var normalizedForm = AsForm(normalized.Document);
+            const string EmptyDocumentJson = "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\"}]}";
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(compiled.Success, Is.True, string.Join(Environment.NewLine, compiled.Diagnostics));
+                Assert.That(normalized.Success, Is.True, string.Join(Environment.NewLine, normalized.Diagnostics));
+                var field = normalizedForm.Fields.OfType<YamlDocumentEditorFieldDefinition>().Single(f => string.Equals(f.Id, "notes", StringComparison.OrdinalIgnoreCase));
+                Assert.That(field.CaptionKey, Is.EqualTo("Notes"));
+                Assert.That(field.PlaceholderKey, Is.EqualTo("Enter additional information"));
+                Assert.That(field.WidthHint, Is.EqualTo(PhialeTech.YamlApp.Abstractions.Enums.FieldWidthHint.Fill));
+                Assert.That(field.FieldChromeMode, Is.EqualTo(PhialeTech.YamlApp.Abstractions.Enums.FieldChromeMode.Framed));
+                Assert.That(field.CaptionPlacement, Is.EqualTo(PhialeTech.YamlApp.Abstractions.Enums.CaptionPlacement.Top));
+                Assert.That(field.Value, Is.EqualTo(EmptyDocumentJson));
             });
         }
 
@@ -507,3 +618,4 @@ documents:
         }
     }
 }
+

@@ -8,7 +8,11 @@ namespace PhialeTech.YamlApp.Definitions.Layouts
     {
         public string CaptionKey { get; set; }
 
-        public bool ShowBorder { get; set; }
+        public string CollapsedText { get; set; }
+
+        public ContainerChrome ContainerChrome { get; set; } = ContainerChrome.Framed;
+
+        public ContainerBehavior ContainerBehavior { get; set; } = ContainerBehavior.Static;
 
         public ContainerVariant? Variant { get; set; }
 

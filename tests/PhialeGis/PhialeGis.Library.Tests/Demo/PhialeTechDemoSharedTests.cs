@@ -265,9 +265,23 @@ namespace PhialeGis.Library.Tests.Demo
                 Assert.That(viewModel.PreviewHintText, Does.Contain("foundations").IgnoreCase);
                 Assert.That(viewModel.DetailHeadline, Is.EqualTo("Preview foundations"));
                 Assert.That(viewModel.FoundationsHighlights.Count, Is.GreaterThanOrEqualTo(4));
+                Assert.That(viewModel.FoundationsHighlights.Any(highlight => highlight.Contains("PgGridRegionsContextMenuCheckBoxStyle")), Is.True);
+                Assert.That(viewModel.FoundationsHighlights.Any(highlight => highlight.Contains("PgWorkspacePlaygroundBorderStyle")), Is.True);
                 Assert.That(viewModel.FoundationsTypographyTokens.Select(token => token.TokenName), Does.Contain("Text.Hero"));
                 Assert.That(viewModel.FoundationsSurfaceTokens.Select(token => token.TokenName), Does.Contain("DemoPanelBackgroundBrush"));
+                Assert.That(viewModel.FoundationsAccentTokens.Select(token => token.TokenName), Does.Contain("DemoReviewBackgroundBrush"));
                 Assert.That(viewModel.FoundationsShapeTokens.Select(token => token.TokenName), Does.Contain("Radius.14"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgWorkspaceBandShellPadding"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgSummaryBottomRegionShellPadding"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgWorkspaceBandActionGroupMargin"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgWorkspacePlaygroundMargin"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgSummaryDesignerChipPadding"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgWorkspacePlaygroundCornerRadius"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgWorkspacePlaygroundMinHeight"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgSummaryDesignerPlaygroundMaxHeight"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgSummaryResultChipPadding"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Select(token => token.TokenName), Does.Contain("PgSummaryResultChipMinWidth"));
+                Assert.That(viewModel.FoundationsSpacingTokens.Single(token => token.TokenName == "PgSummaryDesignerPlaygroundMaxHeight").Value, Is.EqualTo("240"));
             });
         }
 
@@ -454,12 +468,34 @@ namespace PhialeGis.Library.Tests.Demo
 
             Assert.That(viewModel.GridSummaries.Any(summary => summary.ColumnId == "Priority" && summary.Type == GridSummaryType.Min), Is.True);
             Assert.That(viewModel.ConfiguredSummaries.Any(summary => summary.ColumnId == "Priority" && summary.Type == GridSummaryType.Min), Is.True);
+            Assert.That(viewModel.ConfiguredSummaries.Single(summary => summary.ColumnId == "Priority" && summary.Type == GridSummaryType.Min).ColumnLabel, Is.EqualTo("Priority"));
+            Assert.That(viewModel.ConfiguredSummaries.Single(summary => summary.ColumnId == "Priority" && summary.Type == GridSummaryType.Min).TypeLabel, Is.EqualTo("Min"));
 
             viewModel.RemoveSummary("Priority", GridSummaryType.Min);
             Assert.That(viewModel.GridSummaries.Any(summary => summary.ColumnId == "Priority" && summary.Type == GridSummaryType.Min), Is.False);
 
             viewModel.ResetSummaries();
             Assert.That(viewModel.GridSummaries.Select(summary => summary.ColumnId), Is.EquivalentTo(new[] { "AreaSquareMeters", "LengthMeters", "ObjectId" }));
+        }
+
+        [Test]
+        public void ViewModel_ConfiguredSummaryChips_ShouldAlwaysReflectGridSummaryDefinitions()
+        {
+            var viewModel = new DemoShellViewModel("Wpf");
+            var summaries = new List<GridSummaryDescriptor>();
+
+            viewModel.SelectExample("editing");
+            viewModel.GridSummaries = summaries;
+            summaries.Add(new GridSummaryDescriptor("Category", GridSummaryType.Count));
+            summaries.Add(new GridSummaryDescriptor("AreaSquareMeters", GridSummaryType.Sum));
+            viewModel.GridSummaries = summaries;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(viewModel.GridSummaries.Select(summary => summary.ColumnId), Is.EqualTo(new[] { "Category", "AreaSquareMeters" }));
+                Assert.That(viewModel.ConfiguredSummaries.Select(summary => summary.ColumnId), Is.EqualTo(viewModel.GridSummaries.Select(summary => summary.ColumnId)));
+                Assert.That(viewModel.ConfiguredSummaries.Select(summary => summary.Type), Is.EqualTo(viewModel.GridSummaries.Select(summary => summary.Type)));
+            });
         }
 
         [Test]
@@ -774,7 +810,7 @@ namespace PhialeGis.Library.Tests.Demo
             var winUiFiles = catalog.GetCodeFiles("WinUI", "sorting");
 
             Assert.That(wpfFiles.Select(file => file.FileName), Does.Contain("Example.xaml"));
-            Assert.That(wpfFiles.Any(file => file.Text.Contains("Summaries=\"{Binding GridSummaries}\"")), Is.True);
+            Assert.That(wpfFiles.Any(file => file.Text.Contains("Summaries=\"{Binding GridSummaries, Mode=TwoWay}\"")), Is.True);
             Assert.That(wpfFiles.Any(file => file.Text.Contains("new GridSummaryDescriptor(\"AreaSquareMeters\", GridSummaryType.Sum")), Is.True);
             Assert.That(winUiFiles.Select(file => file.FileName), Does.Contain("Example.xaml"));
             Assert.That(winUiFiles.Any(file => file.Text.Contains("using:PhialeTech.PhialeGrid.WinUI.Controls")), Is.True);
@@ -802,7 +838,7 @@ namespace PhialeGis.Library.Tests.Demo
                 Assert.That(viewModel.Text.Length, Is.GreaterThan(1200));
                 Assert.That(host.Text, Does.Contain("public sealed partial class ExampleHost : UserControl"));
                 Assert.That(host.Text, Does.Contain("public GroupingExampleViewModel ViewModel { get; } = new GroupingExampleViewModel();"));
-                Assert.That(host.Text, Does.Not.Contain("ConfiguredSummaryViewModel"));
+                Assert.That(host.Text, Does.Not.Contain("ConfiguredSummaryChipViewModel"));
             });
         }
 
@@ -864,7 +900,7 @@ namespace PhialeGis.Library.Tests.Demo
             Assert.That(filteringFiles.Any(file => file.Text.Contains("MinHeight=\"620\"")), Is.False);
             Assert.That(summaryFiles.Any(file => file.Text.Contains("HandleAddSummaryClick")), Is.True);
             Assert.That(summaryFiles.Any(file => file.Text.Contains("AvailableSummaryColumns")), Is.True);
-            Assert.That(summaryFiles.Any(file => file.Text.Contains("DemoConfiguredSummaryViewModel")), Is.True);
+            Assert.That(summaryFiles.Any(file => file.Text.Contains("DemoConfiguredSummaryChipViewModel")), Is.True);
         }
 
         [Test]
@@ -1040,3 +1076,4 @@ namespace PhialeGis.Library.Tests.Demo
         }
     }
 }
+

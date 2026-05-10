@@ -17,3 +17,4 @@ namespace PhialeTech.Components.Shared.Services
         public GridHierarchyController<object> Controller { get; }
     }
 }
+

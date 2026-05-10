@@ -59,10 +59,14 @@ namespace PhialeTech.WebHost.Wpf.Tests
             var runtime = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Products", "DocumentEditor", "Core", "PhialeTech.DocumentEditor", "DocumentEditorRuntime.cs"));
             var workspace = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Products", "DocumentEditor", "Core", "PhialeTech.DocumentEditor", "DocumentEditorWorkspace.cs"));
             var yamlControl = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Products", "YamlApp", "Platforms", "Wpf", "PhialeTech.YamlApp.Wpf", "Controls", "DocumentEditor", "YamlDocumentEditor.cs"));
+            var yamlDocumentHost = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Products", "YamlApp", "Platforms", "Wpf", "PhialeTech.YamlApp.Wpf", "Document", "YamlDocumentHost.cs"));
+            var yamlLayoutRenderer = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Products", "YamlApp", "Platforms", "Wpf", "PhialeTech.YamlApp.Wpf", "Document", "YamlDocumentLayoutRenderer.cs"));
+            var yamlFieldFactory = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Products", "YamlApp", "Platforms", "Wpf", "PhialeTech.YamlApp.Wpf", "Document", "YamlFieldControlFactory.cs"));
             var yamlRuntimeBinding = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Products", "YamlApp", "Runtime", "PhialeTech.YamlApp.Runtime", "Controls", "DocumentEditor", "YamlDocumentEditorFieldBinding.cs"));
             var yamlRuntimeBindingState = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Products", "YamlApp", "Runtime", "PhialeTech.YamlApp.Runtime", "Controls", "DocumentEditor", "YamlDocumentEditorFieldBindingState.cs"));
             var showcase = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "demo", "PhialeTech", "Wpf", "PhialeTech.Components.Wpf", "DocumentEditorShowcaseView.cs"));
             var codeBehind = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "demo", "PhialeTech", "Wpf", "PhialeTech.Components.Wpf", "MainWindow.xaml.cs"));
+            var hostedYamlFactory = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "demo", "PhialeTech", "Wpf", "PhialeTech.Components.Wpf", "Hosting", "DemoYamlHostedSurfaceFactory.cs"));
             var xaml = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Shared", "PhialeTech.Styles.Wpf", "Themes.Linked", "Demo", "PhialeTech.Components.Wpf.MainWindow.xaml"));
             var html = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Shared", "PhialeTech.WebAssets", "Assets", "DocumentEditor", "index.html"));
             var script = File.ReadAllText(Path.Combine(GetRepositoryRoot(), "src", "PhialeTech", "Shared", "PhialeTech.WebAssets", "Assets", "DocumentEditor", "phiale-document-editor-host.js"));
@@ -98,10 +102,16 @@ namespace PhialeTech.WebHost.Wpf.Tests
             Assert.That(runtime, Does.Contain("public string Theme => _theme;"));
             Assert.That(runtime, Does.Contain("public event EventHandler<string> ThemeChanged;"));
             Assert.That(runtime, Does.Contain("CreateToolbarPayload"));
-            Assert.That(workspace, Does.Contain("theme = _options.InitialTheme"));
+            Assert.That(workspace, Does.Contain("theme = NormalizeTheme(_options.InitialTheme)"));
             Assert.That(workspace, Does.Contain("overlayMode = ToMessageOverlayMode(_options.OverlayMode)"));
             Assert.That(workspace, Does.Contain("command = ToMessageCommand(item.Command)"));
             Assert.That(yamlControl, Does.Contain("ThemeProperty"));
+            Assert.That(yamlDocumentHost, Does.Contain("ThemeProperty"));
+            Assert.That(yamlDocumentHost, Does.Contain("_layoutRenderer.Render(RuntimeDocumentState, Theme, LanguageCode)"));
+            Assert.That(yamlDocumentHost, Does.Contain("ApplyDocumentEditorThemeAsync(NormalizeTheme((string)e.NewValue))"));
+            Assert.That(yamlLayoutRenderer, Does.Contain("_fieldControlFactory.Create(runtimeField, theme, languageCode)"));
+            Assert.That(yamlFieldFactory, Does.Contain("Theme = NormalizeTheme(theme)"));
+            Assert.That(yamlFieldFactory, Does.Contain("LanguageCode = NormalizeLanguageCode(languageCode)"));
             Assert.That(yamlControl, Does.Contain("private readonly Grid _root;"));
             Assert.That(yamlControl, Does.Contain("new DocumentEditorOptions"));
             Assert.That(yamlControl, Does.Contain("OverlayMode = DocumentEditorOverlayMode.Container"));
@@ -132,6 +142,9 @@ namespace PhialeTech.WebHost.Wpf.Tests
             Assert.That(wpfControl, Does.Not.Contain("_captionText"));
             Assert.That(wpfControl, Does.Not.Contain("_supportText"));
             Assert.That(showcase, Does.Contain("await _editor.SetThemeAsync(_theme).ConfigureAwait(true);"));
+            Assert.That(hostedYamlFactory, Does.Contain("public DemoYamlHostedSurfaceFactory(Func<string> themeProvider)"));
+            Assert.That(hostedYamlFactory, Does.Contain("Theme = ResolveTheme()"));
+            Assert.That(codeBehind, Does.Contain("new DemoYamlHostedSurfaceFactory(ResolveReportDesignerTheme)"));
             Assert.That(codeBehind, Does.Contain("await ApplyYamlAdvancedDocumentEditorThemeAsync().ConfigureAwait(true);"));
             Assert.That(codeBehind, Does.Contain("await YamlAdvancedInlineDocumentEditorControl.ApplyExternalThemeAsync(theme).ConfigureAwait(true);"));
             Assert.That(codeBehind, Does.Contain("await YamlAdvancedFramedDocumentEditorControl.ApplyExternalThemeAsync(theme).ConfigureAwait(true);"));
@@ -157,6 +170,9 @@ namespace PhialeTech.WebHost.Wpf.Tests
             Assert.That(script, Does.Contain("toolbar-button__icon"));
             Assert.That(script, Does.Contain("ICONS"));
             Assert.That(script, Does.Contain("applyTheme"));
+            Assert.That(script, Does.Contain("function notifyReady()"));
+            Assert.That(script, Does.Contain("window.PhialeWebHost.notifyReady()"));
+            Assert.That(script, Does.Contain("window.PhialeWebHost.onHostMessage = handleMessage;"));
             Assert.That(script, Does.Contain("bootstrap.overlayMode"));
             Assert.That(script, Does.Contain("overlayMode !== \"disabled\""));
             Assert.That(script, Does.Not.Contain("const overlayClose = document.createElement(\"button\");"));
@@ -278,3 +294,4 @@ namespace PhialeTech.WebHost.Wpf.Tests
         }
     }
 }
+

@@ -109,6 +109,11 @@ namespace PhialeGrid.Core.Surface
         RowHighlight,
 
         /// <summary>
+        /// Dedicated host for an expanded row detail surface.
+        /// </summary>
+        RowDetail,
+
+        /// <summary>
         /// Custom overlay.
         /// </summary>
         Custom,

@@ -7,6 +7,7 @@ using PhialeTech.YamlApp.Definitions.Fields;
 using PhialeTech.YamlApp.Definitions.Documents;
 using PhialeTech.YamlApp.Definitions.Layouts;
 using PhialeTech.YamlApp.Core.Resolved;
+using PhialeTech.YamlApp.Core.Text;
 
 namespace PhialeTech.YamlApp.Core.Normalization
 {
@@ -90,6 +91,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 if (normalizedForm.Layout != null)
                 {
                     ValidateFieldReferences(normalizedForm.Layout, fieldMap, diagnostics);
+                    ValidateContainerSemantics(normalizedForm.Layout, fieldMap, diagnostics);
                 }
 
                 ValidateActionAreaReferences(normalizedForm.Actions, actionAreaMap, diagnostics);
@@ -125,6 +127,10 @@ namespace PhialeTech.YamlApp.Core.Normalization
                 Footer = CloneFooter(source.Footer),
                 Layout = NormalizeLayout(source.Layout, fieldMap, diagnostics)
             };
+            if (normalized.Layout != null)
+            {
+                ValidateContainerSemantics(normalized.Layout, fieldMap, diagnostics);
+            }
             var resolvedDocument = BuildResolvedDocument(normalized);
             return new YamlDocumentNormalizationResult(normalized, resolvedDocument, new Dictionary<string, string>(), diagnostics);
         }
@@ -140,6 +146,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
             {
                 Id = source.Id,
                 Name = source.Name,
+                HeightMode = source.HeightMode,
                 Width = source.Width,
                 WidthHint = source.WidthHint,
                 IsOverlayScope = source.IsOverlayScope,
@@ -270,7 +277,9 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     Id = container.Id,
                     Name = container.Name,
                     CaptionKey = container.CaptionKey,
-                    ShowBorder = container.ShowBorder,
+                    CollapsedText = container.CollapsedText,
+                    ContainerChrome = container.ContainerChrome,
+                    ContainerBehavior = container.ContainerBehavior,
                     Variant = container.Variant,
                     Width = container.Width,
                     WidthHint = container.WidthHint,
@@ -1088,6 +1097,74 @@ namespace PhialeTech.YamlApp.Core.Normalization
             }
         }
 
+        private static void ValidateContainerSemantics(YamlLayoutDefinition layout, IDictionary<string, IFieldDefinition> fieldMap, List<string> diagnostics)
+        {
+            if (layout == null)
+            {
+                return;
+            }
+
+            foreach (var item in layout.Items)
+            {
+                ValidateContainerSemantics(item, fieldMap, diagnostics);
+            }
+        }
+
+        private static void ValidateContainerSemantics(ILayoutItemDefinition item, IDictionary<string, IFieldDefinition> fieldMap, List<string> diagnostics)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            var containerDefinition = item as IContainerDefinition;
+            if (containerDefinition != null &&
+                containerDefinition.ContainerBehavior == ContainerBehavior.Collapsible &&
+                containerDefinition.ContainerChrome == ContainerChrome.None)
+            {
+                diagnostics.Add(string.Format(
+                    "Container '{0}' uses containerBehavior Collapsible but containerChrome is None. Collapsible containers require visible container chrome.",
+                    FirstNonEmpty(containerDefinition.Id, containerDefinition.Name) ?? "<unnamed>"));
+            }
+
+            if (containerDefinition != null && !string.IsNullOrWhiteSpace(containerDefinition.CollapsedText))
+            {
+                IReadOnlyList<string> placeholders;
+                string error;
+                if (!YamlTextTemplate.TryGetPlaceholders(containerDefinition.CollapsedText, out placeholders, out error))
+                {
+                    diagnostics.Add(string.Format(
+                        "Container '{0}' has invalid collapsedText. {1}",
+                        FirstNonEmpty(containerDefinition.Id, containerDefinition.Name) ?? "<unnamed>",
+                        error));
+                }
+                else
+                {
+                    foreach (var placeholder in placeholders)
+                    {
+                        if (fieldMap == null || !fieldMap.ContainsKey(placeholder))
+                        {
+                            diagnostics.Add(string.Format(
+                                "Container '{0}' collapsedText references unknown field '{1}'.",
+                                FirstNonEmpty(containerDefinition.Id, containerDefinition.Name) ?? "<unnamed>",
+                                placeholder));
+                        }
+                    }
+                }
+            }
+
+            var layoutContainer = item as ILayoutContainerDefinition;
+            if (layoutContainer == null)
+            {
+                return;
+            }
+
+            foreach (var child in layoutContainer.Items)
+            {
+                ValidateContainerSemantics(child, fieldMap, diagnostics);
+            }
+        }
+
         private static ResolvedDocumentDefinition BuildResolvedDocument(YamlDocumentDefinition normalized)
         {
             if (normalized == null)
@@ -1305,6 +1382,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
             var effectiveDensityMode = layout.DensityMode ?? inheritedDensityMode;
             var effectiveFieldChromeMode = layout.FieldChromeMode ?? inheritedFieldChromeMode;
             var effectiveCaptionPlacement = layout.CaptionPlacement ?? inheritedCaptionPlacement;
+            var effectiveHeightMode = layout.HeightMode ?? Abstractions.Enums.LayoutHeightMode.Fill;
             var effectiveWidth = ResolveWidth(layout.Width, layout.WidthHint, inheritedWidth, inheritedWidthHint, out var effectiveWidthHint);
             var items = new List<ResolvedLayoutItemDefinition>();
 
@@ -1332,6 +1410,7 @@ namespace PhialeTech.YamlApp.Core.Normalization
             return new ResolvedLayoutDefinition(
                 layout.Id,
                 layout.Name,
+                effectiveHeightMode,
                 effectiveWidth,
                 effectiveWidthHint,
                 layout.IsOverlayScope,
@@ -1461,7 +1540,9 @@ namespace PhialeTech.YamlApp.Core.Normalization
                     effectiveFieldChromeMode,
                     effectiveCaptionPlacement,
                     container.CaptionKey,
-                    container.ShowBorder,
+                    container.CollapsedText,
+                    container.ContainerChrome,
+                    container.ContainerBehavior,
                     container.Variant ?? ContainerVariant.Standard,
                     items);
             }

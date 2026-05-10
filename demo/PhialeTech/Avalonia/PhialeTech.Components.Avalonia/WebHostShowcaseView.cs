@@ -239,3 +239,4 @@ public sealed class WebHostShowcaseView : UserControl, IDisposable
         _host.Dispose();
     }
 }
+

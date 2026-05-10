@@ -7,6 +7,8 @@ document:
   interactionMode: Classic
   densityMode: Normal
   fieldChromeMode: Framed
+  layout:
+    heightMode: Auto
   actionAreas:
     - id: headerActions
       placement: Top

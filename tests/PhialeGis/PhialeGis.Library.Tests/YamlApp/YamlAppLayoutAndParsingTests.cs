@@ -196,7 +196,7 @@ layout:
     - type: Container
       id: AddressSection
       caption: address.details
-      showBorder: true
+      containerChrome: Framed
       items:
         - type: Column
           items:
@@ -217,9 +217,156 @@ layout:
                 Assert.That(container, Is.Not.Null);
                 Assert.That(container.Id, Is.EqualTo("AddressSection"));
                 Assert.That(container.CaptionKey, Is.EqualTo("address.details"));
-                Assert.That(container.ShowBorder, Is.True);
+                Assert.That(container.ContainerChrome, Is.EqualTo(ContainerChrome.Framed));
                 Assert.That(column, Is.Not.Null);
             });
+        }
+
+        [Test]
+        public void ImportAndNormalize_ShouldCarryContainerChromeAndBehavior()
+        {
+            var yaml = @"
+id: ContainerChromeForm
+kind: form
+
+fields:
+  Notes:
+    control: YamlTextBox
+    caption: notes
+
+layout:
+  type: Column
+  items:
+    - type: Container
+      id: NotesSectionChrome
+      caption: review.notes
+      containerChrome: None
+      items:
+        - fieldRef: Notes
+    - type: Container
+      id: NotesSectionBehavior
+      caption: review.notes
+      containerChrome: Framed
+      containerBehavior: Collapsible
+      collapsedText: ""Notes: {Notes}""
+      items:
+        - fieldRef: Notes
+";
+
+            var imported = Import(yaml);
+            var normalized = Normalize(imported);
+            var importedChromeContainer = imported.Definition.Layout.Items.OfType<YamlContainerDefinition>().Single(container => container.Id == "NotesSectionChrome");
+            var importedBehaviorContainer = imported.Definition.Layout.Items.OfType<YamlContainerDefinition>().Single(container => container.Id == "NotesSectionBehavior");
+            var normalizedChromeContainer = normalized.Document.Layout.Items.OfType<YamlContainerDefinition>().Single(container => container.Id == "NotesSectionChrome");
+            var normalizedBehaviorContainer = normalized.Document.Layout.Items.OfType<YamlContainerDefinition>().Single(container => container.Id == "NotesSectionBehavior");
+            var resolvedChromeContainer = normalized.ResolvedDocument.Layout.Items.OfType<ResolvedContainerDefinition>().Single(container => container.Id == "NotesSectionChrome");
+            var resolvedBehaviorContainer = normalized.ResolvedDocument.Layout.Items.OfType<ResolvedContainerDefinition>().Single(container => container.Id == "NotesSectionBehavior");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(imported.Success, Is.True, string.Join("\n", imported.Diagnostics));
+                Assert.That(importedChromeContainer.ContainerChrome, Is.EqualTo(ContainerChrome.None));
+                Assert.That(importedChromeContainer.ContainerBehavior, Is.EqualTo(ContainerBehavior.Static));
+                Assert.That(importedBehaviorContainer.ContainerChrome, Is.EqualTo(ContainerChrome.Framed));
+                Assert.That(importedBehaviorContainer.ContainerBehavior, Is.EqualTo(ContainerBehavior.Collapsible));
+                Assert.That(importedBehaviorContainer.CollapsedText, Is.EqualTo("Notes: {Notes}"));
+                Assert.That(normalized.Success, Is.True, string.Join("\n", normalized.Diagnostics));
+                Assert.That(normalizedChromeContainer.ContainerChrome, Is.EqualTo(ContainerChrome.None));
+                Assert.That(normalizedChromeContainer.ContainerBehavior, Is.EqualTo(ContainerBehavior.Static));
+                Assert.That(normalizedBehaviorContainer.ContainerChrome, Is.EqualTo(ContainerChrome.Framed));
+                Assert.That(normalizedBehaviorContainer.ContainerBehavior, Is.EqualTo(ContainerBehavior.Collapsible));
+                Assert.That(normalizedBehaviorContainer.CollapsedText, Is.EqualTo("Notes: {Notes}"));
+                Assert.That(resolvedChromeContainer.ContainerChrome, Is.EqualTo(ContainerChrome.None));
+                Assert.That(resolvedChromeContainer.ContainerBehavior, Is.EqualTo(ContainerBehavior.Static));
+                Assert.That(resolvedBehaviorContainer.ContainerChrome, Is.EqualTo(ContainerChrome.Framed));
+                Assert.That(resolvedBehaviorContainer.ContainerBehavior, Is.EqualTo(ContainerBehavior.Collapsible));
+                Assert.That(resolvedBehaviorContainer.CollapsedText, Is.EqualTo("Notes: {Notes}"));
+            });
+        }
+
+        [Test]
+        public void Normalize_ShouldFail_WhenCollapsedTextReferencesUnknownField()
+        {
+            var yaml = @"
+id: InvalidCollapsedTextForm
+kind: form
+
+fields:
+  firstName:
+    control: YamlTextBox
+
+layout:
+  type: Column
+  items:
+    - type: Container
+      id: DeveloperSection
+      containerBehavior: Collapsible
+      collapsedText: ""Developer: {missingField}""
+      items:
+        - fieldRef: firstName
+";
+
+            var imported = Import(yaml);
+            var normalized = Normalize(imported);
+
+            Assert.That(
+                normalized.Diagnostics.Any(d => d.Contains("DeveloperSection") && d.Contains("collapsedText") && d.Contains("missingField")),
+                Is.True);
+        }
+
+        [Test]
+        public void Import_ShouldFail_WhenContainerChromeIsInvalid()
+        {
+            var yaml = @"
+id: InvalidContainerChromeForm
+kind: form
+
+fields:
+  Notes:
+    control: YamlTextBox
+
+layout:
+  type: Column
+  items:
+    - type: Container
+      containerChrome: Floating
+      items:
+        - fieldRef: Notes
+";
+
+            var imported = Import(yaml);
+
+            Assert.That(imported.Diagnostics.Any(d => d.Contains("containerChrome") && d.Contains("Container")), Is.True);
+        }
+
+        [Test]
+        public void Normalize_ShouldFail_WhenCollapsibleContainerHasNoChrome()
+        {
+            var yaml = @"
+id: InvalidContainerBehaviorForm
+kind: form
+
+fields:
+  Notes:
+    control: YamlTextBox
+
+layout:
+  type: Column
+  items:
+    - type: Container
+      id: NotesSection
+      containerChrome: None
+      containerBehavior: Collapsible
+      items:
+        - fieldRef: Notes
+";
+
+            var imported = Import(yaml);
+            var normalized = Normalize(imported);
+
+            Assert.That(
+                normalized.Diagnostics.Any(d => d.Contains("NotesSection") && d.Contains("Collapsible") && d.Contains("containerChrome")),
+                Is.True);
         }
 
         [Test]
@@ -890,5 +1037,6 @@ layout:
         }
     }
 }
+
 
 

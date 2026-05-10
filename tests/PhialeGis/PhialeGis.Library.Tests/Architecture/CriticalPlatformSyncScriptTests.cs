@@ -39,3 +39,4 @@ public sealed class CriticalPlatformSyncScriptTests
         throw new InvalidOperationException("Could not resolve repository root from test directory.");
     }
 }
+

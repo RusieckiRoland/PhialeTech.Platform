@@ -91,3 +91,4 @@ namespace PhialeGrid.Wpf.Tests.Virtualization
         }
     }
 }
+

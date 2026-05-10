@@ -8,6 +8,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
         public ResolvedLayoutDefinition(
             string id,
             string name,
+            LayoutHeightMode heightMode,
             double? width,
             FieldWidthHint? widthHint,
             bool isOverlayScope,
@@ -23,6 +24,7 @@ namespace PhialeTech.YamlApp.Core.Resolved
         {
             Id = id;
             Name = name;
+            HeightMode = heightMode;
             Width = width;
             WidthHint = widthHint;
             IsOverlayScope = isOverlayScope;
@@ -40,6 +42,8 @@ namespace PhialeTech.YamlApp.Core.Resolved
         public string Id { get; }
 
         public string Name { get; }
+
+        public LayoutHeightMode HeightMode { get; }
 
         public double? Width { get; }
 

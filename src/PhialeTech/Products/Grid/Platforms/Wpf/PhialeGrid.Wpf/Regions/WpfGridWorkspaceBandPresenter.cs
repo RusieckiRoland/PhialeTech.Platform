@@ -54,7 +54,8 @@ namespace PhialeTech.PhialeGrid.Wpf.Regions
                 binding,
                 state.State == GridRegionState.Collapsed ? (state.MinSize ?? binding.FallbackExpandedSize) : expandedSize,
                 isRenderable: true,
-                state.Placement);
+                state.Placement,
+                directives.AutoSizeToContent);
             binding.ContentHost.Visibility = state.State == GridRegionState.Collapsed ? Visibility.Collapsed : Visibility.Visible;
 
             return new WpfGridRegionChromeState(
@@ -70,11 +71,18 @@ namespace PhialeTech.PhialeGrid.Wpf.Regions
             WpfGridWorkspaceBandBinding binding,
             double size,
             bool isRenderable,
-            GridRegionPlacement placement = GridRegionPlacement.Top)
+            GridRegionPlacement placement = GridRegionPlacement.Top,
+            bool autoSizeToContent = false)
         {
             if (binding.UsesWorkspaceBandStackLayout)
             {
                 binding.Row.Height = GridLength.Auto;
+                if (autoSizeToContent && isRenderable)
+                {
+                    binding.Host.ClearValue(FrameworkElement.HeightProperty);
+                    return;
+                }
+
                 binding.Host.Height = isRenderable ? size : 0d;
                 return;
             }

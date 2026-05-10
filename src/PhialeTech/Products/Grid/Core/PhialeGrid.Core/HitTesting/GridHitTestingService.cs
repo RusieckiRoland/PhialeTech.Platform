@@ -253,7 +253,7 @@ namespace PhialeGrid.Core.HitTesting
                 return false;
             }
 
-            if (row.HasDetailsExpanded &&
+            if (row.HasDetails &&
                 x >= header.Bounds.Left &&
                 x <= header.Bounds.Left + DetailsToggleWidth)
             {
@@ -290,7 +290,7 @@ namespace PhialeGrid.Core.HitTesting
                 }
             }
 
-            var hierarchyOffset = row.HasDetailsExpanded ? DetailsToggleWidth : 0;
+            var hierarchyOffset = row.HasDetails ? DetailsToggleWidth : 0;
             var hierarchyStart = header.Bounds.Left + hierarchyOffset + (row.HierarchyLevel * HierarchyToggleWidth);
             var hierarchyEnd = hierarchyStart + HierarchyToggleWidth;
             if (row.HasHierarchyChildren && x >= hierarchyStart && x <= hierarchyEnd)
@@ -313,7 +313,7 @@ namespace PhialeGrid.Core.HitTesting
 
         private static double GetSelectionCheckboxStart(GridHeaderSurfaceItem header)
         {
-            var indicatorWidth = header.RowIndicatorWidth;
+            var indicatorWidth = header.RowActionWidth + header.RowIndicatorWidth;
             return header.Bounds.Left + indicatorWidth;
         }
 

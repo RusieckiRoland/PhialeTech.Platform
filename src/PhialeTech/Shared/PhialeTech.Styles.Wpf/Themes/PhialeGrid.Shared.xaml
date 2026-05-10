@@ -55,7 +55,15 @@
     <SolidColorBrush x:Key="PgWarningBackgroundBrush" Color="{DynamicResource Color.Warning.Fill}" />
     <SolidColorBrush x:Key="PgWarningBorderBrush" Color="{DynamicResource Color.Warning.Border}" />
     <SolidColorBrush x:Key="PgWarningTextBrush" Color="{DynamicResource Color.Warning.Text}" />
+    <SolidColorBrush x:Key="PgReviewBackgroundBrush" Color="{DynamicResource Color.Review.Fill}" />
+    <SolidColorBrush x:Key="PgReviewBorderBrush" Color="{DynamicResource Color.Review.Border}" />
+    <SolidColorBrush x:Key="PgReviewTextBrush" Color="{DynamicResource Color.Review.Text}" />
     <Thickness x:Key="PgToolsPanelDensityInputMargin">0,6,0,0</Thickness>
+    <Thickness x:Key="PgGridToolsOptionSectionMargin">0,16,0,0</Thickness>
+    <Thickness x:Key="PgGridToolsOptionItemMargin">0,4,0,0</Thickness>
+    <Thickness x:Key="PgGridToolsOptionSubItemMargin">16,4,0,0</Thickness>
+    <Thickness x:Key="PgGridToolsOptionCheckBoxPadding">8,7</Thickness>
+    <Thickness x:Key="PgGridToolsBackButtonPadding">0,8,0,10</Thickness>
     <Thickness x:Key="PgGridToolsComboBoxPadding">10,5</Thickness>
     <Thickness x:Key="PgGridToolsComboBoxItemPadding">10,7</Thickness>
     <Thickness x:Key="PgGridToolsComboBoxChevronMargin">0,0,10,0</Thickness>
@@ -77,6 +85,20 @@
     <Thickness x:Key="PgWorkspacePanelCardMargin">0,0,0,8</Thickness>
     <Thickness x:Key="PgWorkspacePanelCardPadding">10,8</Thickness>
     <Thickness x:Key="PgWorkspacePanelInlineButtonMargin">0,6,0,0</Thickness>
+    <Thickness x:Key="PgWorkspacePanelValidationIssueIconMargin">0,0,6,0</Thickness>
+    <Thickness x:Key="PgWorkspaceBandShellPadding">10,6,8,6</Thickness>
+    <Thickness x:Key="PgSummaryBottomRegionShellPadding">10,6,10,6</Thickness>
+    <Thickness x:Key="PgWorkspaceBandActionGroupMargin">8,0,0,0</Thickness>
+    <Thickness x:Key="PgWorkspacePlaygroundMargin">0</Thickness>
+    <Thickness x:Key="PgWorkspacePlaygroundPadding">10,6</Thickness>
+    <Thickness x:Key="PgSummaryDesignerChipPadding">8,3</Thickness>
+    <Thickness x:Key="PgSummaryDesignerChipMargin">0,0,8,8</Thickness>
+    <Thickness x:Key="PgSummaryDesignerChipTextGapMargin">0,2,0,0</Thickness>
+    <Thickness x:Key="PgSummaryDesignerChipRemoveButtonMargin">8,0,0,0</Thickness>
+    <Thickness x:Key="PgSummaryResultChipPadding">12,7</Thickness>
+    <Thickness x:Key="PgSummaryResultChipMargin">0,0,10,6</Thickness>
+    <Thickness x:Key="PgSummaryResultChipTypeMargin">0,0,0,2</Thickness>
+    <Thickness x:Key="PgSummaryResultChipValueMargin">8,0,0,0</Thickness>
     <SolidColorBrush x:Key="PgSelectionBackgroundBrush" Color="{DynamicResource Color.Selection.Active.Fill}" />
     <SolidColorBrush x:Key="PgSelectionBorderBrush" Color="{DynamicResource Color.Selection.Active.Border}" />
     <SolidColorBrush x:Key="PgSelectionTextBrush" Color="{DynamicResource Color.Selection.Active.Text}" />
@@ -106,6 +128,8 @@
     <system:Double x:Key="PgGridSortGlyphFontSize">14</system:Double>
     <system:Double x:Key="PgGridToolsComboBoxMinHeight">32</system:Double>
     <system:Double x:Key="PgWorkspacePanelCardMinHeight">74</system:Double>
+    <system:Double x:Key="PgWorkspacePanelValidationIssueIconSize">16</system:Double>
+    <system:Double x:Key="PgWorkspacePanelValidationIssueIconFontSize">10</system:Double>
     <system:Double x:Key="PgGridFilterClearButtonSize">18</system:Double>
     <system:Double x:Key="PgGridHeaderMenuButtonSize">18</system:Double>
     <system:Double x:Key="PgGridSideToolCollapsedRailWidth">44</system:Double>
@@ -113,6 +137,14 @@
     <system:Double x:Key="PgWorkspacePanelExpandedTabHeight">24</system:Double>
     <system:Double x:Key="PgWorkspacePanelCollapsedRailTabWidth">28</system:Double>
     <system:Double x:Key="PgWorkspacePanelCollapsedRailTabHeight">0</system:Double>
+    <CornerRadius x:Key="PgWorkspacePlaygroundCornerRadius">8</CornerRadius>
+    <system:Double x:Key="PgWorkspacePlaygroundMinHeight">38</system:Double>
+    <system:Double x:Key="PgSummaryDesignerPlaygroundMinHeight">168</system:Double>
+    <system:Double x:Key="PgSummaryDesignerPlaygroundMaxHeight">240</system:Double>
+    <system:Double x:Key="PgSummaryDesignerChipRemoveButtonSize">20</system:Double>
+    <system:Double x:Key="PgSummaryResultChipMinWidth">128</system:Double>
+    <system:Double x:Key="PgSummaryResultChipTypeFontSize">13</system:Double>
+    <system:Double x:Key="PgSummaryResultChipBodyFontSize">13</system:Double>
 
     <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{DynamicResource Color.Surface2}" />
     <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="{DynamicResource Color.Surface0}" />

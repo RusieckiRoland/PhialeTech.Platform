@@ -757,7 +757,8 @@
                                     BorderThickness="1"
                                     CornerRadius="14"
                                     Padding="18">
-                                <Grid>
+                                <Grid x:Name="DemoSurfaceViewportGrid"
+                                      ClipToBounds="True">
                                     <ScrollViewer x:Name="FoundationsSurfaceScrollViewer"
                                                   Visibility="{Binding ShowFoundationsSurface, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                   VerticalScrollBarVisibility="Auto"
@@ -777,10 +778,62 @@
                                                                   ItemTemplate="{StaticResource FoundationsHighlightTemplate}">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
-                                                                <WrapPanel />
+                                                                <WrapPanel Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeWorkspacePlayground}}}" />
                                                             </ItemsPanelTemplate>
                                                         </ItemsControl.ItemsPanel>
                                                     </ItemsControl>
+                                                    <TextBlock Margin="0,10,0,8"
+                                                               Text="Workspace playground"
+                                                               Style="{StaticResource FoundationsSubsectionTitleStyle}" />
+                                                    <grid:PhialeWorkspacePlayground x:Name="FoundationsWorkspacePlaygroundPreview"
+                                                                                    AutomationProperties.AutomationId="FoundationsWorkspacePlaygroundPreview">
+                                                        <grid:PhialeWorkspacePlayground.PlaygroundContent>
+                                                            <WrapPanel VerticalAlignment="Center">
+                                                                <Border Style="{DynamicResource PgSummaryDesignerChipBorderStyle}">
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <StackPanel>
+                                                                            <TextBlock Text="Category"
+                                                                                       Style="{DynamicResource PgSummaryDesignerChipLabelTextStyle}" />
+                                                                            <TextBlock Text="Count"
+                                                                                       Style="{DynamicResource PgSummaryDesignerChipMetaTextStyle}" />
+                                                                        </StackPanel>
+                                                                        <Button Style="{DynamicResource PgSummaryDesignerChipRemoveButtonStyle}">
+                                                                            <TextBlock Text="x"
+                                                                                       Style="{DynamicResource PgGroupChipActionTextStyle}" />
+                                                                        </Button>
+                                                                    </StackPanel>
+                                                                </Border>
+                                                                  <Border Style="{DynamicResource PgSummaryDesignerChipBorderStyle}">
+                                                                      <StackPanel Orientation="Horizontal">
+                                                                          <StackPanel>
+                                                                              <TextBlock Text="Area [m2]"
+                                                                                         Style="{DynamicResource PgSummaryDesignerChipLabelTextStyle}" />
+                                                                            <TextBlock Text="Sum"
+                                                                                       Style="{DynamicResource PgSummaryDesignerChipMetaTextStyle}" />
+                                                                        </StackPanel>
+                                                                        <Button Style="{DynamicResource PgSummaryDesignerChipRemoveButtonStyle}">
+                                                                            <TextBlock Text="x"
+                                                                                       Style="{DynamicResource PgGroupChipActionTextStyle}" />
+                                                                          </Button>
+                                                                      </StackPanel>
+                                                                  </Border>
+                                                                  <Border Style="{DynamicResource PgSummaryResultChipBorderStyle}">
+                                                                      <StackPanel>
+                                                                          <TextBlock Text="Count"
+                                                                                     Style="{DynamicResource PgSummaryResultChipTypeTextStyle}" />
+                                                                          <StackPanel HorizontalAlignment="Center"
+                                                                                      Orientation="Horizontal">
+                                                                              <TextBlock Text="Category"
+                                                                                         Style="{DynamicResource PgSummaryResultChipLabelTextStyle}" />
+                                                                              <TextBlock Style="{DynamicResource PgSummaryResultChipSeparatorTextStyle}" />
+                                                                              <TextBlock Text="530"
+                                                                                         Style="{DynamicResource PgSummaryResultChipValueTextStyle}" />
+                                                                          </StackPanel>
+                                                                      </StackPanel>
+                                                                  </Border>
+                                                              </WrapPanel>
+                                                          </grid:PhialeWorkspacePlayground.PlaygroundContent>
+                                                      </grid:PhialeWorkspacePlayground>
                                                 </StackPanel>
                                             </Border>
 
@@ -1290,7 +1343,7 @@
                                                      EditSessionContext="{Binding GridEditSessionContext}"
                                                      Groups="{Binding GridGroups, Mode=TwoWay}"
                                                      Sorts="{Binding GridSorts, Mode=TwoWay}"
-                                                     Summaries="{Binding GridSummaries}"
+                                                     Summaries="{Binding GridSummaries, Mode=TwoWay}"
                                                      SideToolRegionTitle="{Binding GridSideToolRegionTitleText}"
                                                      SideToolRegionUsesDrawerChrome="{Binding ShowSummaryDesignerTools}"
                                                      IsGridReadOnly="{Binding IsGridReadOnly}"
@@ -1513,7 +1566,7 @@
                                                      EditSessionContext="{Binding GridEditSessionContext}"
                                                      Groups="{Binding GridGroups, Mode=TwoWay}"
                                                      Sorts="{Binding GridSorts, Mode=TwoWay}"
-                                                     Summaries="{Binding GridSummaries}"
+                                                     Summaries="{Binding GridSummaries, Mode=TwoWay}"
                                                      SideToolRegionTitle="{Binding GridSideToolRegionTitleText}"
                                                      SideToolRegionUsesDrawerChrome="{Binding ShowSummaryDesignerTools}"
                                                      IsGridReadOnly="{Binding IsGridReadOnly}"
@@ -1648,6 +1701,77 @@
                                         <grid:PhialeGrid.ValidationPanelContent>
                                             <grid:PhialeValidationPanel Visibility="{Binding ShowGridSideToolRegionContent, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         </grid:PhialeGrid.ValidationPanelContent>
+                                        <grid:PhialeGrid.SummaryDesignerContent>
+                                            <StackPanel>
+                                                <TextBlock Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                                                           Text="{Binding SummaryDesignerTitleText}" />
+                                                <TextBlock Margin="{DynamicResource PgWorkspacePanelInlineButtonMargin}"
+                                                           Style="{DynamicResource PgGridToolsPanelDescriptionTextStyle}"
+                                                           Text="{Binding SummaryDesignerDescriptionText}"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Margin="{DynamicResource PgGridToolsOptionSectionMargin}"
+                                                           Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                                                           Text="{Binding SummaryDesignerColumnLabelText}" />
+                                                <ComboBox Margin="{DynamicResource PgToolsPanelDensityInputMargin}"
+                                                          ItemsSource="{Binding AvailableSummaryColumns}"
+                                                          DisplayMemberPath="Header"
+                                                          SelectedItem="{Binding SelectedSummaryColumn, Mode=TwoWay}"
+                                                          Style="{DynamicResource PgGridToolsComboBoxStyle}" />
+                                                <TextBlock Margin="{DynamicResource PgGridToolsOptionSectionMargin}"
+                                                           Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                                                           Text="{Binding SummaryDesignerTypeLabelText}" />
+                                                <ComboBox Margin="{DynamicResource PgToolsPanelDensityInputMargin}"
+                                                          ItemsSource="{Binding AvailableSummaryTypes}"
+                                                          DisplayMemberPath="DisplayName"
+                                                          SelectedItem="{Binding SelectedSummaryType, Mode=TwoWay}"
+                                                          Style="{DynamicResource PgGridToolsComboBoxStyle}" />
+                                                <WrapPanel Margin="{DynamicResource PgGridToolsOptionSectionMargin}">
+                                                    <Button Style="{StaticResource GridCommandStripPrimaryButtonStyle}"
+                                                            Content="{Binding AddSummaryText}"
+                                                            Click="HandleAddSummaryClick" />
+                                                    <Button Style="{StaticResource GridCommandStripButtonStyle}"
+                                                            Content="{Binding ResetSummariesText}"
+                                                            Click="HandleResetSummariesClick" />
+                                                </WrapPanel>
+                                                <TextBlock Margin="{DynamicResource PgGridToolsOptionSectionMargin}"
+                                                           Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                                                           Text="{Binding SummaryDesignerPlaygroundLabelText}" />
+                                                <grid:PhialeWorkspacePlayground AutomationProperties.AutomationId="SummaryDesignerPlayground"
+                                                                                 MinHeight="{DynamicResource PgSummaryDesignerPlaygroundMinHeight}"
+                                                                                 MaxHeight="{DynamicResource PgSummaryDesignerPlaygroundMaxHeight}"
+                                                                                 HorizontalScrollBarVisibility="Disabled"
+                                                                                 VerticalScrollBarVisibility="Auto">
+                                                    <grid:PhialeWorkspacePlayground.PlaygroundContent>
+                                                        <ItemsControl ItemsSource="{Binding ConfiguredSummaries}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <WrapPanel Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeWorkspacePlayground}}}" />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Border Style="{DynamicResource PgSummaryDesignerChipBorderStyle}">
+                                                                    <DockPanel LastChildFill="True">
+                                                                        <Button DockPanel.Dock="Right"
+                                                                                Style="{DynamicResource PgSummaryDesignerChipRemoveButtonStyle}"
+                                                                                Content="x"
+                                                                                Tag="{Binding}"
+                                                                                Click="HandleRemoveSummaryClick" />
+                                                                        <StackPanel>
+                                                                            <TextBlock Style="{DynamicResource PgSummaryDesignerChipLabelTextStyle}"
+                                                                                       Text="{Binding ColumnLabel}" />
+                                                                            <TextBlock Style="{DynamicResource PgSummaryDesignerChipMetaTextStyle}"
+                                                                                       Text="{Binding TypeLabel}" />
+                                                                        </StackPanel>
+                                                                    </DockPanel>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </grid:PhialeWorkspacePlayground.PlaygroundContent>
+                                                </grid:PhialeWorkspacePlayground>
+                                            </StackPanel>
+                                        </grid:PhialeGrid.SummaryDesignerContent>
                                     </grid:PhialeGrid>
                                     <selector:ActiveLayerSelector x:Name="DemoActiveLayerSelector"
                                                                   Visibility="{Binding ShowActiveLayerSelectorSurface, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -1656,7 +1780,12 @@
                                                                   InitialVisibleItemCount="5"
                                                                   HorizontalAlignment="Left"
                                                                   VerticalAlignment="Top" />
-                                    <webHost:PhialeWebComponentScrollHost Visibility="{Binding ShowYamlUiSurface, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <webHost:PhialeWebComponentScrollHost x:Name="YamlUiSurfaceScrollHost"
+                                                                          Height="{Binding ActualHeight, ElementName=DemoSurfaceViewportGrid}"
+                                                                          Visibility="{Binding ShowYamlUiSurface, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                                          Loaded="HandleYamlUiSurfaceScrollHostLoaded"
+                                                                          SizeChanged="HandleYamlUiSurfaceScrollHostSizeChanged"
+                                                                          IsVisibleChanged="HandleYamlUiSurfaceScrollHostIsVisibleChanged">
                                         <webHost:PhialeWebComponentScrollHost.HostedContent>
                                         <StackPanel Margin="0,0,8,0">
                                             <Border Style="{StaticResource FoundationsSectionBorderStyle}"
@@ -1838,17 +1967,16 @@
                                                             </StackPanel>
                                                         </Border>
                                                         <StackPanel Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=IsYamlGeneratedFormVisible, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                                            <Border MinHeight="520"
-                                                                    Margin="0,16,0,0"
-                                                                    Background="{DynamicResource DemoPanelBackgroundBrush}"
-                                                                    BorderBrush="{DynamicResource DemoPanelBorderBrush}"
-                                                                    BorderThickness="1"
-                                                                    CornerRadius="12"
-                                                                    ClipToBounds="True">
-                                                                <ContentControl x:Name="YamlActionsEditorPresenter"
-                                                                                HorizontalContentAlignment="Stretch"
-                                                                                VerticalContentAlignment="Stretch" />
-                                                            </Border>
+                                                            <webHost:PhialeWebComponentScrollHost Height="520"
+                                                                                                  Margin="0,16,0,0"
+                                                                                                  Style="{StaticResource DemoYamlMonacoScrollHostStyle}"
+                                                                                                  x:Name="YamlActionsEditorScrollHost">
+                                                                <webHost:PhialeWebComponentScrollHost.HostedContent>
+                                                                    <ContentControl x:Name="YamlActionsEditorPresenter"
+                                                                                    HorizontalContentAlignment="Stretch"
+                                                                                    VerticalContentAlignment="Stretch" />
+                                                                </webHost:PhialeWebComponentScrollHost.HostedContent>
+                                                            </webHost:PhialeWebComponentScrollHost>
                                                             <Border Margin="0,16,0,0"
                                                                     Padding="12"
                                                                     Background="{DynamicResource DemoTokenBackgroundBrush}"
@@ -1895,6 +2023,8 @@
                                                         <StackPanel Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=IsYamlGeneratedFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                             <yamlDocument:YamlDocumentHost Margin="0,16,0,0"
                                                                                            HorizontalAlignment="Stretch"
+                                                                                           Theme="{Binding SelectedThemeCode}"
+                                                                                           LanguageCode="{Binding LanguageCode}"
                                                                                            ShowTitle="False"
                                                                                            ActionInvoked="HandleYamlDocumentActionInvoked"
                                                                                            RuntimeDocumentState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlDocumentRuntimeState}" />
@@ -1960,17 +2090,16 @@
                                                             </StackPanel>
                                                         </Border>
                                                         <StackPanel Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=IsYamlGeneratedFormVisible, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                                            <Border MinHeight="520"
-                                                                    Margin="0,16,0,0"
-                                                                    Background="{DynamicResource DemoPanelBackgroundBrush}"
-                                                                    BorderBrush="{DynamicResource DemoPanelBorderBrush}"
-                                                                    BorderThickness="1"
-                                                                    CornerRadius="12"
-                                                                    ClipToBounds="True">
-                                                                <ContentControl x:Name="YamlGeneratedFormEditorPresenter"
-                                                                                HorizontalContentAlignment="Stretch"
-                                                                                VerticalContentAlignment="Stretch" />
-                                                            </Border>
+                                                            <webHost:PhialeWebComponentScrollHost Height="520"
+                                                                                                  Margin="0,16,0,0"
+                                                                                                  Style="{StaticResource DemoYamlMonacoScrollHostStyle}"
+                                                                                                  x:Name="YamlGeneratedFormEditorScrollHost">
+                                                                <webHost:PhialeWebComponentScrollHost.HostedContent>
+                                                                    <ContentControl x:Name="YamlGeneratedFormEditorPresenter"
+                                                                                    HorizontalContentAlignment="Stretch"
+                                                                                    VerticalContentAlignment="Stretch" />
+                                                                </webHost:PhialeWebComponentScrollHost.HostedContent>
+                                                            </webHost:PhialeWebComponentScrollHost>
                                                             <Border Margin="0,16,0,0"
                                                                     Padding="12"
                                                                     Background="{DynamicResource DemoTokenBackgroundBrush}"
@@ -2017,6 +2146,8 @@
                                                         <StackPanel Visibility="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=IsYamlGeneratedFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                             <yamlDocument:YamlDocumentHost Margin="0,16,0,0"
                                                                                            HorizontalAlignment="Stretch"
+                                                                                           Theme="{Binding SelectedThemeCode}"
+                                                                                           LanguageCode="{Binding LanguageCode}"
                                                                                            ShowTitle="False"
                                                                                            ActionInvoked="HandleYamlDocumentActionInvoked"
                                                                                            RuntimeDocumentState="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=YamlDocumentRuntimeState}" />

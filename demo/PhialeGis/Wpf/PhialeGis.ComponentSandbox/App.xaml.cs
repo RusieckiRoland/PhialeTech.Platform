@@ -1,4 +1,4 @@
-﻿// App.xaml.cs (WPF)
+// App.xaml.cs (WPF)
 using ControlzEx.Theming;
 using MahApps.Metro.Theming;
 using Microsoft.Extensions.DependencyInjection;
@@ -137,3 +137,4 @@ namespace MahAppTestApp
         }
     }
 }
+

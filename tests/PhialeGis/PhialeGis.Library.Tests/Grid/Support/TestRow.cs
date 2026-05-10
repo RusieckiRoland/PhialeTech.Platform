@@ -15,3 +15,4 @@ namespace PhialeGis.Library.Tests.Grid.Support
         public decimal Amount { get; set; }
     }
 }
+

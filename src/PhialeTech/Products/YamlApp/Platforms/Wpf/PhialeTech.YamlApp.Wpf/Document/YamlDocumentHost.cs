@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,6 +12,8 @@ using PhialeTech.YamlApp.Runtime.Model;
 using PhialeTech.YamlApp.Wpf.Controls.Actions;
 using PhialeTech.YamlApp.Wpf.Controls.Badges;
 using PhialeTech.YamlApp.Wpf.Controls.Buttons;
+using PhialeTech.YamlApp.Wpf.Controls.DocumentEditor;
+using PhialeTech.WebHost.Wpf.Controls;
 
 namespace PhialeTech.YamlApp.Wpf.Document
 {
@@ -32,6 +35,20 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 typeof(bool),
                 typeof(YamlDocumentHost),
                 new FrameworkPropertyMetadata(true, OnRuntimeDocumentStateChanged));
+
+        public static readonly DependencyProperty ThemeProperty =
+            DependencyProperty.Register(
+                nameof(Theme),
+                typeof(string),
+                typeof(YamlDocumentHost),
+                new FrameworkPropertyMetadata("light", OnThemeChanged));
+
+        public static readonly DependencyProperty LanguageCodeProperty =
+            DependencyProperty.Register(
+                nameof(LanguageCode),
+                typeof(string),
+                typeof(YamlDocumentHost),
+                new FrameworkPropertyMetadata("en", OnLanguageCodeChanged));
 
         public static readonly RoutedEvent ActionInvokedEvent =
             EventManager.RegisterRoutedEvent(
@@ -70,6 +87,18 @@ namespace PhialeTech.YamlApp.Wpf.Document
             set => SetValue(ShowTitleProperty, value);
         }
 
+        public string Theme
+        {
+            get => (string)GetValue(ThemeProperty);
+            set => SetValue(ThemeProperty, value);
+        }
+
+        public string LanguageCode
+        {
+            get => (string)GetValue(LanguageCodeProperty);
+            set => SetValue(LanguageCodeProperty, value);
+        }
+
         public event EventHandler<YamlDocumentActionInvokedEventArgs> ActionInvoked
         {
             add => AddHandler(ActionInvokedEvent, value);
@@ -79,6 +108,18 @@ namespace PhialeTech.YamlApp.Wpf.Document
         private static void OnRuntimeDocumentStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             ((YamlDocumentHost)d).RebuildVisualTree();
+        }
+
+        private static void OnThemeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var host = (YamlDocumentHost)d;
+            _ = host.ApplyDocumentEditorThemeAsync(NormalizeTheme((string)e.NewValue));
+        }
+
+        private static void OnLanguageCodeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var host = (YamlDocumentHost)d;
+            _ = host.ApplyDocumentEditorLanguageAsync(NormalizeLanguageCode((string)e.NewValue));
         }
 
         private void RebuildVisualTree()
@@ -102,16 +143,26 @@ namespace PhialeTech.YamlApp.Wpf.Document
                     RuntimeDocumentState.Document == null ? null : RuntimeDocumentState.Document.WidthHint,
                     RuntimeDocumentState.Visible,
                     RuntimeDocumentState.Enabled);
+                VerticalAlignment = IsLayoutHeightAuto()
+                    ? VerticalAlignment.Top
+                    : VerticalAlignment.Stretch;
 
-                var root = new Border
+                var root = new Grid
                 {
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                 };
-                ApplyBorderStyle(root, "YamlDocument.RootBorderStyle");
                 KeyboardNavigation.SetTabNavigation(root, KeyboardNavigationMode.Cycle);
+                OverlayHost.SetIsScope(root, true);
+
+                var chrome = new Border
+                {
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                };
+                ApplyBorderStyle(chrome, "YamlDocument.RootBorderStyle");
 
                 var content = BuildContent();
-                root.Child = content;
+                chrome.Child = content;
+                root.Children.Add(chrome);
                 Content = root;
             }
             catch (Exception ex)
@@ -149,7 +200,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
             KeyboardNavigation.SetTabNavigation(shell, KeyboardNavigationMode.Continue);
             shell.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             shell.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            shell.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1d, GridUnitType.Star) });
+            shell.RowDefinitions.Add(new RowDefinition { Height = ResolveLayoutRegionHeight() });
             shell.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             shell.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
@@ -201,6 +252,18 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return shell;
         }
 
+        private GridLength ResolveLayoutRegionHeight()
+        {
+            return IsLayoutHeightAuto()
+                ? GridLength.Auto
+                : new GridLength(1d, GridUnitType.Star);
+        }
+
+        private bool IsLayoutHeightAuto()
+        {
+            return RuntimeDocumentState?.Document?.Layout?.HeightMode == LayoutHeightMode.Auto;
+        }
+
         private FrameworkElement BuildShellActionPanelContent(IEnumerable<DocumentActionAreaRenderPlan> areaPlans, ActionPlacement placement)
         {
             var areas = (areaPlans ?? Enumerable.Empty<DocumentActionAreaRenderPlan>()).ToList();
@@ -249,16 +312,13 @@ namespace PhialeTech.YamlApp.Wpf.Document
 
         private UIElement BuildLayoutRegionContent(DocumentActionRenderPlan plan)
         {
-            var scrollViewer = new ScrollViewer
+            var scrollHost = new PhialeWebComponentScrollHost
             {
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                Content = BuildScrollableContent(plan),
+                HostedContent = BuildScrollableContent(plan),
             };
-            KeyboardNavigation.SetTabNavigation(scrollViewer, KeyboardNavigationMode.Continue);
-            scrollViewer.SetResourceReference(FrameworkElement.StyleProperty, "YamlDocument.ScrollViewerStyle");
-            scrollViewer.PreviewMouseWheel += OnContentScrollViewerPreviewMouseWheel;
+            KeyboardNavigation.SetTabNavigation(scrollHost, KeyboardNavigationMode.Continue);
+            scrollHost.SetResourceReference(FrameworkElement.StyleProperty, "YamlDocument.WebComponentScrollHostStyle");
 
             var center = new Grid
             {
@@ -276,8 +336,8 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 center.Children.Add(leftAreas);
             }
 
-            Grid.SetColumn(scrollViewer, 1);
-            center.Children.Add(scrollViewer);
+            Grid.SetColumn(scrollHost, 1);
+            center.Children.Add(scrollHost);
 
             var rightAreas = BuildSideAreas(plan, ActionPlacement.Right);
             if (rightAreas != null)
@@ -340,10 +400,70 @@ namespace PhialeTech.YamlApp.Wpf.Document
             KeyboardNavigation.SetTabNavigation(stack, KeyboardNavigationMode.Continue);
 
             AddInFlowAreas(stack, plan, ActionPlacement.Top);
-            stack.Children.Add(_layoutRenderer.Render(RuntimeDocumentState));
+            stack.Children.Add(_layoutRenderer.Render(RuntimeDocumentState, Theme, LanguageCode));
             AddInFlowAreas(stack, plan, ActionPlacement.Bottom);
 
             return stack;
+        }
+
+        private async Task ApplyDocumentEditorThemeAsync(string theme)
+        {
+            foreach (var editor in FindDocumentEditors())
+            {
+                await editor.ApplyExternalThemeAsync(theme).ConfigureAwait(true);
+            }
+        }
+
+        private async Task ApplyDocumentEditorLanguageAsync(string languageCode)
+        {
+            foreach (var editor in FindDocumentEditors())
+            {
+                await editor.ApplyExternalLanguageAsync(languageCode).ConfigureAwait(true);
+            }
+        }
+
+        private IList<YamlDocumentEditor> FindDocumentEditors()
+        {
+            var editors = new List<YamlDocumentEditor>();
+            CollectDocumentEditors(this, editors);
+            return editors;
+        }
+
+        private static void CollectDocumentEditors(DependencyObject current, IList<YamlDocumentEditor> editors)
+        {
+            if (current == null)
+            {
+                return;
+            }
+
+            var editor = current as YamlDocumentEditor;
+            if (editor != null && !editors.Contains(editor))
+            {
+                editors.Add(editor);
+            }
+
+            var visualChildren = 0;
+            try
+            {
+                visualChildren = VisualTreeHelper.GetChildrenCount(current);
+            }
+            catch (InvalidOperationException)
+            {
+            }
+
+            for (var index = 0; index < visualChildren; index++)
+            {
+                CollectDocumentEditors(VisualTreeHelper.GetChild(current, index), editors);
+            }
+
+            foreach (var logicalChild in LogicalTreeHelper.GetChildren(current))
+            {
+                var dependencyChild = logicalChild as DependencyObject;
+                if (dependencyChild != null)
+                {
+                    CollectDocumentEditors(dependencyChild, editors);
+                }
+            }
         }
 
         private UIElement BuildActionArea(DocumentActionAreaRenderPlan areaPlan)
@@ -1056,71 +1176,6 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return support;
         }
 
-        private static void OnContentScrollViewerPreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            var scrollViewer = sender as ScrollViewer;
-            if (scrollViewer == null || e == null || e.Handled)
-            {
-                return;
-            }
-
-            if (CanScrollInDirection(scrollViewer, e.Delta))
-            {
-                return;
-            }
-
-            var parentScrollViewer = FindParentScrollViewer(scrollViewer);
-            if (parentScrollViewer == null)
-            {
-                return;
-            }
-
-            e.Handled = true;
-            var forwardedEvent = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
-            {
-                RoutedEvent = MouseWheelEvent,
-                Source = scrollViewer,
-            };
-
-            parentScrollViewer.RaiseEvent(forwardedEvent);
-        }
-
-        private static bool CanScrollInDirection(ScrollViewer scrollViewer, int delta)
-        {
-            if (scrollViewer.ScrollableHeight <= 0)
-            {
-                return false;
-            }
-
-            if (delta > 0)
-            {
-                return scrollViewer.VerticalOffset > 0;
-            }
-
-            if (delta < 0)
-            {
-                return scrollViewer.VerticalOffset < scrollViewer.ScrollableHeight;
-            }
-
-            return false;
-        }
-
-        private static ScrollViewer FindParentScrollViewer(DependencyObject start)
-        {
-            var current = VisualTreeHelper.GetParent(start);
-            while (current != null)
-            {
-                if (current is ScrollViewer scrollViewer)
-                {
-                    return scrollViewer;
-                }
-
-                current = VisualTreeHelper.GetParent(current);
-            }
-
-            return null;
-        }
-
         private UIElement BuildErrorContent(Exception exception)
         {
             var text = new TextBlock
@@ -1178,6 +1233,21 @@ namespace PhialeTech.YamlApp.Wpf.Document
             };
             ApplyBorderStyle(border, styleKey);
             return border;
+        }
+
+        private static string NormalizeTheme(string theme)
+        {
+            return string.Equals(theme, "dark", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(theme, "night", StringComparison.OrdinalIgnoreCase)
+                ? "dark"
+                : "light";
+        }
+
+        private static string NormalizeLanguageCode(string languageCode)
+        {
+            return string.Equals(languageCode, "pl", StringComparison.OrdinalIgnoreCase)
+                ? "pl"
+                : "en";
         }
 
     }

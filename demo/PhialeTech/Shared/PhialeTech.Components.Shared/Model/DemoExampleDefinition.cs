@@ -56,3 +56,4 @@ namespace PhialeTech.Components.Shared.Model
         public IReadOnlyList<string> Tags { get; }
     }
 }
+

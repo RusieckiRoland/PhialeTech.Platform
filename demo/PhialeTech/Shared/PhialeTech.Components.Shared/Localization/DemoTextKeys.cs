@@ -122,6 +122,11 @@ namespace PhialeTech.Components.Shared.Localization
         public const string DemoToolbarRestoreData = "Demo.Toolbar.RestoreData";
         public const string DemoToolbarAddSummary = "Demo.Toolbar.AddSummary";
         public const string DemoToolbarResetSummaries = "Demo.Toolbar.ResetSummaries";
+        public const string DemoSummaryDesignerTitle = "Demo.SummaryDesigner.Title";
+        public const string DemoSummaryDesignerDescription = "Demo.SummaryDesigner.Description";
+        public const string DemoSummaryDesignerColumn = "Demo.SummaryDesigner.Column";
+        public const string DemoSummaryDesignerType = "Demo.SummaryDesigner.Type";
+        public const string DemoSummaryDesignerPlayground = "Demo.SummaryDesigner.Playground";
         public const string DemoToolbarRemoteStatus = "Demo.Toolbar.RemoteStatus";
         public const string DemoToolbarRemoteLoading = "Demo.Toolbar.RemoteLoading";
         public const string DemoToolbarRemoteEmpty = "Demo.Toolbar.RemoteEmpty";
@@ -196,6 +201,8 @@ namespace PhialeTech.Components.Shared.Localization
         public const string ExampleHierarchyDescription = "Example.Hierarchy.Description";
         public const string ExampleMasterDetailTitle = "Example.MasterDetail.Title";
         public const string ExampleMasterDetailDescription = "Example.MasterDetail.Description";
+        public const string ExampleCustomDetailTitle = "Example.CustomDetail.Title";
+        public const string ExampleCustomDetailDescription = "Example.CustomDetail.Description";
         public const string ExamplePersonalizationTitle = "Example.Personalization.Title";
         public const string ExamplePersonalizationDescription = "Example.Personalization.Description";
         public const string ExampleExportImportTitle = "Example.ExportImport.Title";
@@ -294,3 +301,4 @@ namespace PhialeTech.Components.Shared.Localization
         public const string DefinitionManagerApplicationStateBoundary = "DefinitionManager.ApplicationState.StateBoundary";
     }
 }
+

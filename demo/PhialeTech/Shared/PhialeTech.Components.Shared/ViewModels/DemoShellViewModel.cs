@@ -69,7 +69,6 @@ namespace PhialeTech.Components.Shared.ViewModels
         private IReadOnlyList<GridSummaryDescriptor> _gridSummaries;
         private IReadOnlyList<DemoSummaryColumnOptionViewModel> _availableSummaryColumns;
         private IReadOnlyList<DemoSummaryTypeOptionViewModel> _availableSummaryTypes;
-        private IReadOnlyList<DemoConfiguredSummaryViewModel> _configuredSummaries;
         private IReadOnlyList<PhialeGrid.Core.Hierarchy.GridHierarchyNode<object>> _gridHierarchyRoots;
         private PhialeGrid.Core.Hierarchy.GridHierarchyController<object> _gridHierarchyController;
         private IActiveLayerSelectorState _activeLayerSelectorState;
@@ -137,7 +136,6 @@ namespace PhialeTech.Components.Shared.ViewModels
             _gridSummaries = Array.Empty<GridSummaryDescriptor>();
             _availableSummaryColumns = Array.Empty<DemoSummaryColumnOptionViewModel>();
             _availableSummaryTypes = Array.Empty<DemoSummaryTypeOptionViewModel>();
-            _configuredSummaries = Array.Empty<DemoConfiguredSummaryViewModel>();
             _gridHierarchyRoots = Array.Empty<PhialeGrid.Core.Hierarchy.GridHierarchyNode<object>>();
             _stateStatusText = string.Empty;
             _remoteStatusText = string.Empty;
@@ -325,9 +323,10 @@ namespace PhialeTech.Components.Shared.ViewModels
             get => _gridColumns;
             private set
             {
-                if (SetProperty(ref _gridColumns, value))
+                if (SetProperty(ref _gridColumns, value ?? Array.Empty<GridColumnDefinition>()))
                 {
                     RequestGridEditSessionContextRebuild();
+                    RebuildConfiguredSummaries();
                 }
             }
         }
@@ -367,7 +366,8 @@ namespace PhialeTech.Components.Shared.ViewModels
             get => _gridSummaries;
             set
             {
-                if (SetProperty(ref _gridSummaries, value ?? Array.Empty<GridSummaryDescriptor>()))
+                var summaries = value == null ? Array.Empty<GridSummaryDescriptor>() : value.ToArray();
+                if (SetProperty(ref _gridSummaries, summaries))
                 {
                     RebuildConfiguredSummaries();
                 }
@@ -386,10 +386,9 @@ namespace PhialeTech.Components.Shared.ViewModels
             private set => SetProperty(ref _availableSummaryTypes, value ?? Array.Empty<DemoSummaryTypeOptionViewModel>());
         }
 
-        public IReadOnlyList<DemoConfiguredSummaryViewModel> ConfiguredSummaries
+        public IReadOnlyList<DemoConfiguredSummaryChipViewModel> ConfiguredSummaries
         {
-            get => _configuredSummaries;
-            private set => SetProperty(ref _configuredSummaries, value ?? Array.Empty<DemoConfiguredSummaryViewModel>());
+            get => BuildConfiguredSummaryChips();
         }
 
         public DemoSummaryColumnOptionViewModel SelectedSummaryColumn
@@ -929,6 +928,16 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public string ResetSummariesText => Localize(DemoTextKeys.DemoToolbarResetSummaries);
 
+        public string SummaryDesignerTitleText => Localize(DemoTextKeys.DemoSummaryDesignerTitle);
+
+        public string SummaryDesignerDescriptionText => Localize(DemoTextKeys.DemoSummaryDesignerDescription);
+
+        public string SummaryDesignerColumnLabelText => Localize(DemoTextKeys.DemoSummaryDesignerColumn);
+
+        public string SummaryDesignerTypeLabelText => Localize(DemoTextKeys.DemoSummaryDesignerType);
+
+        public string SummaryDesignerPlaygroundLabelText => Localize(DemoTextKeys.DemoSummaryDesignerPlayground);
+
         public string DetailHeadline => string.Equals(SelectedComponentText, SelectedExampleTitle, StringComparison.OrdinalIgnoreCase)
             ? SelectedExampleTitle
             : SelectedComponentText + " | " + SelectedExampleTitle;
@@ -1189,7 +1198,7 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         public bool ShowSummaryDesignerTools => SelectedExample != null && (SelectedExample.Id == "summaries" || SelectedExample.Id == "state-persistence" || SelectedExample.Id == "summary-designer");
 
-        public string GridSideToolRegionTitleText => ShowSummaryDesignerTools ? "Summary designer" : "Grid options";
+        public string GridSideToolRegionTitleText => ShowSummaryDesignerTools ? SummaryDesignerTitleText : "Grid options";
 
         public bool ShowGridEditCommandBar => ShowGridSurface;
 
@@ -1238,6 +1247,12 @@ namespace PhialeTech.Components.Shared.ViewModels
                 return;
             }
 
+            if (!IsExampleVisibleOnCurrentPlatform(example))
+            {
+                TraceDiagnostics("SelectExample stopped because example is hidden on platform '" + _platformKey + "'. ExampleId='" + example.Id + "'.");
+                return;
+            }
+
             TraceDiagnostics("SelectExample deferred rebuild block started. ExampleId='" + example.Id + "'.");
             DeferGridEditSessionContextRebuild(() =>
             {
@@ -1280,7 +1295,12 @@ namespace PhialeTech.Components.Shared.ViewModels
             RebuildDrawerGroups();
             RebuildSections();
 
-            var example = _catalog.GetDefaultExampleByComponentId(componentId);
+            var example = _catalog.GetExamples()
+                .Where(candidate => string.Equals(candidate.ComponentId, componentId, StringComparison.OrdinalIgnoreCase))
+                .Where(IsExampleVisibleOnCurrentPlatform)
+                .OrderBy(candidate => candidate.SectionOrder)
+                .ThenBy(candidate => candidate.DisplayOrder)
+                .FirstOrDefault();
             if (example == null)
             {
                 return;
@@ -1294,8 +1314,10 @@ namespace PhialeTech.Components.Shared.ViewModels
             _selectedDrawerGroupId = NormalizeDrawerGroupId(drawerGroupId);
             RebuildDrawerGroups();
 
-            var examples = _catalog.GetExamplesByDrawerGroupId(_selectedDrawerGroupId);
-            if (examples.Count == 1)
+            var examples = _catalog.GetExamplesByDrawerGroupId(_selectedDrawerGroupId)
+                .Where(IsExampleVisibleOnCurrentPlatform)
+                .ToArray();
+            if (examples.Length == 1)
             {
                 SelectExample(examples[0].Id);
                 return;
@@ -2141,11 +2163,16 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         private void RebuildConfiguredSummaries()
         {
-            ConfiguredSummaries = GridSummaries
+            OnPropertyChanged(nameof(ConfiguredSummaries));
+        }
+
+        private IReadOnlyList<DemoConfiguredSummaryChipViewModel> BuildConfiguredSummaryChips()
+        {
+            return GridSummaries
                 .Select(summary =>
                 {
                     var header = GridColumns.FirstOrDefault(column => string.Equals(column.Id, summary.ColumnId, StringComparison.OrdinalIgnoreCase))?.Header ?? summary.ColumnId;
-                    return new DemoConfiguredSummaryViewModel(summary.ColumnId, summary.Type, header + " · " + LocalizeSummaryType(summary.Type));
+                    return new DemoConfiguredSummaryChipViewModel(summary.ColumnId, summary.Type, header, LocalizeSummaryType(summary.Type));
                 })
                 .ToArray();
         }
@@ -2232,16 +2259,20 @@ namespace PhialeTech.Components.Shared.ViewModels
 
         private void RebuildSections()
         {
-            VisibleSections = string.IsNullOrWhiteSpace(_selectedDrawerGroupId)
+            var sections = string.IsNullOrWhiteSpace(_selectedDrawerGroupId)
                 ? _catalog.BuildSections(LanguageCode, SearchText)
                 : _catalog.BuildSectionsForDrawerGroup(LanguageCode, SearchText, _selectedDrawerGroupId);
+
+            VisibleSections = FilterSectionsForCurrentPlatform(sections);
             OnPropertyChanged(nameof(HasOverviewResults));
             OnPropertyChanged(nameof(HasNoOverviewResults));
         }
 
         private void RebuildDrawerGroups()
         {
-            DrawerGroups = _catalog.BuildDrawerGroups(LanguageCode, _selectedDrawerGroupId);
+            DrawerGroups = _catalog.BuildDrawerGroups(LanguageCode, _selectedDrawerGroupId)
+                .Where(group => IsDrawerGroupVisibleOnCurrentPlatform(group.Id))
+                .ToArray();
             OnPropertyChanged(nameof(SelectedDrawerGroupTitle));
             OnPropertyChanged(nameof(SelectedDrawerGroupDescription));
             OnPropertyChanged(nameof(WorkspaceOverviewTitle));
@@ -2267,6 +2298,85 @@ namespace PhialeTech.Components.Shared.ViewModels
         {
             return example != null &&
                    string.Equals(example.ComponentId, "web-components", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private IReadOnlyList<DemoSectionViewModel> FilterSectionsForCurrentPlatform(IReadOnlyList<DemoSectionViewModel> sections)
+        {
+            if (IsFullDemoPlatform())
+            {
+                return sections;
+            }
+
+            return sections
+                .Select(section => new DemoSectionViewModel(
+                    section.Key,
+                    section.Title,
+                    section.Examples.Where(example => IsExampleVisibleOnCurrentPlatform(example.Id))))
+                .Where(section => section.Examples.Count > 0)
+                .ToArray();
+        }
+
+        private bool IsDrawerGroupVisibleOnCurrentPlatform(string drawerGroupId)
+        {
+            if (IsFullDemoPlatform())
+            {
+                return true;
+            }
+
+            return _catalog.GetExamplesByDrawerGroupId(drawerGroupId)
+                .Any(IsExampleVisibleOnCurrentPlatform);
+        }
+
+        private bool IsExampleVisibleOnCurrentPlatform(DemoExampleCardViewModel example)
+        {
+            return example != null && IsExampleVisibleOnCurrentPlatform(example.Id);
+        }
+
+        private bool IsExampleVisibleOnCurrentPlatform(DemoExampleDefinition example)
+        {
+            return example != null && IsExampleVisibleOnCurrentPlatform(example.Id);
+        }
+
+        private bool IsExampleVisibleOnCurrentPlatform(string exampleId)
+        {
+            if (IsFullDemoPlatform())
+            {
+                return true;
+            }
+
+            if (IsWinUiDemoPlatform())
+            {
+                return IsWinUiShowcaseExample(exampleId);
+            }
+
+            return IsAvaloniaShowcaseExample(exampleId);
+        }
+
+        private bool IsFullDemoPlatform()
+        {
+            return string.Equals(_platformKey, "Wpf", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsWinUiDemoPlatform()
+        {
+            return string.Equals(_platformKey, "WinUI", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(_platformKey, "WinUI3", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsWinUiShowcaseExample(string exampleId)
+        {
+            return string.Equals(exampleId, "foundations", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(exampleId, "web-host", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(exampleId, "pdf-viewer", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(exampleId, "monaco-editor", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsAvaloniaShowcaseExample(string exampleId)
+        {
+            return string.Equals(exampleId, "foundations", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(exampleId, "web-host", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(exampleId, "pdf-viewer", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(exampleId, "report-designer", StringComparison.OrdinalIgnoreCase);
         }
 
         private void RaiseLocalizedPropertyChanges()
@@ -2448,6 +2558,12 @@ namespace PhialeTech.Components.Shared.ViewModels
             OnPropertyChanged(nameof(RestoreDataText));
             OnPropertyChanged(nameof(AddSummaryText));
             OnPropertyChanged(nameof(ResetSummariesText));
+            OnPropertyChanged(nameof(SummaryDesignerTitleText));
+            OnPropertyChanged(nameof(SummaryDesignerDescriptionText));
+            OnPropertyChanged(nameof(SummaryDesignerColumnLabelText));
+            OnPropertyChanged(nameof(SummaryDesignerTypeLabelText));
+            OnPropertyChanged(nameof(SummaryDesignerPlaygroundLabelText));
+            OnPropertyChanged(nameof(GridSideToolRegionTitleText));
             OnPropertyChanged(nameof(FoundationsExportErrorTitle));
             OnPropertyChanged(nameof(FoundationsExportErrorMessage));
             OnPropertyChanged(nameof(DemoBookExportErrorTitle));
@@ -2715,3 +2831,4 @@ namespace PhialeTech.Components.Shared.ViewModels
         }
     }
 }
+

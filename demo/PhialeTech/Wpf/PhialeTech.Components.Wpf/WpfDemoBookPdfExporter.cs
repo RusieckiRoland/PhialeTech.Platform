@@ -192,3 +192,4 @@ namespace PhialeTech.Components.Wpf
         public double ViewportHeight { get; }
     }
 }
+

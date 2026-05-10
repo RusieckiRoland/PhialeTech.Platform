@@ -16,6 +16,8 @@ namespace PhialeTech.Components.Shared.Services
                 polish ? "Kod: Consolas" : "Code: Consolas",
                 polish ? "Kolory są semantyczne i gotowe na dzień / noc" : "Colors are semantic and ready for day / night",
                 polish ? "Kontrolki zbiegają się do radius 6, powierzchnie do 12 / 14" : "Controls converge on radius 6, surfaces on 12 / 14",
+                polish ? "Menu Regions używa PgGridRegionsContextMenuCheckBoxStyle, opartego na tym samym checkboxie co Columns." : "The Regions menu uses PgGridRegionsContextMenuCheckBoxStyle, based on the same checkbox as Columns.",
+                polish ? "Grouping, Summaries i Summary designer używają wspólnego PgWorkspacePlaygroundBorderStyle dla obszarów chipów." : "Grouping, Summaries and Summary designer use the shared PgWorkspacePlaygroundBorderStyle for chip areas.",
             };
         }
 
@@ -238,6 +240,7 @@ namespace PhialeTech.Components.Shared.Services
             {
                 new DemoFoundationColorTokenViewModel("DemoPlatformBadgeBackgroundBrush", polish ? "Wyróżnione badge i aktywne stany lekkiego chromu." : "Highlighted badges and light chrome states.", "#E6F4F1", "#1B3047"),
                 new DemoFoundationColorTokenViewModel("DemoCommitButtonBackgroundBrush", polish ? "Akcja potwierdzająca o najwyższym priorytecie." : "Highest-priority confirmation action.", "#0F766E", "#4B8DFF"),
+                new DemoFoundationColorTokenViewModel("DemoReviewBackgroundBrush", polish ? "Review, zmiany i stany do sprawdzenia." : "Review, changes and states pending inspection.", "#EFF6FF", "#1E2D45"),
                 new DemoFoundationColorTokenViewModel("DemoWarningBackgroundBrush", polish ? "Ostrzeżenia i stany wymagające uwagi." : "Warnings and attention states.", "#FDF6E3", "#3B3221"),
             };
         }
@@ -264,6 +267,17 @@ namespace PhialeTech.Components.Shared.Services
                 new DemoFoundationMeasureTokenViewModel("Space.14", "14", polish ? "Padding kart, toolbar buttonow i card copy." : "Card padding, toolbar buttons and card copy."),
                 new DemoFoundationMeasureTokenViewModel("Space.10", "10", polish ? "Inline gap, chip rhythm i zwarte marginesy." : "Inline gaps, chip rhythm and compact margins."),
                 new DemoFoundationMeasureTokenViewModel("Space.8", "8", polish ? "Inset etykiet i drobniejszy oddech kontrolek." : "Label inset and smaller control breathing room."),
+                new DemoFoundationMeasureTokenViewModel("PgWorkspaceBandShellPadding", "10,6,8,6", polish ? "Padding wspólnego chrome WorkspaceBand." : "Padding for shared WorkspaceBand chrome."),
+                new DemoFoundationMeasureTokenViewModel("PgSummaryBottomRegionShellPadding", "10,6,10,6", polish ? "Padding dolnej wstęgi Summaries, która pokazuje wyłącznie wyniki." : "Padding for the bottom Summaries band that only shows results."),
+                new DemoFoundationMeasureTokenViewModel("PgWorkspaceBandActionGroupMargin", "8,0,0,0", polish ? "Odstęp grupy akcji wspólnego WorkspaceBand od treści." : "Action group offset from shared WorkspaceBand content."),
+                new DemoFoundationMeasureTokenViewModel("PgWorkspacePlaygroundMargin", "0", polish ? "Wspólny margines obszaru playground w WorkspaceBand." : "Shared margin for WorkspaceBand chip playgrounds."),
+                new DemoFoundationMeasureTokenViewModel("PgWorkspacePlaygroundPadding", "10,6", polish ? "Wspólny padding obszaru playground dla chipów WorkspaceBand." : "Shared padding for WorkspaceBand chip playgrounds."),
+                new DemoFoundationMeasureTokenViewModel("PgWorkspacePlaygroundCornerRadius", "8", polish ? "Lekkie zaokrąglenie wspólnego playgroundu WorkspaceBand." : "Light corner radius for the shared WorkspaceBand playground."),
+                new DemoFoundationMeasureTokenViewModel("PgWorkspacePlaygroundMinHeight", "38", polish ? "Minimalna wysokość wspólnego playgroundu WorkspaceBand." : "Minimum height for the shared WorkspaceBand playground."),
+                new DemoFoundationMeasureTokenViewModel("PgSummaryDesignerChipPadding", "8,3", polish ? "Padding chipów w playgroundzie Summary designer, zgodny z chipami grupowania." : "Summary designer playground chip padding, aligned with grouping chips."),
+                new DemoFoundationMeasureTokenViewModel("PgSummaryDesignerPlaygroundMaxHeight", "240", polish ? "Maksymalna wysokość przewijanego playgroundu chipów." : "Maximum height for the scrollable chip playground."),
+                new DemoFoundationMeasureTokenViewModel("PgSummaryResultChipPadding", "12,7", polish ? "Padding chipów wynikowych na wstędze Summaries." : "Padding for result chips in the Summaries band."),
+                new DemoFoundationMeasureTokenViewModel("PgSummaryResultChipMinWidth", "128", polish ? "Minimalna szerokość chipów wynikowych podsumowań." : "Minimum width for summary result chips."),
             };
         }
 
@@ -408,3 +422,4 @@ namespace PhialeTech.Components.Shared.Services
         }
     }
 }
+

@@ -3,5 +3,7 @@
              x:Class="PhialeTech.Components.Avalonia.App">
   <Application.Styles>
     <FluentTheme />
+    <StyleInclude Source="avares://PhialeTech.Styles.Avalonia/Themes/Demo.Theme.Day.axaml" />
+    <StyleInclude Source="avares://PhialeTech.Styles.Avalonia/Themes/Demo.Controls.axaml" />
   </Application.Styles>
 </Application>

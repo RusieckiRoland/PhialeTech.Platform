@@ -346,3 +346,4 @@ namespace PhialeGrid.Wpf.Tests.Layout
         }
     }
 }
+

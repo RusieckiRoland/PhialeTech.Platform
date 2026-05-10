@@ -20,19 +20,27 @@ namespace PhialeTech.YamlApp.Core.Resolved
             FieldChromeMode fieldChromeMode,
             CaptionPlacement captionPlacement,
             string captionKey,
-            bool showBorder,
+            string collapsedText,
+            ContainerChrome containerChrome,
+            ContainerBehavior containerBehavior,
             ContainerVariant variant,
             IReadOnlyList<ResolvedLayoutItemDefinition> items)
             : base(id, name, width, widthHint, isOverlayScope, visible, enabled, showOldValueRestoreButton, validationTrigger, interactionMode, densityMode, fieldChromeMode, captionPlacement, items)
         {
             CaptionKey = captionKey;
-            ShowBorder = showBorder;
+            CollapsedText = collapsedText;
+            ContainerChrome = containerChrome;
+            ContainerBehavior = containerBehavior;
             Variant = variant;
         }
 
         public string CaptionKey { get; }
 
-        public bool ShowBorder { get; }
+        public string CollapsedText { get; }
+
+        public ContainerChrome ContainerChrome { get; }
+
+        public ContainerBehavior ContainerBehavior { get; }
 
         public ContainerVariant Variant { get; }
     }

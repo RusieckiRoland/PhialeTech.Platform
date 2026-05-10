@@ -125,6 +125,53 @@
         </Style.Triggers>
     </Style>
 
+    <Style x:Key="ComboBox.DropDownItem" TargetType="{x:Type ComboBoxItem}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                    <Border
+                        x:Name="ComboBoxDropDownItemChrome"
+                        Margin="2,1"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="6"
+                        SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
+                        <ContentPresenter
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            RecognizesAccessKey="True"
+                            TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="ComboBoxDropDownItemChrome" Property="Background" Value="{DynamicResource Brush.Hover.Fill}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="ComboBoxDropDownItemChrome" Property="Background" Value="{DynamicResource Brush.Selection.Active.Fill}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Active.Text}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type ComboBoxItem}" BasedOn="{StaticResource ComboBox.DropDownItem}" />
+
     <Style TargetType="{x:Type ComboBox}">
         <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
@@ -132,6 +179,9 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="10,5" />
         <Setter Property="MinHeight" Value="32" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource ComboBox.DropDownItem}" />
         <Setter Property="FocusVisualStyle" Value="{DynamicResource FocusVisualStyle.Ring}" />
         <Style.Triggers>
             <Trigger Property="IsKeyboardFocusWithin" Value="True">

@@ -1,4 +1,4 @@
-﻿using MahAppTestApp;
+using MahAppTestApp;
 using Microsoft.Extensions.DependencyInjection;
 using PhialeGis.ComponentSandbox.ViewModels;
 using System;

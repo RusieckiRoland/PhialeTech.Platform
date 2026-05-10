@@ -39,3 +39,4 @@ namespace PhialeTech.Components.Shared.Model
         public string InspectionForegroundHex { get; }
     }
 }
+

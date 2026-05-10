@@ -9,5 +9,6 @@ namespace PhialeGrid.Core.Regions
         SideToolRegion,
         ChangePanelRegion,
         ValidationPanelRegion,
+        SummaryDesignerRegion,
     }
 }

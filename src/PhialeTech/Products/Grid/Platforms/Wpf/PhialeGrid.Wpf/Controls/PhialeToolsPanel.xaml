@@ -6,19 +6,140 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="72"
+             d:DesignHeight="400"
              d:DesignWidth="280">
-    <StackPanel>
-        <TextBlock Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
-                   Text="Density" />
+    <Grid>
 
-        <ComboBox Margin="{DynamicResource PgToolsPanelDensityInputMargin}"
-                  Style="{DynamicResource PgGridToolsComboBoxStyle}"
-                  SelectedValue="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=Density, Mode=TwoWay}"
-                  SelectedValuePath="Tag">
-            <ComboBoxItem Tag="{x:Static grid:GridDensity.Compact}" Content="Compact" />
-            <ComboBoxItem Tag="{x:Static grid:GridDensity.Normal}" Content="Normal" />
-            <ComboBoxItem Tag="{x:Static grid:GridDensity.Comfortable}" Content="Comfortable" />
-        </ComboBox>
-    </StackPanel>
+        <!-- ═══ Main view ═══ -->
+        <ScrollViewer x:Name="MainView"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- Density -->
+                <TextBlock Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                           Text="Density" />
+                <ComboBox Margin="{DynamicResource PgToolsPanelDensityInputMargin}"
+                          Style="{DynamicResource PgGridToolsComboBoxStyle}"
+                          SelectedValue="{Binding Density, Mode=TwoWay}"
+                          SelectedValuePath="Tag">
+                    <ComboBoxItem Tag="{x:Static grid:GridDensity.Compact}" Content="Compact" />
+                    <ComboBoxItem Tag="{x:Static grid:GridDensity.Normal}" Content="Normal" />
+                    <ComboBoxItem Tag="{x:Static grid:GridDensity.Comfortable}" Content="Comfortable" />
+                </ComboBox>
+
+                <!-- Row state -->
+                <TextBlock Margin="{DynamicResource PgGridToolsOptionSectionMargin}"
+                           Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                           Text="Row state" />
+                <CheckBox Margin="{DynamicResource PgGridToolsOptionItemMargin}"
+                          Style="{DynamicResource PgGridToolsCheckBoxStyle}"
+                          Content="Show row indicator"
+                          IsChecked="{Binding SelectCurrentRow, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <CheckBox Margin="{DynamicResource PgGridToolsOptionItemMargin}"
+                          Style="{DynamicResource PgGridToolsCheckBoxStyle}"
+                          Content="Multi-select"
+                          IsChecked="{Binding MultiSelect, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <!-- Row numbering -->
+                <TextBlock Margin="{DynamicResource PgGridToolsOptionSectionMargin}"
+                           Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                           Text="Row numbering" />
+                <CheckBox Margin="{DynamicResource PgGridToolsOptionItemMargin}"
+                          Style="{DynamicResource PgGridToolsCheckBoxStyle}"
+                          Content="Show row numbers"
+                          IsChecked="{Binding ShowNb, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowNb}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <RadioButton Margin="{DynamicResource PgGridToolsOptionSubItemMargin}"
+                                 Style="{DynamicResource PgGridToolsRadioButtonStyle}"
+                                 Content="Global"
+                                 IsChecked="{Binding IsRowNumberingGlobal, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <RadioButton Margin="{DynamicResource PgGridToolsOptionSubItemMargin}"
+                                 Style="{DynamicResource PgGridToolsRadioButtonStyle}"
+                                 Content="Within group"
+                                 IsChecked="{Binding IsRowNumberingWithinGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <!-- Columns -->
+                <TextBlock Margin="{DynamicResource PgGridToolsOptionSectionMargin}"
+                           Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                           Text="Columns" />
+                <Button Margin="{DynamicResource PgGridToolsOptionItemMargin}"
+                        Style="{DynamicResource PgGridToolsColumnsButtonStyle}"
+                        Content="Show columns"
+                        Click="HandleShowColumnsClick" />
+
+                <!-- Cell interaction -->
+                <TextBlock Margin="{DynamicResource PgGridToolsOptionSectionMargin}"
+                           Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                           Text="Cell interaction" />
+                <CheckBox Margin="{DynamicResource PgGridToolsOptionItemMargin}"
+                          Style="{DynamicResource PgGridToolsCheckBoxStyle}"
+                          Content="Enable cell selection"
+                          IsChecked="{Binding EnableCellSelection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <CheckBox Margin="{DynamicResource PgGridToolsOptionItemMargin}"
+                          Style="{DynamicResource PgGridToolsCheckBoxStyle}"
+                          Content="Enable range selection"
+                          IsChecked="{Binding EnableRangeSelection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          IsEnabled="{Binding EnableCellSelection}" />
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ═══ Columns view ═══ -->
+        <Grid x:Name="ColumnsView"
+              Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Fixed header: back link, title, description -->
+            <Border Grid.Row="0"
+                    Padding="0,0,0,8"
+                    BorderBrush="{DynamicResource PgPanelBorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <StackPanel>
+                    <Button Style="{DynamicResource PgGridToolsBackButtonStyle}"
+                            Click="HandleBackFromColumnsClick">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="← " />
+                            <TextBlock Text="{Binding ToolsRegionTitleText, Mode=OneWay}" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock Margin="0,8,0,2"
+                               Style="{DynamicResource PgGridToolsPanelLabelTextStyle}"
+                               Text="Columns" />
+                    <TextBlock Style="{DynamicResource PgGridToolsPanelDescriptionTextStyle}"
+                               Text="Choose which columns are shown in the grid." />
+                </StackPanel>
+            </Border>
+
+            <ScrollViewer Grid.Row="1"
+                          Margin="0,8,0,0"
+                          Style="{DynamicResource PgGridToolsScrollViewerStyle}">
+                <ItemsControl x:Name="ColumnsItemsControl">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Margin="{DynamicResource PgGridToolsOptionItemMargin}"
+                                      Style="{DynamicResource PgGridToolsCheckBoxStyle}"
+                                      Content="{Binding Header}"
+                                      IsChecked="{Binding IsVisible, Mode=OneWay}"
+                                      Click="HandleColumnVisibilityToggleClick" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+    </Grid>
 </UserControl>

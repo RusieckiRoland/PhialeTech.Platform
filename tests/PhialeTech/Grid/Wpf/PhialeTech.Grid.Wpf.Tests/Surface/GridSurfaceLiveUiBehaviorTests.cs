@@ -10,7 +10,9 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using NUnit.Framework;
+using PhialeGrid.Core;
 using PhialeGrid.Core.Columns;
+using PhialeGrid.Core.Details;
 using PhialeGrid.Core.Hierarchy;
 using PhialeGrid.Core.Query;
 using PhialeGrid.Core.Surface;
@@ -58,6 +60,140 @@ namespace PhialeGrid.Wpf.Tests.Surface
                     Assert.That(expandedRows, Is.EqualTo(4));
                     Assert.That(expandedRenderedCells, Is.GreaterThan(initialRenderedCells));
                     Assert.That(surfaceHost.CurrentSnapshot.Rows.Count, Is.EqualTo(2));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void RoutedUi_WhenCustomRowDetailToggleClicked_InsertsTypedDetailRowAndCreatesFactoryContent()
+        {
+            var rowDetailProvider = new TestRowDetailProvider();
+            var rowDetailFactory = new TestRowDetailContentFactory();
+            var grid = CreateCustomDetailGrid(rowDetailProvider, rowDetailFactory);
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 720, height: 360);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var surfaceHost = GridSurfaceTestHost.FindSurfaceHost(grid);
+                var initialRows = surfaceHost.CurrentSnapshot.Rows.ToArray();
+                var firstRow = initialRows.First(row => row.RowKey == "row-1");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(firstRow.HasDetails, Is.True);
+                    Assert.That(firstRow.HasDetailsExpanded, Is.False);
+                    Assert.That(surfaceHost.CurrentSnapshot.Overlays.Any(overlay => overlay.Kind == GridOverlayKind.RowDetail), Is.False);
+                });
+
+                GridSurfaceTestHost.ClickPointViaRoutedUi(surfaceHost, x: 8d, y: firstRow.Bounds.Y + (firstRow.Bounds.Height / 2d));
+                GridSurfaceTestHost.FlushDispatcher(grid);
+                surfaceHost.UpdateLayout();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var expandedSnapshot = surfaceHost.CurrentSnapshot;
+                var expandedFirstRow = expandedSnapshot.Rows.First(row => row.RowKey == "row-1");
+                var detailOverlay = expandedSnapshot.Overlays.Single(overlay => overlay.Kind == GridOverlayKind.RowDetail);
+                var detailPresenter = GridSurfaceTestHost.FindVisualChildren<GridRowDetailPresenter>(surfaceHost)
+                    .SingleOrDefault(presenter => presenter.OverlayData != null);
+                var detailText = detailPresenter == null ? string.Empty : GridSurfaceTestHost.ReadVisibleText(detailPresenter);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(expandedFirstRow.HasDetailsExpanded, Is.True);
+                    Assert.That(expandedSnapshot.Rows.Any(row => row.RowKey == "row-1:detail"), Is.True);
+                    Assert.That(detailOverlay.Payload, Is.InstanceOf<GridRowDetailSurfacePayload>());
+                    Assert.That(detailPresenter, Is.Not.Null);
+                    Assert.That(detailText, Does.Contain("Alpha"));
+                    Assert.That(rowDetailProvider.LastRequest.Values["Name"], Is.EqualTo("Alpha"));
+                    Assert.That(rowDetailProvider.LastRequest.Fields["Name"].IsReadOnly, Is.True);
+                    Assert.That(rowDetailFactory.LastContext.CoreContext.RowKey, Is.EqualTo("row-1"));
+                });
+
+                GridSurfaceTestHost.ClickPointViaRoutedUi(surfaceHost, x: 8d, y: expandedFirstRow.Bounds.Y + (expandedFirstRow.Bounds.Height / 2d));
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(surfaceHost.CurrentSnapshot.Rows.Any(row => row.RowKey == "row-1:detail"), Is.False);
+                    Assert.That(surfaceHost.CurrentSnapshot.Overlays.Any(overlay => overlay.Kind == GridOverlayKind.RowDetail), Is.False);
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void RoutedUi_WhenCustomRowDetailProviderExists_RowsWithoutDetailKeepAlignedHeaderButDoNotToggle()
+        {
+            var provider = new TestRowDetailProvider(hasSecondRowDetail: false);
+            var grid = CreateCustomDetailGrid(provider, new TestRowDetailContentFactory());
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 720, height: 360);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var surfaceHost = GridSurfaceTestHost.FindSurfaceHost(grid);
+                var rowWithoutDetail = surfaceHost.CurrentSnapshot.Rows.First(row => row.RowKey == "row-2");
+                var headerWithoutDetail = surfaceHost.CurrentSnapshot.Headers.First(header => header.HeaderKey == "row-2");
+
+                GridSurfaceTestHost.ClickPointViaRoutedUi(surfaceHost, x: 8d, y: rowWithoutDetail.Bounds.Y + (rowWithoutDetail.Bounds.Height / 2d));
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(rowWithoutDetail.HasDetails, Is.False);
+                    Assert.That(headerWithoutDetail.RowActionWidth, Is.GreaterThan(0d));
+                    Assert.That(surfaceHost.CurrentSnapshot.Rows.Any(row => row.RowKey == "row-2:detail"), Is.False);
+                    Assert.That(surfaceHost.CurrentSnapshot.Overlays.Any(overlay => overlay.Kind == GridOverlayKind.RowDetail), Is.False);
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void RoutedUi_WhenCustomRowDetailToggleClickedAfterScroll_InsertsTypedDetailRowForVisibleRecord()
+        {
+            var rowDetailProvider = new TestRowDetailProvider();
+            var rowDetailFactory = new TestRowDetailContentFactory();
+            var grid = CreateCustomDetailGrid(rowDetailProvider, rowDetailFactory, itemCount: 60);
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 720, height: 360);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                grid.ScrollRowIntoView("row-38", GridScrollAlignment.Start);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var surfaceHost = GridSurfaceTestHost.FindSurfaceHost(grid);
+                var targetRow = surfaceHost.CurrentSnapshot.Rows.First(row => row.RowKey == "row-38");
+
+                GridSurfaceTestHost.ClickPointViaRoutedUi(surfaceHost, x: 8d, y: targetRow.Bounds.Y + (targetRow.Bounds.Height / 2d));
+                GridSurfaceTestHost.FlushDispatcher(grid);
+                surfaceHost.UpdateLayout();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(surfaceHost.CurrentSnapshot.Rows.Any(row => row.RowKey == "row-38:detail"), Is.True);
+                    Assert.That(surfaceHost.CurrentSnapshot.Rows.First(row => row.RowKey == "row-38").HasDetailsExpanded, Is.True);
+                    Assert.That(surfaceHost.CurrentSnapshot.Overlays.Any(overlay => overlay.Kind == GridOverlayKind.RowDetail), Is.True);
+                    Assert.That(rowDetailProvider.LastRequest.RowKey, Is.EqualTo("row-38"));
                 });
             }
             finally
@@ -817,6 +953,52 @@ namespace PhialeGrid.Wpf.Tests.Surface
             };
         }
 
+        private static WpfGrid CreateCustomDetailGrid(
+            IGridRowDetailProvider rowDetailProvider,
+            IGridRowDetailContentFactory rowDetailContentFactory,
+            int itemCount = 2)
+        {
+            return new WpfGrid
+            {
+                Width = 720,
+                Height = 360,
+                IsGridReadOnly = true,
+                LanguageDirectory = global::PhialeGrid.Wpf.Tests.GridTestRepositoryPaths.GridLanguagesDirectory,
+                RowDetailProvider = rowDetailProvider,
+                RowDetailContentFactory = rowDetailContentFactory,
+                Columns = new[]
+                {
+                    new GridColumnDefinition("Name", "Name", width: 160, displayIndex: 0),
+                    new GridColumnDefinition("City", "City", width: 160, displayIndex: 1),
+                },
+                ItemsSource = CreateCustomDetailRows(itemCount),
+            };
+        }
+
+        private static SurfaceRow[] CreateCustomDetailRows(int itemCount)
+        {
+            if (itemCount < 2)
+            {
+                throw new ArgumentOutOfRangeException(nameof(itemCount));
+            }
+
+            var rows = new SurfaceRow[itemCount];
+            for (var index = 0; index < itemCount; index++)
+            {
+                var number = index + 1;
+                rows[index] = new SurfaceRow
+                {
+                    Id = "row-" + number.ToString(CultureInfo.InvariantCulture),
+                    Name = number == 1 ? "Alpha" : "Name " + number.ToString(CultureInfo.InvariantCulture),
+                    City = number == 1 ? "Warsaw" : "City " + number.ToString(CultureInfo.InvariantCulture),
+                };
+            }
+
+            rows[1].Name = "Beta";
+            rows[1].City = "Gdansk";
+            return rows;
+        }
+
         private static WpfGrid CreateGroupedGrid()
         {
             return new WpfGrid
@@ -950,6 +1132,73 @@ namespace PhialeGrid.Wpf.Tests.Surface
             }
         }
 
+        private sealed class TestRowDetailProvider : IGridRowDetailProvider
+        {
+            private readonly bool _hasSecondRowDetail;
+
+            public TestRowDetailProvider(bool hasSecondRowDetail = true)
+            {
+                _hasSecondRowDetail = hasSecondRowDetail;
+            }
+
+            public GridRowDetailRequest LastRequest { get; private set; }
+
+            public bool HasDetail(GridRowDetailRequest request)
+            {
+                if (request == null)
+                {
+                    throw new ArgumentNullException(nameof(request));
+                }
+
+                return string.Equals(request.RecordKey, "row-1", StringComparison.Ordinal) ||
+                    (_hasSecondRowDetail && string.Equals(request.RecordKey, "row-2", StringComparison.Ordinal));
+            }
+
+            public GridRowDetailDescriptor CreateDetail(GridRowDetailRequest request)
+            {
+                if (request == null)
+                {
+                    throw new ArgumentNullException(nameof(request));
+                }
+
+                LastRequest = request;
+                return new GridRowDetailDescriptor(
+                    request.RowKey + ":detail",
+                    request.RowKey,
+                    GridRowDetailHeightPolicy.Fixed(64d),
+                    new TestRowDetailContentDescriptor("Preview"));
+            }
+        }
+
+        private sealed class TestRowDetailContentFactory : IGridRowDetailContentFactory
+        {
+            public GridRowDetailWpfContext LastContext { get; private set; }
+
+            public FrameworkElement CreateContent(GridRowDetailWpfContext context)
+            {
+                if (context == null)
+                {
+                    throw new ArgumentNullException(nameof(context));
+                }
+
+                LastContext = context;
+                return new TextBlock
+                {
+                    Text = "Detail " + context.CoreContext.Values["Name"],
+                };
+            }
+        }
+
+        private sealed class TestRowDetailContentDescriptor
+        {
+            public TestRowDetailContentDescriptor(string title)
+            {
+                Title = title ?? throw new ArgumentNullException(nameof(title));
+            }
+
+            public string Title { get; }
+        }
+
         private sealed class TestPagedHierarchyProvider : IGridHierarchyPagingProvider<object>
         {
             private readonly System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<GridHierarchyNode<object>>>> _pagesByPath;
@@ -983,3 +1232,4 @@ namespace PhialeGrid.Wpf.Tests.Surface
         }
     }
 }
+

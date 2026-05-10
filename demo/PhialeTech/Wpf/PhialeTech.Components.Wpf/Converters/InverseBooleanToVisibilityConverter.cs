@@ -18,3 +18,4 @@ namespace PhialeTech.Components.Wpf.Converters
         }
     }
 }
+

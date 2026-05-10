@@ -28,3 +28,4 @@ internal static class RepositoryPaths
         throw new InvalidOperationException("Could not resolve repository root.");
     }
 }
+

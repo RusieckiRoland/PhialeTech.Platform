@@ -9,3 +9,12 @@ definitions:
   baseMultilineText:
     extends: baseText
     multiline: true
+
+  baseDocumentEditorText:
+    control: YamlDocumentEditor
+    widthHint: Fill
+    fieldChromeMode: Framed
+    captionPlacement: Top
+    showLabel: true
+    showPlaceholder: true
+    value: '{"type":"doc","content":[{"type":"paragraph"}]}'

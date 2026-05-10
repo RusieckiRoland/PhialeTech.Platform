@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using PhialeTech.YamlApp.Abstractions.Enums;
 using PhialeTech.YamlApp.Core.Resolved;
+using PhialeTech.YamlApp.Core.Text;
 using PhialeTech.YamlApp.Runtime.Model;
 using PhialeTech.YamlApp.Wpf.Controls.Badges;
 using PhialeTech.YamlApp.Wpf.Controls.Buttons;
@@ -27,6 +29,11 @@ namespace PhialeTech.YamlApp.Wpf.Document
 
         public FrameworkElement Render(RuntimeDocumentState documentState)
         {
+            return Render(documentState, "light", "en");
+        }
+
+        public FrameworkElement Render(RuntimeDocumentState documentState, string theme, string languageCode)
+        {
             if (documentState == null)
             {
                 throw new InvalidOperationException("Runtime document state is required.");
@@ -39,10 +46,10 @@ namespace PhialeTech.YamlApp.Wpf.Document
 
             if (documentState.Document.Layout == null)
             {
-                return BuildVerticalItemsPanel(documentState, null, isCompactSpacing: false);
+                return BuildVerticalItemsPanel(documentState, null, isCompactSpacing: false, theme: theme, languageCode: languageCode);
             }
 
-            var root = BuildVerticalItemsPanel(documentState, documentState.Document.Layout.Items, isCompactSpacing: false);
+            var root = BuildVerticalItemsPanel(documentState, documentState.Document.Layout.Items, isCompactSpacing: false, theme: theme, languageCode: languageCode);
             YamlWpfPresentationHelper.ApplyPresentation(
                 root,
                 documentState.Document.Layout.Width,
@@ -54,7 +61,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return root;
         }
 
-        private FrameworkElement BuildVerticalItemsPanel(RuntimeDocumentState documentState, System.Collections.Generic.IReadOnlyList<ResolvedLayoutItemDefinition> items, bool isCompactSpacing)
+        private FrameworkElement BuildVerticalItemsPanel(RuntimeDocumentState documentState, System.Collections.Generic.IReadOnlyList<ResolvedLayoutItemDefinition> items, bool isCompactSpacing, string theme, string languageCode)
         {
             var panel = new StackPanel
             {
@@ -69,7 +76,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
 
             for (var index = 0; index < items.Count; index++)
             {
-                var element = BuildItem(documentState, items[index]);
+                var element = BuildItem(documentState, items[index], theme, languageCode);
                 if (element == null)
                 {
                     continue;
@@ -81,7 +88,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return panel;
         }
 
-        private FrameworkElement BuildItem(RuntimeDocumentState documentState, ResolvedLayoutItemDefinition item)
+        private FrameworkElement BuildItem(RuntimeDocumentState documentState, ResolvedLayoutItemDefinition item, string theme, string languageCode)
         {
             if (item == null)
             {
@@ -90,12 +97,12 @@ namespace PhialeTech.YamlApp.Wpf.Document
 
             if (item is ResolvedFieldReferenceDefinition fieldReference)
             {
-                return BuildFieldReference(documentState, fieldReference);
+                return BuildFieldReference(documentState, fieldReference, theme, languageCode);
             }
 
             if (item is ResolvedContainerDefinition container)
             {
-                return BuildContainer(documentState, container);
+                return BuildContainer(documentState, container, theme, languageCode);
             }
 
             if (item is ResolvedBadgeDefinition badge)
@@ -110,21 +117,21 @@ namespace PhialeTech.YamlApp.Wpf.Document
 
             if (item is ResolvedColumnDefinition column)
             {
-                return BuildColumn(documentState, column);
+                return BuildColumn(documentState, column, theme, languageCode);
             }
 
             if (item is ResolvedRowDefinition row)
             {
-                return BuildRow(documentState, row);
+                return BuildRow(documentState, row, theme, languageCode);
             }
 
             throw new NotSupportedException(string.Format("Unsupported layout item: {0}", item.GetType().Name));
         }
 
-        private FrameworkElement BuildFieldReference(RuntimeDocumentState documentState, ResolvedFieldReferenceDefinition fieldReference)
+        private FrameworkElement BuildFieldReference(RuntimeDocumentState documentState, ResolvedFieldReferenceDefinition fieldReference, string theme, string languageCode)
         {
             var runtimeField = documentState.GetField(fieldReference.FieldRef);
-            var control = _fieldControlFactory.Create(runtimeField);
+            var control = _fieldControlFactory.Create(runtimeField, theme, languageCode);
             ApplyLayoutItemPresentation(control, fieldReference);
 
             if (HasLocalSizing(fieldReference))
@@ -135,14 +142,45 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return control;
         }
 
-        private FrameworkElement BuildContainer(RuntimeDocumentState documentState, ResolvedContainerDefinition container)
+        private FrameworkElement BuildContainer(RuntimeDocumentState documentState, ResolvedContainerDefinition container, string theme, string languageCode)
         {
+            if (container.ContainerBehavior == ContainerBehavior.Collapsible && container.ContainerChrome == ContainerChrome.None)
+            {
+                throw new InvalidOperationException("Collapsible container requires visible container chrome.");
+            }
+
+            var itemsPanel = BuildVerticalItemsPanel(documentState, container.Items, container.Variant == ContainerVariant.Compact, theme, languageCode);
+
+            if (container.ContainerBehavior == ContainerBehavior.Collapsible)
+            {
+                TextBlock collapsedSummary;
+                var expander = new Expander
+                {
+                    Header = BuildCollapsibleContainerHeader(documentState, container, out collapsedSummary),
+                    Content = itemsPanel,
+                    IsExpanded = true,
+                };
+                if (collapsedSummary != null)
+                {
+                    expander.Collapsed += (sender, args) => collapsedSummary.Visibility = Visibility.Visible;
+                    expander.Expanded += (sender, args) => collapsedSummary.Visibility = Visibility.Collapsed;
+                }
+                expander.SetResourceReference(
+                    FrameworkElement.StyleProperty,
+                    container.Variant == ContainerVariant.Compact
+                        ? "YamlDocument.ContainerExpanderStyle.Compact"
+                        : "YamlDocument.ContainerExpanderStyle");
+                ApplyLayoutItemPresentation(expander, container);
+                OverlayHost.SetIsScope(expander, container.IsOverlayScope);
+                return expander;
+            }
+
             var contentStack = new StackPanel
             {
                 Orientation = Orientation.Vertical,
             };
 
-            if (!string.IsNullOrWhiteSpace(container.CaptionKey))
+            if (container.ContainerChrome == ContainerChrome.Framed && !string.IsNullOrWhiteSpace(container.CaptionKey))
             {
                 var caption = new TextBlock
                 {
@@ -156,12 +194,10 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 contentStack.Children.Add(caption);
             }
 
-            var itemsPanel = BuildVerticalItemsPanel(documentState, container.Items, container.Variant == ContainerVariant.Compact);
-            contentStack.Children.Add(itemsPanel);
-
             FrameworkElement element;
-            if (container.ShowBorder)
+            if (container.ContainerChrome == ContainerChrome.Framed)
             {
+                contentStack.Children.Add(itemsPanel);
                 var border = new Border
                 {
                     Child = contentStack,
@@ -175,12 +211,88 @@ namespace PhialeTech.YamlApp.Wpf.Document
             }
             else
             {
-                element = contentStack;
+                element = itemsPanel;
             }
 
             ApplyLayoutItemPresentation(element, container);
             OverlayHost.SetIsScope(element, container.IsOverlayScope);
             return element;
+        }
+
+        private static FrameworkElement BuildCollapsibleContainerHeader(RuntimeDocumentState documentState, ResolvedContainerDefinition container, out TextBlock collapsedSummary)
+        {
+            collapsedSummary = null;
+            var header = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
+
+            var caption = new TextBlock
+            {
+                Text = container.CaptionKey ?? container.Name ?? container.Id ?? string.Empty,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            caption.SetResourceReference(
+                FrameworkElement.StyleProperty,
+                "YamlDocument.ContainerExpanderHeaderTextStyle");
+            header.Children.Add(caption);
+
+            if (!string.IsNullOrWhiteSpace(container.CollapsedText))
+            {
+                collapsedSummary = new TextBlock
+                {
+                    Visibility = Visibility.Collapsed,
+                };
+                collapsedSummary.SetResourceReference(
+                    FrameworkElement.StyleProperty,
+                    "YamlDocument.ContainerCollapsedSummaryTextStyle");
+                header.Children.Add(collapsedSummary);
+
+                var summary = collapsedSummary;
+
+                Action updateSummary = () =>
+                {
+                    summary.Text = YamlTextTemplate.Format(
+                        container.CollapsedText,
+                        placeholder =>
+                        {
+                            var field = documentState.GetField(placeholder);
+                            if (field == null)
+                            {
+                                throw new InvalidOperationException(string.Format(
+                                    "Container collapsedText references unknown field '{0}'.",
+                                    placeholder));
+                            }
+
+                            return field.Value;
+                        });
+                };
+
+                updateSummary();
+
+                IReadOnlyList<string> placeholders;
+                string error;
+                if (!YamlTextTemplate.TryGetPlaceholders(container.CollapsedText, out placeholders, out error))
+                {
+                    throw new InvalidOperationException(error);
+                }
+
+                foreach (var placeholder in placeholders)
+                {
+                    var field = documentState.GetField(placeholder);
+                    if (field == null)
+                    {
+                        throw new InvalidOperationException(string.Format(
+                            "Container collapsedText references unknown field '{0}'.",
+                            placeholder));
+                    }
+
+                    field.StateChanged += (sender, args) => updateSummary();
+                }
+            }
+
+            return header;
         }
 
         private FrameworkElement BuildBadge(ResolvedBadgeDefinition badge)
@@ -222,15 +334,15 @@ namespace PhialeTech.YamlApp.Wpf.Document
             return element;
         }
 
-        private FrameworkElement BuildColumn(RuntimeDocumentState documentState, ResolvedColumnDefinition column)
+        private FrameworkElement BuildColumn(RuntimeDocumentState documentState, ResolvedColumnDefinition column, string theme, string languageCode)
         {
-            var panel = BuildVerticalItemsPanel(documentState, column.Items, isCompactSpacing: false);
+            var panel = BuildVerticalItemsPanel(documentState, column.Items, isCompactSpacing: false, theme: theme, languageCode: languageCode);
             ApplyLayoutItemPresentation(panel, column);
             OverlayHost.SetIsScope(panel, column.IsOverlayScope);
             return panel;
         }
 
-        private FrameworkElement BuildRow(RuntimeDocumentState documentState, ResolvedRowDefinition row)
+        private FrameworkElement BuildRow(RuntimeDocumentState documentState, ResolvedRowDefinition row, string theme, string languageCode)
         {
             var grid = new Grid
             {
@@ -250,7 +362,7 @@ namespace PhialeTech.YamlApp.Wpf.Document
                 var columnWidth = ResolveColumnWidth(childDefinition);
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = columnWidth });
 
-                var child = BuildItem(documentState, childDefinition) ?? new Border();
+                var child = BuildItem(documentState, childDefinition, theme, languageCode) ?? new Border();
                 if (index < row.Items.Count - 1)
                 {
                     var host = WrapRowItem(child);

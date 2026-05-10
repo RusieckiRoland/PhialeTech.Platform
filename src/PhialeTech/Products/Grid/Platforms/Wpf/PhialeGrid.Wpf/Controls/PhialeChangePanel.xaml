@@ -7,32 +7,40 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              d:DesignHeight="360"
-             d:DesignWidth="280">
+             d:DesignWidth="280"
+             Loaded="HandleChangePanelLoaded">
     <DockPanel LastChildFill="True">
         <StackPanel DockPanel.Dock="Bottom"
                     Margin="{DynamicResource PgWorkspacePanelSectionMargin}">
             <Button Style="{DynamicResource PgWorkspacePanelLinkButtonStyle}"
-                    Content="Show only changed rows" />
+                    Content="{Binding ChangePanelRowsFilterToggleText}"
+                    Click="HandleChangedRowsFilterToggleClick" />
             <TextBlock Margin="{DynamicResource PgWorkspacePanelInlineButtonMargin}"
                        Style="{DynamicResource PgWorkspacePanelBodyTextStyle}"
                        Text="Review and commit your changes." />
         </StackPanel>
 
         <StackPanel>
-            <TextBlock Style="{DynamicResource PgWorkspacePanelHeaderTextStyle}"
-                       Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=PendingEditCount, StringFormat={}{0} changed rows}" />
+            <StackPanel Style="{DynamicResource PgWorkspacePanelChangeSummaryPanelStyle}">
+                <Border Style="{DynamicResource PgWorkspacePanelChangeIconBorderStyle}">
+                    <TextBlock Style="{DynamicResource PgWorkspacePanelChangeIconTextStyle}"
+                               Text="i" />
+                </Border>
+                <TextBlock Style="{DynamicResource PgWorkspacePanelHeaderTextStyle}"
+                           Text="{Binding ChangeSummaryText}" />
+            </StackPanel>
 
             <ItemsControl Margin="{DynamicResource PgWorkspacePanelContentMargin}"
-                          ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=PendingEditRowIds}">
+                          ItemsSource="{Binding ChangePanelItems}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{DynamicResource PgWorkspacePanelCardBorderStyle}">
+                        <Border Style="{DynamicResource PgWorkspacePanelChangeCardBorderStyle}">
                             <StackPanel>
                                 <TextBlock Style="{DynamicResource PgWorkspacePanelCaptionTextStyle}"
-                                           Text="{Binding StringFormat={}Row {0}}" />
+                                           Text="{Binding Title}" />
                                 <TextBlock Margin="{DynamicResource PgWorkspacePanelInlineButtonMargin}"
                                            Style="{DynamicResource PgWorkspacePanelBodyTextStyle}"
-                                           Text="{Binding}" />
+                                           Text="{Binding Description}" />
                                 <Button Style="{DynamicResource PgWorkspacePanelLinkButtonStyle}"
                                         Content="Go to row"
                                         Click="HandleGoToRowClick" />

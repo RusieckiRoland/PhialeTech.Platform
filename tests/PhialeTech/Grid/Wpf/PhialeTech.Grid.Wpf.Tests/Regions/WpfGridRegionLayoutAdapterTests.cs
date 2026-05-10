@@ -560,3 +560,4 @@ namespace PhialeGrid.Wpf.Tests.Regions
         }
     }
 }
+

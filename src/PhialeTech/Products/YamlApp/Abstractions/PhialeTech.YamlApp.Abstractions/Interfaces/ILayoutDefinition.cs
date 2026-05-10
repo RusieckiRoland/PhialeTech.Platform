@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PhialeTech.YamlApp.Abstractions.Enums;
 
 namespace PhialeTech.YamlApp.Abstractions.Interfaces
 {
@@ -6,6 +7,7 @@ namespace PhialeTech.YamlApp.Abstractions.Interfaces
     {
         string Id { get; }
         string Name { get; }
+        LayoutHeightMode? HeightMode { get; }
 
         IEnumerable<ILayoutItemDefinition> Items { get; }
     }

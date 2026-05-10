@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using NUnit.Framework;
 using PhialeGrid.Core.Commit;
+using PhialeGrid.Core.Details;
 using PhialeGrid.Core.Editing;
 using PhialeGrid.Core.Layout;
 using PhialeGrid.Core.Query;
@@ -685,7 +686,59 @@ namespace PhialeGrid.Core.Tests.Rendering
                 Assert.That(snapshot.Headers.Any(header => header.Kind == PhialeGrid.Core.Surface.GridHeaderKind.RowHeader && header.HeaderKey == "details:row-1"), Is.False);
                 Assert.That(detailsOverlay.Kind, Is.EqualTo(PhialeGrid.Core.Surface.GridOverlayKind.Custom));
                 Assert.That(detailsOverlay.Payload, Is.SameAs(payload));
-                Assert.That(detailsOverlay.Bounds, Is.EqualTo(new PhialeGrid.Core.Surface.GridBounds(40, 50, 360, 60)));
+                Assert.That(detailsOverlay.Bounds, Is.EqualTo(new PhialeGrid.Core.Surface.GridBounds(40, 82, 360, 60)));
+            });
+        }
+
+        [Test]
+        public void BuildSnapshot_WithRowDetailPayload_CreatesRowDetailOverlayAndSkipsStandardCellsAndHeaders()
+        {
+            var sut = new GridSurfaceBuilder();
+            var context = CreateContext();
+            var detailContext = new GridRowDetailContext(
+                "row-1",
+                "row-1",
+                new object(),
+                new Dictionary<string, object>(),
+                new Dictionary<string, GridRowDetailFieldContext>());
+            var payload = new GridRowDetailSurfacePayload(
+                "detail:row-1",
+                "row-1",
+                detailContext,
+                new object());
+            context.RowDefinitions = new[]
+            {
+                new GridRowDefinition { RowKey = "row-1", Height = 20 },
+                new GridRowDefinition
+                {
+                    RowKey = "detail:row-1",
+                    Height = 72,
+                    IsDetailsHost = true,
+                    DetailsPayload = payload,
+                    HasDetails = true,
+                    HasDetailsExpanded = true,
+                    RepresentsDataRecord = false,
+                },
+            };
+            context.RowLayouts = new[]
+            {
+                new GridRowLayout { RowKey = "row-1", Y = 0, Height = 20 },
+                new GridRowLayout { RowKey = "detail:row-1", Y = 20, Height = 72 },
+            };
+            context.RowRealizationRange = new GridRealizationRange { VisibleStart = 0, VisibleEnd = 2, BufferedStart = 0, BufferedEnd = 2 };
+
+            var snapshot = sut.BuildSnapshot(context);
+            var detailsRow = snapshot.Rows.Single(row => row.RowKey == "detail:row-1");
+            var detailsOverlay = snapshot.Overlays.Single(overlay => overlay.TargetKey == "detail:row-1");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(detailsRow.IsDetailsHost, Is.True);
+                Assert.That(snapshot.Cells.Any(cell => cell.RowKey == "detail:row-1"), Is.False);
+                Assert.That(snapshot.Headers.Any(header => header.Kind == PhialeGrid.Core.Surface.GridHeaderKind.RowHeader && header.HeaderKey == "detail:row-1"), Is.False);
+                Assert.That(detailsOverlay.Kind, Is.EqualTo(PhialeGrid.Core.Surface.GridOverlayKind.RowDetail));
+                Assert.That(detailsOverlay.Payload, Is.SameAs(payload));
+                Assert.That(detailsOverlay.Bounds, Is.EqualTo(new PhialeGrid.Core.Surface.GridBounds(40, 82, 360, 72)));
             });
         }
 
@@ -780,3 +833,4 @@ namespace PhialeGrid.Core.Tests.Rendering
         }
     }
 }
+

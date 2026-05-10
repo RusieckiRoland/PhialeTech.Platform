@@ -87,3 +87,4 @@ public partial class MapDocumentView : UserControl
         transform.BeginAnimation(TranslateTransform.XProperty, animation, HandoffBehavior.SnapshotAndReplace);
     }
 }
+

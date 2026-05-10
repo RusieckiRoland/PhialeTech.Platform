@@ -1,4 +1,4 @@
-﻿using Moq;
+using Moq;
 using NUnit.Framework;
 using PhialeGis.Library.Abstractions.Ui.Rendering;
 using PhialeGis.Library.Core.Graphics;
@@ -303,3 +303,4 @@ namespace PhialeGis.Library.Tests.Models.DeviceRepresentation
         }
     }
 }
+

@@ -6,7 +6,11 @@ namespace PhialeTech.YamlApp.Abstractions.Interfaces
     {
         string CaptionKey { get; }
 
-        bool ShowBorder { get; }
+        string CollapsedText { get; }
+
+        ContainerChrome ContainerChrome { get; }
+
+        ContainerBehavior ContainerBehavior { get; }
 
         ContainerVariant? Variant { get; }
     }

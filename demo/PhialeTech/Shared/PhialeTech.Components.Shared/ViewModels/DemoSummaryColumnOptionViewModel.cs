@@ -21,3 +21,4 @@ namespace PhialeTech.Components.Shared.ViewModels
         public IReadOnlyList<GridSummaryType> AllowedTypes { get; }
     }
 }
+

@@ -84,6 +84,7 @@ namespace PhialeGrid.Core.Tests.State
             state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.TopCommandRegion, State = GridRegionState.Open, Size = 44d, IsActive = false });
             state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.GroupingRegion, State = GridRegionState.Open, Size = 56d, IsActive = false });
             state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SummaryBottomRegion, State = GridRegionState.Open, Size = 56d, IsActive = false });
+            state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SummaryDesignerRegion, State = GridRegionState.Closed, Size = 320d, IsActive = false });
             state.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SideToolRegion, State = GridRegionState.Open, Size = 340d, IsActive = true, PlacementOverride = GridRegionPlacement.Left });
 
             var snapshot = GridViewStateConverter.ToSnapshot(state, baselineColumns);
@@ -129,12 +130,16 @@ namespace PhialeGrid.Core.Tests.State
                     new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false ),
                     new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Collapsed, 120d, false ),
                     new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false ),
+                    new GridRegionLayoutState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Closed, 320d, false),
                     new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Closed, 320d, false, GridRegionPlacement.Left),
+                    new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
+                    new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
                 }),
                 "owner:alpha");
         }
     }
 }
+
 
 
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PhialeTech.YamlApp.Abstractions.Interfaces;
 using PhialeTech.YamlApp.Core.Resolved;
 using PhialeTech.YamlApp.Runtime.Model;
 
@@ -17,7 +18,14 @@ namespace PhialeTech.YamlApp.Runtime.Services
             var fields = new List<RuntimeFieldState>();
             foreach (var field in form.Fields)
             {
-                fields.Add(new RuntimeFieldState(field));
+                var runtimeField = new RuntimeFieldState(field);
+                var documentEditorField = field.Definition as IDocumentEditorFieldDefinition;
+                if (documentEditorField != null && !string.IsNullOrWhiteSpace(documentEditorField.Value))
+                {
+                    runtimeField.LoadValue(documentEditorField.Value);
+                }
+
+                fields.Add(runtimeField);
             }
 
             var actions = new List<RuntimeActionState>();

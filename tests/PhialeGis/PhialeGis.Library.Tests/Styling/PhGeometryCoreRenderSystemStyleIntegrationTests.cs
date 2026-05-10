@@ -421,3 +421,4 @@ namespace PhialeGis.Library.Tests.Styling
         }
     }
 }
+

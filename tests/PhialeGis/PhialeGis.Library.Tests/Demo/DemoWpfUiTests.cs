@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using NUnit.Framework;
 using PhialeGis.Library.Tests.Support;
@@ -118,14 +119,65 @@ namespace PhialeGis.Library.Tests.Demo
         public void SummaryDesignerToolbar_ShowsDesignerSelectorsAndActions()
         {
             var xaml = File.ReadAllText(GetMainWindowPath());
+            var codeBehind = File.ReadAllText(Path.Combine(GetRepoRoot(), "demo", "PhialeTech", "Wpf", "PhialeTech.Components.Wpf", "MainWindow.xaml.cs"));
+            var viewModelCode = File.ReadAllText(Path.Combine(GetRepoRoot(), "demo", "PhialeTech", "Shared", "PhialeTech.Components.Shared", "ViewModels", "DemoShellViewModel.cs"));
+            var designerContentStart = xaml.IndexOf("<grid:PhialeGrid.SummaryDesignerContent>", StringComparison.Ordinal);
+            var designerContentEnd = xaml.IndexOf("</grid:PhialeGrid.SummaryDesignerContent>", StringComparison.Ordinal);
 
-            Assert.That(xaml, Does.Contain("ShowSummaryDesignerTools"));
-            Assert.That(xaml, Does.Contain("AvailableSummaryColumns"));
-            Assert.That(xaml, Does.Contain("AvailableSummaryTypes"));
-            Assert.That(xaml, Does.Contain("ConfiguredSummaries"));
-            Assert.That(xaml, Does.Contain("HandleAddSummaryClick"));
-            Assert.That(xaml, Does.Contain("HandleRemoveSummaryClick"));
-            Assert.That(xaml, Does.Contain("HandleResetSummariesClick"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(designerContentStart, Is.GreaterThanOrEqualTo(0));
+                Assert.That(designerContentEnd, Is.GreaterThan(designerContentStart));
+                Assert.That(xaml, Does.Contain("ShowSummaryDesignerTools"));
+                Assert.That(xaml, Does.Contain("AvailableSummaryColumns"));
+                Assert.That(xaml, Does.Contain("AvailableSummaryTypes"));
+                Assert.That(xaml, Does.Contain("ConfiguredSummaries"));
+                Assert.That(xaml, Does.Contain("AutomationProperties.AutomationId=\"SummaryDesignerPlayground\""));
+                Assert.That(xaml, Does.Contain("<grid:PhialeWorkspacePlayground"));
+                Assert.That(xaml, Does.Contain("MinHeight=\"{DynamicResource PgSummaryDesignerPlaygroundMinHeight}\""));
+                Assert.That(xaml, Does.Contain("MaxHeight=\"{DynamicResource PgSummaryDesignerPlaygroundMaxHeight}\""));
+                Assert.That(xaml, Does.Contain("HorizontalScrollBarVisibility=\"Disabled\""));
+                Assert.That(xaml, Does.Contain("VerticalScrollBarVisibility=\"Auto\""));
+                Assert.That(xaml, Does.Contain("Style=\"{DynamicResource PgSummaryDesignerChipBorderStyle}\""));
+                Assert.That(xaml, Does.Contain("Style=\"{DynamicResource PgSummaryDesignerChipLabelTextStyle}\""));
+                Assert.That(xaml, Does.Contain("Style=\"{DynamicResource PgSummaryDesignerChipMetaTextStyle}\""));
+                Assert.That(xaml, Does.Contain("Style=\"{DynamicResource PgSummaryDesignerChipRemoveButtonStyle}\""));
+                Assert.That(xaml, Does.Contain("AncestorType={x:Type grid:PhialeWorkspacePlayground}"));
+                Assert.That(xaml, Does.Contain("<grid:PhialeGrid.SummaryDesignerContent>"));
+                Assert.That(xaml, Does.Not.Contain("<grid:PhialeGrid.SummaryViewContent>"));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding SummaryDesignerTitleText}\""));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding SummaryDesignerDescriptionText}\""));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding SummaryDesignerColumnLabelText}\""));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding SummaryDesignerTypeLabelText}\""));
+                Assert.That(xaml, Does.Contain("Text=\"{Binding SummaryDesignerPlaygroundLabelText}\""));
+                Assert.That(xaml, Does.Contain("Content=\"{Binding AddSummaryText}\""));
+                Assert.That(xaml, Does.Contain("Content=\"{Binding ResetSummariesText}\""));
+                Assert.That(viewModelCode, Does.Contain("SummaryDesignerTitleText => Localize(DemoTextKeys.DemoSummaryDesignerTitle)"));
+                Assert.That(viewModelCode, Does.Contain("SummaryDesignerDescriptionText => Localize(DemoTextKeys.DemoSummaryDesignerDescription)"));
+                Assert.That(viewModelCode, Does.Contain("SummaryDesignerColumnLabelText => Localize(DemoTextKeys.DemoSummaryDesignerColumn)"));
+                Assert.That(viewModelCode, Does.Contain("SummaryDesignerTypeLabelText => Localize(DemoTextKeys.DemoSummaryDesignerType)"));
+                Assert.That(viewModelCode, Does.Contain("SummaryDesignerPlaygroundLabelText => Localize(DemoTextKeys.DemoSummaryDesignerPlayground)"));
+                Assert.That(viewModelCode, Does.Contain("OnPropertyChanged(nameof(SummaryDesignerTitleText))"));
+                Assert.That(viewModelCode, Does.Contain("OnPropertyChanged(nameof(SummaryDesignerDescriptionText))"));
+                Assert.That(viewModelCode, Does.Contain("OnPropertyChanged(nameof(SummaryDesignerColumnLabelText))"));
+                Assert.That(viewModelCode, Does.Contain("OnPropertyChanged(nameof(SummaryDesignerTypeLabelText))"));
+                Assert.That(viewModelCode, Does.Contain("OnPropertyChanged(nameof(SummaryDesignerPlaygroundLabelText))"));
+                Assert.That(xaml, Does.Contain("HandleAddSummaryClick"));
+                Assert.That(xaml, Does.Contain("HandleRemoveSummaryClick"));
+                Assert.That(xaml, Does.Contain("HandleResetSummariesClick"));
+                Assert.That(codeBehind, Does.Contain("GridRegionKind.SummaryDesignerRegion"));
+                Assert.That(codeBehind, Does.Not.Contain("GridRegionKind.SummaryViewRegion"));
+            });
+
+            var designerContent = xaml.Substring(designerContentStart, designerContentEnd - designerContentStart);
+            Assert.That(designerContent, Does.Not.Contain("Visibility=\"{Binding ShowSummaryDesignerTools"));
+            Assert.That(designerContent, Does.Not.Contain("Text=\"Summary designer\""));
+            Assert.That(designerContent, Does.Not.Contain("Text=\"Compose summary chips for the live grid.\""));
+            Assert.That(designerContent, Does.Not.Contain("Text=\"Column\""));
+            Assert.That(designerContent, Does.Not.Contain("Text=\"Type\""));
+            Assert.That(designerContent, Does.Not.Contain("Text=\"Playground\""));
+            Assert.That(designerContent, Does.Not.Contain("Content=\"Add summary\""));
+            Assert.That(designerContent, Does.Not.Contain("Content=\"Reset\""));
         }
 
         [Test]
@@ -153,6 +205,14 @@ namespace PhialeGis.Library.Tests.Demo
             Assert.That(xaml, Does.Contain("FoundationsSurfaceTokens"));
             Assert.That(xaml, Does.Contain("FoundationsShapeTokens"));
             Assert.That(xaml, Does.Contain("FoundationsSectionBorderStyle"));
+            Assert.That(xaml, Does.Contain("x:Name=\"FoundationsWorkspacePlaygroundPreview\""));
+            Assert.That(xaml, Does.Contain("AutomationProperties.AutomationId=\"FoundationsWorkspacePlaygroundPreview\""));
+            Assert.That(xaml, Does.Contain("<grid:PhialeWorkspacePlayground"));
+            Assert.That(xaml, Does.Contain("Style=\"{DynamicResource PgSummaryResultChipBorderStyle}\""));
+            Assert.That(xaml, Does.Contain("Style=\"{DynamicResource PgSummaryResultChipTypeTextStyle}\""));
+            Assert.That(xaml, Does.Contain("Style=\"{DynamicResource PgSummaryResultChipLabelTextStyle}\""));
+            Assert.That(xaml, Does.Contain("Style=\"{DynamicResource PgSummaryResultChipSeparatorTextStyle}\""));
+            Assert.That(xaml, Does.Contain("Style=\"{DynamicResource PgSummaryResultChipValueTextStyle}\""));
         }
 
         [Test]
@@ -378,3 +438,4 @@ namespace PhialeGis.Library.Tests.Demo
         }
     }
 }
+

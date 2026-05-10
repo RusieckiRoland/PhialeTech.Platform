@@ -127,6 +127,85 @@
                 <Setter Property="VerticalAlignment" Value="Center" />
                 <Setter Property="Cursor" Value="SizeAll" />
             </Style>
+            <Style TargetType="{x:Type controls:PhialeWorkspaceBand}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type controls:PhialeWorkspaceBand}">
+                            <Border
+                                x:Name="WorkspaceBandShell"
+                                Padding="{TemplateBinding BandPadding}"
+                                Background="{TemplateBinding BandBackground}"
+                                BorderBrush="{TemplateBinding BandBorderBrush}"
+                                BorderThickness="{TemplateBinding BandBorderThickness}"
+                                CornerRadius="{TemplateBinding BandCornerRadius}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border
+                                        x:Name="WorkspaceBandDragGrip"
+                                        Grid.Column="0"
+                                        LostMouseCapture="HandleRegionDragLostMouseCapture"
+                                        PreviewMouseLeftButtonDown="HandleRegionDragMouseLeftButtonDown"
+                                        PreviewMouseLeftButtonUp="HandleRegionDragMouseLeftButtonUp"
+                                        PreviewMouseMove="HandleRegionDragMouseMove"
+                                        Style="{StaticResource PgGridWorkspaceBandDragGripStyle}"
+                                        Tag="{TemplateBinding Tag}">
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            FontWeight="Bold"
+                                            Foreground="{DynamicResource PgMutedTextBrush}"
+                                            Text="⋮⋮" />
+                                    </Border>
+
+                                    <ContentPresenter
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Content="{TemplateBinding Content}"
+                                        ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}" />
+
+                                    <StackPanel
+                                        Grid.Column="2"
+                                        Margin="{DynamicResource PgWorkspaceBandActionGroupMargin}"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                        <Button
+                                            x:Name="WorkspaceBandToggleButton"
+                                            Click="HandleRegionToggleButtonClick"
+                                            Content="{TemplateBinding ToggleText}"
+                                            Style="{StaticResource PgRegionExpanderButtonStyle}"
+                                            Tag="{TemplateBinding Tag}">
+                                            <Button.Visibility>
+                                                <Binding
+                                                    Converter="{StaticResource BooleanToVisibilityConverter}"
+                                                    Path="IsToggleVisible"
+                                                    RelativeSource="{RelativeSource TemplatedParent}" />
+                                            </Button.Visibility>
+                                        </Button>
+                                        <Button
+                                            x:Name="WorkspaceBandCloseButton"
+                                            Click="HandleRegionCloseButtonClick"
+                                            Style="{StaticResource PgRegionCloseButtonStyle}"
+                                            Tag="{TemplateBinding Tag}">
+                                            <Button.Visibility>
+                                                <Binding
+                                                    Converter="{StaticResource BooleanToVisibilityConverter}"
+                                                    Path="IsCloseVisible"
+                                                    RelativeSource="{RelativeSource TemplatedParent}" />
+                                            </Button.Visibility>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <Style x:Key="PgRegionSplitterHorizontalStyle" TargetType="GridSplitter">
                 <Setter Property="Height" Value="12" />
                 <Setter Property="Background" Value="{DynamicResource PgGridRegionSurfaceBackgroundBrush}" />
@@ -240,72 +319,33 @@
                 Grid.Row="2"
                 Grid.Column="2"
                 Orientation="Vertical">
-                <Grid x:Name="GroupingRegionHost">
-                    <controls:PhialeWorkspaceBand x:Name="GroupingBand">
-                        <Border
-                            x:Name="GroupingRegionShell"
-                            Padding="10,6,8,6"
-                            Background="{DynamicResource PgPanelBackgroundBrush}"
-                            BorderBrush="{DynamicResource PgPanelBorderBrush}"
-                            BorderThickness="0,0,0,1">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <Border
-                                    x:Name="GroupingRegionDragGrip"
-                                    Grid.Column="0"
-                                    LostMouseCapture="HandleRegionDragLostMouseCapture"
-                                    PreviewMouseLeftButtonDown="HandleRegionDragMouseLeftButtonDown"
-                                    PreviewMouseLeftButtonUp="HandleRegionDragMouseLeftButtonUp"
-                                    PreviewMouseMove="HandleRegionDragMouseMove"
-                                    Style="{StaticResource PgGridWorkspaceBandDragGripStyle}"
-                                    Tag="GroupingRegion">
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        FontWeight="Bold"
-                                        Foreground="{DynamicResource PgMutedTextBrush}"
-                                        Text="⋮⋮" />
-                                </Border>
-
-                                <controls:PhialeGroupingBand
-                                    x:Name="GroupingBandContentHost"
-                                    Grid.Column="1"
-                                    AllowsGroupingDrag="{Binding ElementName=Root, Path=AllowsGroupingDrag}"
-                                    BandLabelText="{Binding ElementName=Root, Path=GroupingBandLabelText}"
-                                    CollapseAllGroupsRequested="HandleCollapseAllGroupsClick"
-                                    CollapseAllText="{Binding ElementName=Root, Path=GroupingCollapseAllText}"
-                                    ColumnDropped="HandleGroupingBandColumnDropped"
-                                    DragDataFormat="{Binding ElementName=Root, Path=GroupingDragDataFormat}"
-                                    DropText="{Binding ElementName=Root, Path=GroupingDropText}"
-                                    ExpandAllGroupsRequested="HandleExpandAllGroupsClick"
-                                    ExpandAllText="{Binding ElementName=Root, Path=GroupingExpandAllText}"
-                                    GroupChips="{Binding ElementName=Root, Path=GroupChips}"
-                                    HasGroups="{Binding ElementName=Root, Path=HasGroups}"
-                                    HasNoGroups="{Binding ElementName=Root, Path=HasNoGroups}"
-                                    RemoveGroupRequested="HandleGroupingBandRemoveGroupRequested"
-                                    ToggleDirectionRequested="HandleGroupingBandToggleDirectionRequested" />
-
-                                <StackPanel
-                                    Grid.Column="2"
-                                    Margin="8,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Orientation="Horizontal">
-                                    <Button
-                                        x:Name="GroupingRegionCloseButton"
-                                        Click="HandleRegionCloseButtonClick"
-                                        Style="{StaticResource PgRegionCloseButtonStyle}"
-                                        Tag="GroupingRegion"
-                                        Visibility="{Binding ElementName=Root, Path=CanCloseGroupingRegion, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </controls:PhialeWorkspaceBand>
-                </Grid>
+                <controls:PhialeWorkspaceBand
+                    x:Name="GroupingRegionHost"
+                    BandBackground="{DynamicResource PgPanelBackgroundBrush}"
+                    BandBorderBrush="{DynamicResource PgPanelBorderBrush}"
+                    BandBorderThickness="0,0,0,1"
+                    BandPadding="{DynamicResource PgWorkspaceBandShellPadding}"
+                    IsCloseVisible="{Binding ElementName=Root, Path=CanCloseGroupingRegion}"
+                    IsToggleVisible="{Binding ElementName=Root, Path=CanCollapseGroupingRegion}"
+                    Tag="GroupingRegion"
+                    ToggleText="{Binding ElementName=Root, Path=GroupingRegionToggleText}">
+                    <controls:PhialeGroupingBand
+                        x:Name="GroupingBandContentHost"
+                        AllowsGroupingDrag="{Binding ElementName=Root, Path=AllowsGroupingDrag}"
+                        BandLabelText="{Binding ElementName=Root, Path=GroupingBandLabelText}"
+                        CollapseAllGroupsRequested="HandleCollapseAllGroupsClick"
+                        CollapseAllText="{Binding ElementName=Root, Path=GroupingCollapseAllText}"
+                        ColumnDropped="HandleGroupingBandColumnDropped"
+                        DragDataFormat="{Binding ElementName=Root, Path=GroupingDragDataFormat}"
+                        DropText="{Binding ElementName=Root, Path=GroupingDropText}"
+                        ExpandAllGroupsRequested="HandleExpandAllGroupsClick"
+                        ExpandAllText="{Binding ElementName=Root, Path=GroupingExpandAllText}"
+                        GroupChips="{Binding ElementName=Root, Path=GroupChips}"
+                        HasGroups="{Binding ElementName=Root, Path=HasGroups}"
+                        HasNoGroups="{Binding ElementName=Root, Path=HasNoGroups}"
+                        RemoveGroupRequested="HandleGroupingBandRemoveGroupRequested"
+                        ToggleDirectionRequested="HandleGroupingBandToggleDirectionRequested" />
+                </controls:PhialeWorkspaceBand>
             </StackPanel>
 
             <Grid
@@ -323,75 +363,23 @@
                 <controls:PhialeWorkspaceBand
                     x:Name="TopCommandBand"
                     Grid.Row="0"
-                    Grid.Column="0">
-                    <Grid x:Name="TopCommandStripHost" Style="{StaticResource PgGridRegionSurfaceGridStyle}">
-                        <Border
-                            x:Name="TopCommandStripShell"
-                            Padding="10,6,8,6"
-                            BorderThickness="0,0,0,1"
-                            Style="{StaticResource PgGridRegionSurfaceBorderStyle}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <Border
-                                    x:Name="TopCommandStripDragGrip"
-                                    Grid.Column="0"
-                                    LostMouseCapture="HandleRegionDragLostMouseCapture"
-                                    PreviewMouseLeftButtonDown="HandleRegionDragMouseLeftButtonDown"
-                                    PreviewMouseLeftButtonUp="HandleRegionDragMouseLeftButtonUp"
-                                    PreviewMouseMove="HandleRegionDragMouseMove"
-                                    Style="{StaticResource PgGridWorkspaceBandDragGripStyle}"
-                                    Tag="TopCommandRegion">
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        FontWeight="Bold"
-                                        Foreground="{DynamicResource PgMutedTextBrush}"
-                                        Text="⋮⋮" />
-                                </Border>
-
-                                <ScrollViewer
-                                    x:Name="TopCommandStripContentHost"
-                                    Grid.Column="1"
-                                    VerticalAlignment="Center"
-                                    HorizontalScrollBarVisibility="Auto"
-                                    VerticalScrollBarVisibility="Disabled">
-                                    <ContentPresenter x:Name="TopCommandStripContentPresenter" Content="{Binding ElementName=Root, Path=TopCommandContent}" />
-                                </ScrollViewer>
-
-                                <StackPanel
-                                    Grid.Column="2"
-                                    VerticalAlignment="Center"
-                                    Orientation="Horizontal">
-                                    <Button
-                                        x:Name="TopCommandStripToggleButton"
-                                        Width="24"
-                                        Height="24"
-                                        Margin="8,0,0,0"
-                                        Padding="0"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Click="HandleRegionToggleButtonClick"
-                                        Content="{Binding ElementName=Root, Path=TopCommandStripToggleText}"
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Foreground="{DynamicResource PgPanelTextBrush}"
-                                        Tag="TopCommandRegion"
-                                        Visibility="{Binding ElementName=Root, Path=CanToggleTopCommandStrip, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <Button
-                                        x:Name="TopCommandStripCloseButton"
-                                        Click="HandleRegionCloseButtonClick"
-                                        Style="{StaticResource PgRegionCloseButtonStyle}"
-                                        Tag="TopCommandRegion"
-                                        Visibility="{Binding ElementName=Root, Path=CanCloseTopCommandStrip, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </Grid>
+                    Grid.Column="0"
+                    BandBackground="{DynamicResource PgGridRegionSurfaceBackgroundBrush}"
+                    BandBorderBrush="{DynamicResource PgPanelBorderBrush}"
+                    BandBorderThickness="0,0,0,1"
+                    BandCornerRadius="{DynamicResource CornerRadius.Grid.RegionSurface}"
+                    BandPadding="{DynamicResource PgWorkspaceBandShellPadding}"
+                    IsCloseVisible="{Binding ElementName=Root, Path=CanCloseTopCommandStrip}"
+                    IsToggleVisible="{Binding ElementName=Root, Path=CanToggleTopCommandStrip}"
+                    Tag="TopCommandRegion"
+                    ToggleText="{Binding ElementName=Root, Path=TopCommandStripToggleText}">
+                    <ScrollViewer
+                        x:Name="TopCommandStripContentHost"
+                        VerticalAlignment="Center"
+                        HorizontalScrollBarVisibility="Auto"
+                        VerticalScrollBarVisibility="Disabled">
+                        <ContentPresenter x:Name="TopCommandStripContentPresenter" Content="{Binding ElementName=Root, Path=TopCommandContent}" />
+                    </ScrollViewer>
                 </controls:PhialeWorkspaceBand>
 
                 <Grid
@@ -458,8 +446,17 @@
                                 VerticalAlignment="Stretch"
                                 AutomationProperties.AutomationId="surface.grid-options-button"
                                 Click="HandleGridOptionsButtonClick"
-                                Content="..."
-                                Style="{StaticResource PgGridCornerOptionsButtonStyle}" />
+                                Style="{StaticResource PgGridCornerOptionsButtonStyle}">
+                                <Path
+                                    Width="14"
+                                    Height="10"
+                                    Data="M 1 1 L 13 1 M 1 5 L 13 5 M 1 9 L 13 9"
+                                    Stretch="None"
+                                    Stroke="{DynamicResource PgHeaderTextBrush}"
+                                    StrokeEndLineCap="Round"
+                                    StrokeStartLineCap="Round"
+                                    StrokeThickness="1.6" />
+                            </Button>
                         </Border>
 
                         <Border
@@ -640,6 +637,18 @@
                                         </TextBlock.LayoutTransform>
                                     </TextBlock>
                                 </Button>
+                                <Button
+                                    x:Name="ToolsRailSummaryDesignerTabButton"
+                                    Click="HandleOpenWorkspacePanelTabClick"
+                                    Style="{StaticResource PgWorkspacePanelCollapsedRailTabButtonStyle}"
+                                    Tag="SummaryDesignerRegion"
+                                    Visibility="{Binding ElementName=Root, Path=ToolsPanelSummaryDesignerTabVisibility}">
+                                    <TextBlock Text="{Binding ElementName=Root, Path=SummaryDesignerTitleText}">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Button>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -756,6 +765,13 @@
                             Tag="ValidationPanelRegion"
                             Visibility="{Binding ElementName=Root, Path=ToolsPanelValidationTabVisibility}" />
                         <Button
+                            x:Name="ToolsPanelSummaryDesignerTabButton"
+                            Click="HandleOpenWorkspacePanelTabClick"
+                            Content="{Binding ElementName=Root, Path=SummaryDesignerTitleText}"
+                            Style="{StaticResource PgWorkspacePanelExpandedTabButtonStyle}"
+                            Tag="SummaryDesignerRegion"
+                            Visibility="{Binding ElementName=Root, Path=ToolsPanelSummaryDesignerTabVisibility}" />
+                        <Button
                             x:Name="ToolsPanelOverflowTabButton"
                             Click="HandleWorkspacePanelTabOverflowClick"
                             Content="..."
@@ -835,6 +851,18 @@
                                     Tag="ValidationPanelRegion"
                                     Visibility="{Binding ElementName=Root, Path=ChangesPanelValidationTabVisibility}">
                                     <TextBlock Text="{Binding ElementName=Root, Path=ValidationPanelTitleText}">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Button>
+                                <Button
+                                    x:Name="ChangesRailSummaryDesignerTabButton"
+                                    Click="HandleOpenWorkspacePanelTabClick"
+                                    Style="{StaticResource PgWorkspacePanelCollapsedRailTabButtonStyle}"
+                                    Tag="SummaryDesignerRegion"
+                                    Visibility="{Binding ElementName=Root, Path=ChangesPanelSummaryDesignerTabVisibility}">
+                                    <TextBlock Text="{Binding ElementName=Root, Path=SummaryDesignerTitleText}">
                                         <TextBlock.LayoutTransform>
                                             <RotateTransform Angle="90" />
                                         </TextBlock.LayoutTransform>
@@ -938,6 +966,13 @@
                             Tag="ValidationPanelRegion"
                             Visibility="{Binding ElementName=Root, Path=ChangesPanelValidationTabVisibility}" />
                         <Button
+                            x:Name="ChangesPanelSummaryDesignerTabButton"
+                            Click="HandleOpenWorkspacePanelTabClick"
+                            Content="{Binding ElementName=Root, Path=SummaryDesignerTitleText}"
+                            Style="{StaticResource PgWorkspacePanelExpandedTabButtonStyle}"
+                            Tag="SummaryDesignerRegion"
+                            Visibility="{Binding ElementName=Root, Path=ChangesPanelSummaryDesignerTabVisibility}" />
+                        <Button
                             x:Name="ChangesPanelOverflowTabButton"
                             Click="HandleWorkspacePanelTabOverflowClick"
                             Content="..."
@@ -1017,6 +1052,18 @@
                                     Tag="ValidationPanelRegion"
                                     Visibility="{Binding ElementName=Root, Path=ValidationPanelValidationTabVisibility}">
                                     <TextBlock Text="{Binding ElementName=Root, Path=ValidationPanelTitleText}">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Button>
+                                <Button
+                                    x:Name="ValidationRailSummaryDesignerTabButton"
+                                    Click="HandleOpenWorkspacePanelTabClick"
+                                    Style="{StaticResource PgWorkspacePanelCollapsedRailTabButtonStyle}"
+                                    Tag="SummaryDesignerRegion"
+                                    Visibility="{Binding ElementName=Root, Path=ValidationPanelSummaryDesignerTabVisibility}">
+                                    <TextBlock Text="{Binding ElementName=Root, Path=SummaryDesignerTitleText}">
                                         <TextBlock.LayoutTransform>
                                             <RotateTransform Angle="90" />
                                         </TextBlock.LayoutTransform>
@@ -1120,7 +1167,215 @@
                             Tag="ValidationPanelRegion"
                             Visibility="{Binding ElementName=Root, Path=ValidationPanelValidationTabVisibility}" />
                         <Button
+                            x:Name="ValidationPanelSummaryDesignerTabButton"
+                            Click="HandleOpenWorkspacePanelTabClick"
+                            Content="{Binding ElementName=Root, Path=SummaryDesignerTitleText}"
+                            Style="{StaticResource PgWorkspacePanelExpandedTabButtonStyle}"
+                            Tag="SummaryDesignerRegion"
+                            Visibility="{Binding ElementName=Root, Path=ValidationPanelSummaryDesignerTabVisibility}" />
+                        <Button
                             x:Name="ValidationPanelOverflowTabButton"
+                            Click="HandleWorkspacePanelTabOverflowClick"
+                            Content="..."
+                            Style="{StaticResource PgWorkspacePanelExpandedTabButtonStyle}"
+                            Visibility="Collapsed" />
+                    </StackPanel>
+                </controls:PhialeWorkspacePanel>
+            </Grid>
+
+            <GridSplitter
+                x:Name="SummaryDesignerRegionSplitter"
+                Grid.Row="2"
+                Grid.RowSpan="5"
+                Grid.Column="3"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                DragCompleted="HandleRegionSplitterDragCompleted"
+                ResizeBehavior="PreviousAndNext"
+                ResizeDirection="Columns"
+                ShowsPreview="True"
+                Style="{StaticResource PgRegionSplitterVerticalStyle}"
+                Tag="SummaryDesignerRegion" />
+
+            <Grid
+                x:Name="SummaryDesignerRegionHost"
+                Grid.Row="2"
+                Grid.RowSpan="5"
+                Grid.Column="4"
+                Style="{StaticResource PgGridRegionSurfaceGridStyle}">
+                <controls:PhialeWorkspacePanel x:Name="SummaryDesignerPanel" Style="{StaticResource PgGridRegionSurfaceGridStyle}">
+                    <Border
+                        x:Name="SummaryDesignerCollapsedRail"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource PgWorkspacePanelCollapsedRailBorderStyle}"
+                        Visibility="Collapsed">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Button
+                                Margin="0,10,0,0"
+                                HorizontalAlignment="Center"
+                                Click="HandleRegionToggleButtonClick"
+                                Content="{Binding ElementName=Root, Path=SummaryDesignerRegionToggleText}"
+                                Style="{StaticResource PgRegionExpanderButtonStyle}"
+                                Tag="SummaryDesignerRegion" />
+                            <StackPanel Grid.Row="1" Style="{StaticResource PgWorkspacePanelCollapsedRailTabStackStyle}">
+                                <Button
+                                    x:Name="SummaryDesignerRailToolsTabButton"
+                                    Click="HandleOpenWorkspacePanelTabClick"
+                                    Style="{StaticResource PgWorkspacePanelCollapsedRailTabButtonStyle}"
+                                    Tag="SideToolRegion"
+                                    Visibility="{Binding ElementName=Root, Path=SummaryDesignerPanelToolsTabVisibility}">
+                                    <TextBlock Text="{Binding ElementName=Root, Path=ToolsRegionTitleText}">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Button>
+                                <Button
+                                    x:Name="SummaryDesignerRailChangesTabButton"
+                                    Click="HandleOpenWorkspacePanelTabClick"
+                                    Style="{StaticResource PgWorkspacePanelCollapsedRailTabButtonStyle}"
+                                    Tag="ChangePanelRegion"
+                                    Visibility="{Binding ElementName=Root, Path=SummaryDesignerPanelChangesTabVisibility}">
+                                    <TextBlock Text="{Binding ElementName=Root, Path=ChangePanelTitleText}">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Button>
+                                <Button
+                                    x:Name="SummaryDesignerRailValidationTabButton"
+                                    Click="HandleOpenWorkspacePanelTabClick"
+                                    Style="{StaticResource PgWorkspacePanelCollapsedRailTabButtonStyle}"
+                                    Tag="ValidationPanelRegion"
+                                    Visibility="{Binding ElementName=Root, Path=SummaryDesignerPanelValidationTabVisibility}">
+                                    <TextBlock Text="{Binding ElementName=Root, Path=ValidationPanelTitleText}">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Button>
+                                <Button
+                                    x:Name="SummaryDesignerRailSummaryDesignerTabButton"
+                                    Click="HandleOpenWorkspacePanelTabClick"
+                                    Style="{StaticResource PgWorkspacePanelCollapsedRailActiveTabButtonStyle}"
+                                    Tag="SummaryDesignerRegion"
+                                    Visibility="{Binding ElementName=Root, Path=SummaryDesignerPanelSummaryDesignerTabVisibility}">
+                                    <TextBlock Text="{Binding ElementName=Root, Path=SummaryDesignerTitleText}">
+                                        <TextBlock.LayoutTransform>
+                                            <RotateTransform Angle="90" />
+                                        </TextBlock.LayoutTransform>
+                                    </TextBlock>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border
+                        x:Name="SummaryDesignerExpandedShell"
+                        Margin="10,0,0,0"
+                        Padding="10,8"
+                        BorderThickness="0,0,0,1"
+                        SizeChanged="HandleWorkspacePanelTabOverflowLayoutChanged"
+                        Style="{StaticResource PgWorkspacePanelExpandedShellBorderStyle}">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="SummaryDesignerExpandedShellTransform" />
+                        </Border.RenderTransform>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Style="{StaticResource PgGridRegionHeaderChromeBorderStyle}">
+                                <DockPanel
+                                    LastChildFill="False"
+                                    LostMouseCapture="HandleRegionDragLostMouseCapture"
+                                    PreviewMouseLeftButtonDown="HandleRegionDragMouseLeftButtonDown"
+                                    PreviewMouseLeftButtonUp="HandleRegionDragMouseLeftButtonUp"
+                                    PreviewMouseMove="HandleRegionDragMouseMove"
+                                    Style="{StaticResource PgGridRegionHeaderDockPanelStyle}"
+                                    Tag="SummaryDesignerRegion">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock
+                                            Margin="0,0,8,0"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            FontWeight="Bold"
+                                            Foreground="{DynamicResource PgMutedTextBrush}"
+                                            Text="⋮⋮" />
+                                        <Button
+                                            Click="HandleRegionToggleButtonClick"
+                                            Content="{Binding ElementName=Root, Path=SummaryDesignerRegionToggleText}"
+                                            Style="{StaticResource PgRegionExpanderButtonStyle}"
+                                            Tag="SummaryDesignerRegion"
+                                            Visibility="{Binding ElementName=Root, Path=CanCollapseSummaryDesignerRegion, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="13"
+                                            FontWeight="SemiBold"
+                                            Foreground="{DynamicResource PgPanelTextBrush}"
+                                            Text="{Binding ElementName=Root, Path=SummaryDesignerTitleText}" />
+                                    </StackPanel>
+                                    <Button
+                                        Click="HandleRegionCloseButtonClick"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource PgRegionCloseButtonStyle}"
+                                        Tag="SummaryDesignerRegion"
+                                        Visibility="{Binding ElementName=Root, Path=CanCloseSummaryDesignerRegion, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </DockPanel>
+                            </Border>
+
+                            <ScrollViewer
+                                x:Name="SummaryDesignerContentScrollViewer"
+                                Grid.Row="1"
+                                Margin="0,12,0,0"
+                                Background="{DynamicResource PgGridRegionSurfaceBackgroundBrush}"
+                                VerticalScrollBarVisibility="Auto">
+                                <ContentPresenter x:Name="SummaryDesignerContentPresenter" Content="{Binding ElementName=Root, Path=SummaryDesignerContent}" />
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                    <StackPanel
+                        x:Name="SummaryDesignerExpandedTabStrip"
+                        Panel.ZIndex="1"
+                        Margin="{DynamicResource PgWorkspacePanelExpandedRightExternalTabStripMargin}"
+                        SizeChanged="HandleWorkspacePanelTabOverflowLayoutChanged"
+                        Style="{StaticResource PgWorkspacePanelExpandedTabStripStyle}"
+                        Visibility="{Binding ElementName=SummaryDesignerExpandedShell, Path=Visibility}">
+                        <Button
+                            x:Name="SummaryDesignerPanelToolsTabButton"
+                            Click="HandleOpenWorkspacePanelTabClick"
+                            Content="{Binding ElementName=Root, Path=ToolsRegionTitleText}"
+                            Style="{StaticResource PgWorkspacePanelExpandedTabButtonStyle}"
+                            Tag="SideToolRegion"
+                            Visibility="{Binding ElementName=Root, Path=SummaryDesignerPanelToolsTabVisibility}" />
+                        <Button
+                            x:Name="SummaryDesignerPanelChangesTabButton"
+                            Click="HandleOpenWorkspacePanelTabClick"
+                            Content="{Binding ElementName=Root, Path=ChangePanelTitleText}"
+                            Style="{StaticResource PgWorkspacePanelExpandedTabButtonStyle}"
+                            Tag="ChangePanelRegion"
+                            Visibility="{Binding ElementName=Root, Path=SummaryDesignerPanelChangesTabVisibility}" />
+                        <Button
+                            x:Name="SummaryDesignerPanelValidationTabButton"
+                            Click="HandleOpenWorkspacePanelTabClick"
+                            Content="{Binding ElementName=Root, Path=ValidationPanelTitleText}"
+                            Style="{StaticResource PgWorkspacePanelExpandedTabButtonStyle}"
+                            Tag="ValidationPanelRegion"
+                            Visibility="{Binding ElementName=Root, Path=SummaryDesignerPanelValidationTabVisibility}" />
+                        <Button
+                            x:Name="SummaryDesignerPanelSummaryDesignerTabButton"
+                            Click="HandleOpenWorkspacePanelTabClick"
+                            Content="{Binding ElementName=Root, Path=SummaryDesignerTitleText}"
+                            Style="{StaticResource PgWorkspacePanelExpandedActiveTabButtonStyle}"
+                            Tag="SummaryDesignerRegion"
+                            Visibility="{Binding ElementName=Root, Path=SummaryDesignerPanelSummaryDesignerTabVisibility}" />
+                        <Button
+                            x:Name="SummaryDesignerPanelOverflowTabButton"
                             Click="HandleWorkspacePanelTabOverflowClick"
                             Content="..."
                             Style="{StaticResource PgWorkspacePanelExpandedTabButtonStyle}"
@@ -1220,105 +1475,53 @@
                 Grid.Row="6"
                 Grid.Column="2"
                 Orientation="Vertical">
-                <Grid x:Name="SummaryBottomRegionHost">
-                    <Border
-                        x:Name="SummaryBottomRegionShell"
-                        Padding="10,6,10,6"
-                        Background="{DynamicResource PgPanelBackgroundBrush}"
-                        BorderBrush="{DynamicResource PgPanelBorderBrush}"
-                        BorderThickness="0,1,0,0">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <DockPanel
-                                Grid.Row="0"
-                                LastChildFill="False"
-                                Tag="SummaryBottomRegion">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border
-                                        x:Name="SummaryBottomRegionDragGrip"
-                                        LostMouseCapture="HandleRegionDragLostMouseCapture"
-                                        PreviewMouseLeftButtonDown="HandleRegionDragMouseLeftButtonDown"
-                                        PreviewMouseLeftButtonUp="HandleRegionDragMouseLeftButtonUp"
-                                        PreviewMouseMove="HandleRegionDragMouseMove"
-                                        Style="{StaticResource PgGridWorkspaceBandDragGripStyle}"
-                                        Tag="SummaryBottomRegion">
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            FontWeight="Bold"
-                                            Foreground="{DynamicResource PgMutedTextBrush}"
-                                            Text="⋮⋮" />
+                <controls:PhialeWorkspaceBand
+                    x:Name="SummaryBottomRegionHost"
+                    BandBackground="{DynamicResource PgPanelBackgroundBrush}"
+                    BandBorderBrush="{DynamicResource PgPanelBorderBrush}"
+                    BandBorderThickness="0,1,0,0"
+                    BandPadding="{DynamicResource PgSummaryBottomRegionShellPadding}"
+                    IsCloseVisible="{Binding ElementName=Root, Path=CanCloseSummaryBottomRegion}"
+                    IsToggleVisible="{Binding ElementName=Root, Path=CanCollapseSummaryBottomRegion}"
+                    Tag="SummaryBottomRegion"
+                    ToggleText="{Binding ElementName=Root, Path=SummaryBottomRegionToggleText}">
+                    <controls:PhialeWorkspacePlayground
+                        x:Name="SummaryBottomRegionContentScrollViewer"
+                        MinHeight="{DynamicResource PgWorkspacePlaygroundMinHeight}"
+                        DataContext="{Binding ElementName=Root}">
+                        <controls:PhialeWorkspacePlayground.PlaygroundContent>
+                            <ItemsControl ItemsSource="{Binding SummaryItems}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{DynamicResource PgSummaryResultChipBorderStyle}">
+                                        <StackPanel>
+                                            <TextBlock
+                                                Style="{DynamicResource PgSummaryResultChipTypeTextStyle}"
+                                                Text="{Binding TypeLabel}" />
+                                            <StackPanel
+                                                HorizontalAlignment="Center"
+                                                Orientation="Horizontal">
+                                                <TextBlock
+                                                    Style="{DynamicResource PgSummaryResultChipLabelTextStyle}"
+                                                    Text="{Binding ColumnLabel}" />
+                                                <TextBlock Style="{DynamicResource PgSummaryResultChipSeparatorTextStyle}" />
+                                                <TextBlock
+                                                    Style="{DynamicResource PgSummaryResultChipValueTextStyle}"
+                                                    Text="{Binding ValueText}" />
+                                            </StackPanel>
+                                        </StackPanel>
                                     </Border>
-                                    <Button
-                                        x:Name="SummaryBottomRegionExpanderButton"
-                                        Click="HandleRegionToggleButtonClick"
-                                        Content="{Binding ElementName=Root, Path=SummaryBottomRegionToggleText}"
-                                        Style="{StaticResource PgRegionExpanderButtonStyle}"
-                                        Tag="SummaryBottomRegion"
-                                        Visibility="{Binding ElementName=Root, Path=CanCollapseSummaryBottomRegion, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontSize="13"
-                                        FontWeight="SemiBold"
-                                        Foreground="{DynamicResource PgStatusTextBrush}"
-                                        Text="{Binding ElementName=Root, Path=SummaryRegionTitleText}" />
-                                </StackPanel>
-
-                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                    <Button
-                                        x:Name="SummaryBottomRegionCloseButton"
-                                        Click="HandleRegionCloseButtonClick"
-                                        Style="{StaticResource PgRegionCloseButtonStyle}"
-                                        Tag="SummaryBottomRegion"
-                                        Visibility="{Binding ElementName=Root, Path=CanCloseSummaryBottomRegion, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </StackPanel>
-                            </DockPanel>
-
-                            <ScrollViewer
-                                x:Name="SummaryBottomRegionContentScrollViewer"
-                                Grid.Row="1"
-                                Margin="0,4,0,0"
-                                HorizontalScrollBarVisibility="Auto"
-                                VerticalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding ElementName=Root, Path=SummaryItems}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border
-                                                Margin="0,0,10,6"
-                                                Padding="8,5"
-                                                Background="{DynamicResource PgPanelBackgroundBrush}"
-                                                BorderBrush="{DynamicResource PgSummaryCardBorderBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="8">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock
-                                                        FontSize="12"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{DynamicResource PgStatusTextBrush}"
-                                                        Text="{Binding Label}" />
-                                                    <TextBlock
-                                                        Margin="8,0,0,0"
-                                                        FontSize="12"
-                                                        Foreground="{DynamicResource PgSummaryValueBrush}"
-                                                        Text="{Binding ValueText}" />
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </Grid>
-                    </Border>
-                </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </controls:PhialeWorkspacePlayground.PlaygroundContent>
+                    </controls:PhialeWorkspacePlayground>
+                </controls:PhialeWorkspaceBand>
             </StackPanel>
 
             <Border

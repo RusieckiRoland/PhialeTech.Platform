@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Win32;                               // OpenFileDialog for WPF
@@ -116,3 +116,4 @@ namespace PhialeGis.ComponentSandbox.ViewModels
         }
     }
 }
+

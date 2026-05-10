@@ -38,3 +38,4 @@ namespace PhialeGrid.Wpf.Tests.State
         }
     }
 }
+

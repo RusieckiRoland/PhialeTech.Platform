@@ -1,4 +1,4 @@
-﻿// App.xaml.cs
+// App.xaml.cs
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using PhialeGis.ComponentSandboxWinUi.Core;
@@ -117,3 +117,4 @@ namespace PhialeGis.ComponentSandboxWinUi
         }
     }
 }
+

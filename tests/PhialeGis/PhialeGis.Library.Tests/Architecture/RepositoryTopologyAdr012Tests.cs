@@ -183,3 +183,4 @@ public sealed class RepositoryTopologyAdr012Tests
         throw new InvalidOperationException("Could not resolve repository root from test directory.");
     }
 }
+

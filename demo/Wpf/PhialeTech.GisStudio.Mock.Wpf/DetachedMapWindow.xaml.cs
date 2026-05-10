@@ -9,3 +9,4 @@ public partial class DetachedMapWindow : Window
         InitializeComponent();
     }
 }
+

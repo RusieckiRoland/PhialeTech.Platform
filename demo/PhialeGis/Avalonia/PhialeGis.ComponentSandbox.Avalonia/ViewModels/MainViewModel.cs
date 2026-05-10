@@ -1,4 +1,4 @@
-﻿// MainWindowViewModel.cs (Avalonia)
+// MainWindowViewModel.cs (Avalonia)
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -178,3 +178,4 @@ namespace PhialeGis.ComponentSandbox.Avalonia.ViewModels
         }
     }
 }
+

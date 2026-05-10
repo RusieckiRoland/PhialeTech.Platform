@@ -21,6 +21,11 @@ definitions:
     captionKey: person.notes.caption
     placeholderKey: person.notes.placeholder
 
+  documentNotes:
+    extends: documentNotesText
+    captionKey: person.notes.caption
+    placeholderKey: person.notes.placeholder
+
   age:
     extends: nonNegativeInteger
     captionKey: person.age.caption

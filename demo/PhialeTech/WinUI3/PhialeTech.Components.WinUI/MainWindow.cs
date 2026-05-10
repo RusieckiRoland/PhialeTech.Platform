@@ -27,10 +27,15 @@ namespace PhialeTech.Components.WinUI
         private readonly StackPanel _drawerGroupPanel;
         private readonly TextBlock _languageLabelText;
         private readonly ComboBox _languageComboBox;
+        private readonly TextBlock _themeLabelText;
+        private readonly ComboBox _themeComboBox;
         private readonly ScrollViewer _contentScroller;
         private readonly StackPanel _contentPanel;
+        private FoundationShowcaseView _foundationShowcaseView;
         private WebHostShowcaseView _webHostShowcaseView;
+        private WebHostLoadTrace _webHostLoadTrace;
         private PdfViewerShowcaseView _pdfViewerShowcaseView;
+        private MonacoEditorShowcaseView _monacoEditorShowcaseView;
         private ReportDesignerShowcaseView _reportDesignerShowcaseView;
         private bool _isRefreshing;
         private bool _refreshQueued;
@@ -46,8 +51,8 @@ namespace PhialeTech.Components.WinUI
             _searchLabelText = CreateTextBlock(string.Empty, 14, FontWeights.SemiBold, "#3A4754");
             _searchBox = new TextBox
             {
-                Background = CreateBrush("#FBFBF9"),
-                BorderBrush = CreateBrush("#D5D0C5"),
+                Background = CreateBrush("#FFFFFF"),
+                BorderBrush = CreateBrush("#D3D9E1"),
                 Padding = new Thickness(12, 9, 12, 9),
             };
             _searchBox.TextChanged += HandleSearchTextChanged;
@@ -60,6 +65,10 @@ namespace PhialeTech.Components.WinUI
             _languageLabelText = CreateTextBlock(string.Empty, 14, FontWeights.SemiBold, "#3A4754");
             _languageComboBox = new ComboBox();
             _languageComboBox.SelectionChanged += HandleLanguageSelectionChanged;
+            _themeLabelText = CreateTextBlock(string.Empty, 13, FontWeights.SemiBold, "#4B5563");
+            _themeComboBox = new ComboBox { MinWidth = 140 };
+            _themeComboBox.DisplayMemberPath = nameof(DemoThemeOption.DisplayName);
+            _themeComboBox.SelectionChanged += HandleThemeSelectionChanged;
 
             _contentPanel = new StackPanel();
             _contentScroller = new ScrollViewer
@@ -69,6 +78,7 @@ namespace PhialeTech.Components.WinUI
 
             Content = BuildLayout();
             Closed += HandleClosed;
+            ApplySelectedTheme();
             RefreshUi();
         }
 
@@ -79,6 +89,8 @@ namespace PhialeTech.Components.WinUI
             _webHostShowcaseView = null;
             _pdfViewerShowcaseView?.Dispose();
             _pdfViewerShowcaseView = null;
+            _monacoEditorShowcaseView?.Dispose();
+            _monacoEditorShowcaseView = null;
             _reportDesignerShowcaseView?.Dispose();
             _reportDesignerShowcaseView = null;
         }
@@ -87,15 +99,15 @@ namespace PhialeTech.Components.WinUI
         {
             var root = new Grid
             {
-                Background = CreateBrush("#F3F1EC"),
+                Background = CreateBrush("#F4F6FA"),
             };
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(296) });
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             var sidebar = new Border
             {
-                Background = CreateBrush("#ECE8DE"),
-                BorderBrush = CreateBrush("#D8D2C4"),
+                Background = CreateBrush("#EEF2F7"),
+                BorderBrush = CreateBrush("#D8DEE7"),
                 BorderThickness = new Thickness(0, 0, 1, 0),
                 Child = BuildSidebar(),
             };
@@ -177,6 +189,15 @@ namespace PhialeTech.Components.WinUI
                 _languageComboBox.SelectedItem = _viewModel.SelectedLanguage;
             }
 
+            _themeLabelText.Text = _viewModel.ThemeLabelText;
+            _themeComboBox.ItemsSource = _viewModel.ThemeOptions;
+            var selectedTheme = _viewModel.ThemeOptions.FirstOrDefault(option =>
+                string.Equals(option.Code, _viewModel.SelectedThemeCode, StringComparison.OrdinalIgnoreCase));
+            if (!ReferenceEquals(_themeComboBox.SelectedItem, selectedTheme))
+            {
+                _themeComboBox.SelectedItem = selectedTheme;
+            }
+
             Title = _viewModel.AppTitle;
             RenderContent();
 
@@ -232,6 +253,13 @@ namespace PhialeTech.Components.WinUI
             };
             backButton.Click += (_, _) => _viewModel.ShowOverview();
 
+            var headerActions = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 10,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
             var platformBadge = new Border
             {
                 Background = CreateBrush("#E6F4F1"),
@@ -241,44 +269,106 @@ namespace PhialeTech.Components.WinUI
                 Padding = new Thickness(12, 8, 12, 8),
                 Child = CreateTextBlock(_viewModel.PlatformBadgeText, 13, FontWeights.SemiBold, "#0F766E"),
             };
-            Grid.SetColumn(platformBadge, 2);
+            headerActions.Children.Add(platformBadge);
+            _themeLabelText.VerticalAlignment = VerticalAlignment.Center;
+            headerActions.Children.Add(_themeLabelText);
+            _themeComboBox.Style = Application.Current.Resources["DemoThemeComboBoxStyle"] as Style;
+            headerActions.Children.Add(_themeComboBox);
+            Grid.SetColumn(headerActions, 2);
 
             header.Children.Add(backButton);
-            header.Children.Add(platformBadge);
+            header.Children.Add(headerActions);
 
             var titleBlock = CreateTextBlock(_viewModel.DetailHeadline, 34, FontWeights.SemiBold, "#17212B", new Thickness(0, 26, 0, 0));
             var descriptionBlock = CreateTextBlock(_viewModel.SelectedExampleDescription, 15, FontWeights.Normal, "#52606D", new Thickness(0, 8, 0, 20));
             descriptionBlock.TextWrapping = TextWrapping.WrapWholeWords;
 
-            var pivot = new Pivot();
-            pivot.SelectedIndex = _viewModel.SelectedTabIndex;
-            pivot.SelectionChanged += (sender, args) =>
-            {
-                if (sender is Pivot control)
-                {
-                    _viewModel.SelectedTabIndex = control.SelectedIndex;
-                }
-            };
-
-            pivot.Items.Add(new PivotItem
-            {
-                Header = _viewModel.DemoTabText,
-                Content = BuildDemoTab(),
-            });
-            pivot.Items.Add(new PivotItem
-            {
-                Header = _viewModel.CodeTabText,
-                Content = BuildCodeTab(),
-            });
-
             _contentPanel.Children.Add(header);
             _contentPanel.Children.Add(titleBlock);
             _contentPanel.Children.Add(descriptionBlock);
-            _contentPanel.Children.Add(pivot);
+            _contentPanel.Children.Add(BuildDetailTabs());
+        }
+
+        private UIElement BuildDetailTabs()
+        {
+            var layout = new StackPanel();
+
+            var tabs = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 18,
+            };
+
+            tabs.Children.Add(CreateTabButton(_viewModel.DemoTabText, (int)DemoTabKind.Demo));
+            tabs.Children.Add(CreateTabButton(_viewModel.CodeTabText, (int)DemoTabKind.Code));
+            layout.Children.Add(tabs);
+
+            layout.Children.Add(_viewModel.SelectedTabIndex == (int)DemoTabKind.Code
+                ? BuildCodeTab()
+                : BuildDemoTab());
+
+            return layout;
+        }
+
+        private UIElement CreateTabButton(string text, int tabIndex)
+        {
+            var isSelected = _viewModel.SelectedTabIndex == tabIndex;
+            var button = new Button
+            {
+                Background = new SolidColorBrush(Colors.Transparent),
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(0, 0, 0, 8),
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Tag = tabIndex,
+            };
+
+            var label = CreateTextBlock(text, 24, FontWeights.Normal, isSelected ? "#111827" : "#6B7280");
+            var underline = new Border
+            {
+                Height = 3,
+                Background = isSelected ? CreateBrush("#0067C0") : new SolidColorBrush(Colors.Transparent),
+                Margin = new Thickness(0, 7, 0, 0),
+            };
+
+            button.Content = new StackPanel
+            {
+                Children =
+                {
+                    label,
+                    underline
+                }
+            };
+
+            button.Click += (_, _) =>
+            {
+                if (_viewModel.SelectedTabIndex != tabIndex)
+                {
+                    _viewModel.SelectedTabIndex = tabIndex;
+                    QueueRefreshUi();
+                }
+            };
+
+            return button;
         }
 
         private UIElement BuildDemoTab()
         {
+            if (_viewModel.ShowFoundationsSurface)
+            {
+                _foundationShowcaseView ??= new FoundationShowcaseView(_viewModel);
+                _foundationShowcaseView.Refresh();
+                return new Border
+                {
+                    Margin = new Thickness(0, 20, 0, 0),
+                    Background = ResourceBrush("DemoPanelBackgroundBrush"),
+                    BorderBrush = ResourceBrush("DemoPanelBorderBrush"),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(14),
+                    Padding = new Thickness(18),
+                    Child = _foundationShowcaseView,
+                };
+            }
+
             if (_viewModel.ShowWebComponentsSurface)
             {
                 if (_viewModel.SelectedTabIndex != 0)
@@ -294,6 +384,11 @@ namespace PhialeTech.Components.WinUI
                 if (_viewModel.ShowPdfViewerSurface)
                 {
                     return BuildPdfViewerDemoTab();
+                }
+
+                if (_viewModel.ShowMonacoEditorSurface)
+                {
+                    return BuildMonacoEditorDemoTab();
                 }
 
                 return BuildReportDesignerDemoTab();
@@ -362,15 +457,20 @@ namespace PhialeTech.Components.WinUI
         private UIElement BuildWebHostDemoTab()
         {
             _webHostShowcaseView ??= new WebHostShowcaseView();
+            _webHostLoadTrace ??= new WebHostLoadTrace("WinUI WebHost demo");
+            _webHostLoadTrace.Mark("BuildWebHostDemoTab invoked");
+            _webHostShowcaseView.AttachLoadTrace(_webHostLoadTrace);
 
             return new Border
             {
                 Margin = new Thickness(0, 20, 0, 0),
-                Background = CreateBrush("#FBFBF9"),
-                BorderBrush = CreateBrush("#DDD8CF"),
+                Background = CreateBrush("#FFFFFF"),
+                BorderBrush = CreateBrush("#E4E7EC"),
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(14),
                 Padding = new Thickness(18),
+                Height = 700,
+                MinHeight = 700,
                 Child = _webHostShowcaseView,
             };
         }
@@ -378,16 +478,38 @@ namespace PhialeTech.Components.WinUI
         private UIElement BuildPdfViewerDemoTab()
         {
             _pdfViewerShowcaseView ??= new PdfViewerShowcaseView(this);
+            _ = _pdfViewerShowcaseView.ApplyEnvironmentAsync(ResolveReportDesignerTheme());
 
             return new Border
             {
                 Margin = new Thickness(0, 20, 0, 0),
                 Background = CreateBrush("#FBFBF9"),
-                BorderBrush = CreateBrush("#DDD8CF"),
+                BorderBrush = CreateBrush("#E4E7EC"),
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(14),
                 Padding = new Thickness(18),
+                Height = 620,
+                MinHeight = 620,
                 Child = _pdfViewerShowcaseView,
+            };
+        }
+
+        private UIElement BuildMonacoEditorDemoTab()
+        {
+            _monacoEditorShowcaseView ??= new MonacoEditorShowcaseView(_viewModel.LanguageCode, ResolveReportDesignerTheme());
+            _ = _monacoEditorShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme());
+
+            return new Border
+            {
+                Margin = new Thickness(0, 20, 0, 0),
+                Background = CreateBrush("#FBFBF9"),
+                BorderBrush = CreateBrush("#E4E7EC"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(14),
+                Padding = new Thickness(18),
+                Height = 620,
+                MinHeight = 620,
+                Child = _monacoEditorShowcaseView,
             };
         }
 
@@ -505,7 +627,7 @@ namespace PhialeTech.Components.WinUI
         {
             var border = new Border
             {
-                BorderBrush = CreateBrush("#EEE8DE"),
+                BorderBrush = CreateBrush("#E4E7EC"),
                 BorderThickness = new Thickness(0, 1, 0, 0),
                 Padding = new Thickness(18, 14, 18, 14),
             };
@@ -581,8 +703,8 @@ namespace PhialeTech.Components.WinUI
             {
                 Width = 330,
                 Height = 168,
-                Background = CreateBrush("#FBFBF9"),
-                BorderBrush = CreateBrush("#DDD8CF"),
+                Background = CreateBrush("#FFFFFF"),
+                BorderBrush = CreateBrush("#E4E7EC"),
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(14),
             };
@@ -633,7 +755,30 @@ namespace PhialeTech.Components.WinUI
             _viewModel.SelectedLanguage = _languageComboBox.SelectedItem as DemoLanguageOption;
         }
 
+        private void HandleThemeSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isRefreshing)
+            {
+                return;
+            }
+
+            if (_themeComboBox.SelectedItem is DemoThemeOption selectedTheme)
+            {
+                _viewModel.SelectedThemeCode = selectedTheme.Code;
+            }
+        }
+
         private void HandleViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(DemoShellViewModel.SelectedThemeCode))
+            {
+                ApplySelectedTheme();
+            }
+
+            QueueRefreshUi();
+        }
+
+        private void QueueRefreshUi()
         {
             if (_refreshQueued)
             {
@@ -663,6 +808,42 @@ namespace PhialeTech.Components.WinUI
             return Application.Current?.RequestedTheme == ApplicationTheme.Dark ? "dark" : "light";
         }
 
+        private void ApplySelectedTheme()
+        {
+            var useNight = ResolveReportDesignerTheme() == "dark";
+            var themeUri = new Uri(useNight
+                ? "ms-appx:///PhialeTech.Styles.WinUI/Themes/Demo.Theme.Night.xaml"
+                : "ms-appx:///PhialeTech.Styles.WinUI/Themes/Demo.Theme.Day.xaml");
+
+            var dictionaries = Application.Current.Resources.MergedDictionaries;
+            var existingTheme = dictionaries.FirstOrDefault(dictionary =>
+                dictionary.Source != null &&
+                dictionary.Source.ToString().IndexOf("/Themes/Demo.Theme.", StringComparison.OrdinalIgnoreCase) >= 0);
+            var replacement = new ResourceDictionary { Source = themeUri };
+
+            if (existingTheme == null)
+            {
+                dictionaries.Add(replacement);
+                return;
+            }
+
+            if (string.Equals(existingTheme.Source?.ToString(), themeUri.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var index = dictionaries.IndexOf(existingTheme);
+            dictionaries.RemoveAt(index);
+            dictionaries.Insert(index, replacement);
+        }
+
+        private static SolidColorBrush ResourceBrush(string key)
+        {
+            return Application.Current?.Resources.TryGetValue(key, out var value) == true && value is SolidColorBrush brush
+                ? brush
+                : new SolidColorBrush(Colors.Transparent);
+        }
+
         private void RefreshDrawerGroupCards()
         {
             _drawerGroupPanel.Children.Clear();
@@ -681,8 +862,8 @@ namespace PhialeTech.Components.WinUI
 
                 var card = new Border
                 {
-                    Background = CreateBrush(group.IsSelected ? "#F1F9FD" : "#FBFBF9"),
-                    BorderBrush = CreateBrush(group.IsSelected ? group.AccentHex : "#D5D0C5"),
+                    Background = CreateBrush(group.IsSelected ? "#E6F4F1" : "#FFFFFF"),
+                    BorderBrush = CreateBrush(group.IsSelected ? group.AccentHex : "#E4E7EC"),
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(12),
                     Padding = new Thickness(12),
@@ -748,4 +929,5 @@ namespace PhialeTech.Components.WinUI
         }
     }
 }
+
 

@@ -22,6 +22,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
         private const string RowHeaderContainerType = "row-header";
         private const string OverlayContainerType = "overlay";
         private const string MasterDetailOverlayContainerType = "master-detail-overlay";
+        private const string RowDetailOverlayContainerType = "row-detail-overlay";
 
         private readonly GridContainerPool _containerPool = new GridContainerPool();
         private readonly Dictionary<string, RenderedItem> _renderedItems =
@@ -50,7 +51,10 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
             _containerPool.RegisterFactory(RowHeaderContainerType, () => new GridRowHeaderPresenter());
             _containerPool.RegisterFactory(OverlayContainerType, () => new GridOverlayPresenter());
             _containerPool.RegisterFactory(MasterDetailOverlayContainerType, () => new GridMasterDetailPresenter());
+            _containerPool.RegisterFactory(RowDetailOverlayContainerType, () => new GridRowDetailPresenter());
         }
+
+        public IGridRowDetailContentFactory RowDetailContentFactory { get; set; }
 
         /// <summary>
         /// Renderuje snapshot na panelu.
@@ -91,7 +95,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
                 {
                     desiredItems.Add(new RenderDescriptor(
                         overlay.ItemKey,
-                        overlay.Payload is global::PhialeTech.PhialeGrid.Wpf.Controls.GridMasterDetailMasterRowModel ? MasterDetailOverlayContainerType : OverlayContainerType,
+                        ResolveOverlayContainerType(overlay),
                         _overlayLayer,
                         overlay));
                 }
@@ -196,11 +200,31 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface
                 return;
             }
 
+            if (element is GridRowDetailPresenter rowDetailPresenter && item is GridOverlaySurfaceItem rowDetailOverlay)
+            {
+                rowDetailPresenter.ContentFactory = RowDetailContentFactory;
+                rowDetailPresenter.OverlayData = rowDetailOverlay;
+                rowDetailPresenter.Bounds = rowDetailOverlay.Bounds;
+                return;
+            }
+
             if (element is GridMasterDetailPresenter masterDetailPresenter && item is GridOverlaySurfaceItem masterDetailOverlay)
             {
                 masterDetailPresenter.OverlayData = masterDetailOverlay;
                 masterDetailPresenter.Bounds = masterDetailOverlay.Bounds;
             }
+        }
+
+        private static string ResolveOverlayContainerType(GridOverlaySurfaceItem overlay)
+        {
+            if (overlay.Kind == GridOverlayKind.RowDetail)
+            {
+                return RowDetailOverlayContainerType;
+            }
+
+            return overlay.Payload is global::PhialeTech.PhialeGrid.Wpf.Controls.GridMasterDetailMasterRowModel
+                ? MasterDetailOverlayContainerType
+                : OverlayContainerType;
         }
 
         private static bool AreEquivalent(GridCellSurfaceItem current, GridCellSurfaceItem next)

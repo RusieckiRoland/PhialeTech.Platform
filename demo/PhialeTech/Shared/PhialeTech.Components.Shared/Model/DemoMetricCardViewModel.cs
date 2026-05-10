@@ -19,3 +19,4 @@ namespace PhialeTech.Components.Shared.Model
         public bool IsPositive { get; }
     }
 }
+

@@ -194,3 +194,4 @@ namespace PhialeGrid.Wpf.Tests.Grouping
         }
     }
 }
+

@@ -22,3 +22,4 @@ namespace PhialeTech.Components.Shared.Model
         public bool IsSelected { get; }
     }
 }
+

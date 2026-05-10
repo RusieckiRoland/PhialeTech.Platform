@@ -8,3 +8,4 @@ namespace PhialeTech.Components.Shared.Services
         Task<DemoRemoteQueryResult> QueryAsync(DemoRemoteQueryRequest request, CancellationToken cancellationToken = default);
     }
 }
+

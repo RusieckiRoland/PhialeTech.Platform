@@ -15,3 +15,4 @@ namespace PhialeTech.Components.Shared.ViewModels
         public string DisplayName { get; }
     }
 }
+

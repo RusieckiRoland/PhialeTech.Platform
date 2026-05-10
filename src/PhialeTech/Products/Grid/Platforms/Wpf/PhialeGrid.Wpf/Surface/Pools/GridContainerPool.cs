@@ -78,6 +78,10 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Pools
             {
                 masterDetailPresenter.OverlayData = null;
             }
+            else if (container is GridRowDetailPresenter rowDetailPresenter)
+            {
+                rowDetailPresenter.Clear();
+            }
             else if (container is ContentControl contentControl)
             {
                 contentControl.Content = null;

@@ -1,8 +1,10 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Windows.Controls;
 using System.Windows.Media;
 using NUnit.Framework;
+using PhialeGrid.Core.Details;
 using PhialeGrid.Core.Surface;
 using PhialeTech.PhialeGrid.Wpf.Surface;
 using PhialeTech.PhialeGrid.Wpf.Surface.Presenters;
@@ -117,6 +119,47 @@ namespace PhialeGrid.Wpf.Tests.Surface
             });
         }
 
+        [Test]
+        public void RenderSnapshot_WithRowDetailOverlay_UsesRowDetailPresenterAndFactoryContent()
+        {
+            var factory = new RecordingRowDetailFactory();
+            var panel = new GridSurfacePanel
+            {
+                RowDetailContentFactory = factory,
+            };
+            var payload = CreateRowDetailPayload();
+
+            panel.RenderSnapshot(CreateSnapshot(
+                new[] { CreateColumnHeader("col-1", 40, 0, 100, 30) },
+                null,
+                new[] { CreateOverlay("row-detail-1", 40, 50, 120, 72, GridOverlayKind.RowDetail, payload) }));
+
+            var presenter = (GridRowDetailPresenter)FindLayerChild(panel, 2, 0);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(presenter.Content, Is.SameAs(factory.CreatedContent));
+                Assert.That(factory.LastContext.CoreContext.RowKey, Is.EqualTo("row-1"));
+                Assert.That(factory.LastContext.ContentDescriptor, Is.SameAs(payload.ContentDescriptor));
+                Assert.That(Canvas.GetLeft(presenter), Is.EqualTo(40d));
+                Assert.That(Canvas.GetTop(presenter), Is.EqualTo(50d));
+                Assert.That(presenter.Width, Is.EqualTo(120d));
+                Assert.That(presenter.Height, Is.EqualTo(72d));
+            });
+        }
+
+        [Test]
+        public void RenderSnapshot_WithRowDetailOverlayWithoutFactory_FailsFast()
+        {
+            var panel = new GridSurfacePanel();
+
+            Assert.Throws<InvalidOperationException>(() =>
+                panel.RenderSnapshot(CreateSnapshot(
+                    new[] { CreateColumnHeader("col-1", 40, 0, 100, 30) },
+                    null,
+                    new[] { CreateOverlay("row-detail-1", 40, 50, 120, 72, GridOverlayKind.RowDetail, CreateRowDetailPayload()) })));
+        }
+
         private static GridSurfaceSnapshot CreateSnapshot(
             GridHeaderSurfaceItem[] headers,
             GridCellSurfaceItem[] cells,
@@ -160,11 +203,32 @@ namespace PhialeGrid.Wpf.Tests.Surface
 
         private static GridOverlaySurfaceItem CreateOverlay(string key, double x, double y, double width, double height)
         {
-            return new GridOverlaySurfaceItem(key, GridOverlayKind.CurrentCell)
+            return CreateOverlay(key, x, y, width, height, GridOverlayKind.CurrentCell, null);
+        }
+
+        private static GridOverlaySurfaceItem CreateOverlay(string key, double x, double y, double width, double height, GridOverlayKind kind, object payload)
+        {
+            return new GridOverlaySurfaceItem(key, kind)
             {
                 Bounds = new GridBounds(x, y, width, height),
+                Payload = payload,
                 SnapshotRevision = 1,
             };
+        }
+
+        private static GridRowDetailSurfacePayload CreateRowDetailPayload()
+        {
+            var context = new GridRowDetailContext(
+                "row-1",
+                "row-1",
+                new object(),
+                new System.Collections.Generic.Dictionary<string, object>(),
+                new System.Collections.Generic.Dictionary<string, GridRowDetailFieldContext>());
+            return new GridRowDetailSurfacePayload(
+                "detail:row-1",
+                "row-1",
+                context,
+                new object());
         }
 
         private static object FindLayerChild(GridSurfacePanel panel, int layerIndex, int childIndex)
@@ -208,5 +272,20 @@ namespace PhialeGrid.Wpf.Tests.Surface
                 },
                 overlays: System.Array.Empty<GridOverlaySurfaceItem>());
         }
+
+        private sealed class RecordingRowDetailFactory : IGridRowDetailContentFactory
+        {
+            public GridRowDetailWpfContext LastContext { get; private set; }
+
+            public TextBlock CreatedContent { get; private set; }
+
+            public System.Windows.FrameworkElement CreateContent(GridRowDetailWpfContext context)
+            {
+                LastContext = context;
+                CreatedContent = new TextBlock { Text = "detail" };
+                return CreatedContent;
+            }
+        }
     }
 }
+

@@ -540,3 +540,4 @@ public sealed class MapDocumentViewModel : ViewModelBase
         };
     }
 }
+

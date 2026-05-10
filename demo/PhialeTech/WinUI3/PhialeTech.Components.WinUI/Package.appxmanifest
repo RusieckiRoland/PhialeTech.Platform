@@ -10,7 +10,7 @@
   <Identity
     Name="1E24A405-9B5A-4606-84E6-0A5D1D47AD7E"
     Publisher="CN=PhialeTech"
-    Version="1.0.0.1" />
+    Version="1.0.0.2" />
 
   <mp:PhoneIdentity PhoneProductId="1E24A405-9B5A-4606-84E6-0A5D1D47AD7E" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

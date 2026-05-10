@@ -90,6 +90,11 @@ namespace PhialeGrid.Core.Surface
         /// <summary>
         /// Czy wiersz ma row details sekcję.
         /// </summary>
+        public bool HasDetails { get; set; }
+
+        /// <summary>
+        /// Czy wiersz ma row details sekcję i jest rozwinięty.
+        /// </summary>
         public bool HasDetailsExpanded { get; set; }
 
         /// <summary>

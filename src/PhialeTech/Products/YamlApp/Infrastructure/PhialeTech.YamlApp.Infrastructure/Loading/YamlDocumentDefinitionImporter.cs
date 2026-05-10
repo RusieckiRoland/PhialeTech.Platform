@@ -681,6 +681,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 "id",
                 "name",
                 "type",
+                "heightMode",
                 "width",
                 "widthHint",
                 "weight",
@@ -699,6 +700,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             {
                 Id = ReadScalar(layoutNode, "id"),
                 Name = ReadScalar(layoutNode, "name"),
+                HeightMode = ReadNullableEnum<LayoutHeightMode>(layoutNode, "heightMode"),
                 Width = ReadNullableDouble(layoutNode, "width"),
                 WidthHint = ReadNullableEnum<FieldWidthHint>(layoutNode, "widthHint"),
                 Weight = ReadNullableDouble(layoutNode, "weight"),
@@ -714,6 +716,7 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             };
 
             ValidateNullableEnumValue<FieldWidthHint>(layoutNode, "widthHint", "Layout", diagnostics);
+            ValidateNullableEnumValue<LayoutHeightMode>(layoutNode, "heightMode", "Layout", diagnostics);
             ValidateNullableEnumValue<ValidationTrigger>(layoutNode, "validationTrigger", "Layout", diagnostics);
             ValidateNullableEnumValue<InteractionMode>(layoutNode, "interactionMode", "Layout", diagnostics);
             ValidateNullableEnumValue<DensityMode>(layoutNode, "densityMode", "Layout", diagnostics);
@@ -790,7 +793,9 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 "items",
                 "caption",
                 "captionKey",
-                "showBorder",
+                "collapsedText",
+                "containerChrome",
+                "containerBehavior",
                 "variant");
 
             if (TryGetMappingChild(itemNode, "field", out var inlineFieldNode))
@@ -951,11 +956,13 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
                 Id = ReadScalar(itemNode, "id"),
                 Name = ReadScalar(itemNode, "name"),
                 CaptionKey = FirstNonEmpty(ReadScalar(itemNode, "captionKey"), ReadScalar(itemNode, "caption")),
+                CollapsedText = ReadScalar(itemNode, "collapsedText"),
                 Width = ReadNullableDouble(itemNode, "width"),
                 WidthHint = ReadNullableEnum<FieldWidthHint>(itemNode, "widthHint"),
                 Weight = ReadNullableDouble(itemNode, "weight"),
                 IsOverlayScope = ReadBoolean(itemNode, "overlayScope"),
-                ShowBorder = ReadBoolean(itemNode, "showBorder", true),
+                ContainerChrome = ReadNullableEnum<ContainerChrome>(itemNode, "containerChrome") ?? ContainerChrome.Framed,
+                ContainerBehavior = ReadNullableEnum<ContainerBehavior>(itemNode, "containerBehavior") ?? ContainerBehavior.Static,
                 Variant = ReadNullableEnum<ContainerVariant>(itemNode, "variant"),
                 Visible = ReadNullableBoolean(itemNode, "visible"),
                 Enabled = ReadNullableBoolean(itemNode, "enabled"),
@@ -974,6 +981,8 @@ namespace PhialeTech.YamlApp.Infrastructure.Loading
             ValidateNullableEnumValue<DensityMode>(itemNode, "densityMode", containerScope, diagnostics);
             ValidateNullableEnumValue<FieldChromeMode>(itemNode, "fieldChromeMode", containerScope, diagnostics);
             ValidateNullableEnumValue<CaptionPlacement>(itemNode, "captionPlacement", containerScope, diagnostics);
+            ValidateNullableEnumValue<ContainerChrome>(itemNode, "containerChrome", containerScope, diagnostics);
+            ValidateNullableEnumValue<ContainerBehavior>(itemNode, "containerBehavior", containerScope, diagnostics);
             ValidateNullableEnumValue<ContainerVariant>(itemNode, "variant", containerScope, diagnostics);
             ValidateNullableBooleanValue(itemNode, "overlayScope", containerScope, diagnostics);
             ValidateExclusiveWidth(containerScope, container.Width, container.WidthHint, diagnostics);

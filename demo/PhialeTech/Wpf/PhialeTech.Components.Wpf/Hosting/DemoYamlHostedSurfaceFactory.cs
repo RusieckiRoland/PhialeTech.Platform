@@ -1,6 +1,5 @@
 using System;
 using System.Windows;
-using System.Windows.Controls;
 using PhialeTech.ComponentHost.Abstractions.Presentation;
 using PhialeTech.ComponentHost.Wpf.Hosting;
 using PhialeTech.Yaml.Library;
@@ -16,6 +15,18 @@ namespace PhialeTech.Components.Wpf.Hosting
 {
     public sealed class DemoYamlHostedSurfaceFactory : IWpfHostedSurfaceFactory
     {
+        private readonly Func<string> _themeProvider;
+
+        public DemoYamlHostedSurfaceFactory()
+            : this(null)
+        {
+        }
+
+        public DemoYamlHostedSurfaceFactory(Func<string> themeProvider)
+        {
+            _themeProvider = themeProvider;
+        }
+
         public bool CanCreate(IHostedSurfaceRequest request)
         {
             return request != null &&
@@ -30,15 +41,24 @@ namespace PhialeTech.Components.Wpf.Hosting
             var host = new YamlDocumentHost
             {
                 RuntimeDocumentState = documentState,
+                Theme = ResolveTheme(),
             };
             host.ActionInvoked += (sender, args) => HandleYamlDocumentActionInvoked(args, manager);
 
-            return new ScrollViewer
-            {
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                Content = host,
-            };
+            return host;
+        }
+
+        private string ResolveTheme()
+        {
+            return NormalizeTheme(_themeProvider == null ? null : _themeProvider());
+        }
+
+        private static string NormalizeTheme(string theme)
+        {
+            return string.Equals(theme, "dark", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(theme, "night", StringComparison.OrdinalIgnoreCase)
+                ? "dark"
+                : "light";
         }
 
         private static RuntimeDocumentState BuildRuntimeState(IHostedSurfaceRequest request)
@@ -133,14 +153,21 @@ namespace PhialeTech.Components.Wpf.Hosting
                 "      extends: firstName",
                 "    - id: lastName",
                 "      extends: lastName",
+                "    - id: age",
+                "      extends: age",
                 "    - id: notes",
-                "      extends: notes",
+                "      extends: documentNotes",
+                "    - id: developer.firstName",
+                "      extends: firstName",
+                "    - id: developer.lastName",
+                "      extends: lastName",
                 "  layout:",
                 "    type: Column",
+                "    overlayScope: true",
                 "    items:",
                 "      - type: Container",
                 "        caption: Reviewer",
-                "        showBorder: true",
+                "        containerChrome: Framed",
                 "        variant: Compact",
                 "        items:",
                 "          - type: Row",
@@ -148,11 +175,24 @@ namespace PhialeTech.Components.Wpf.Hosting
                 "              - fieldRef: firstName",
                 "              - fieldRef: lastName",
                 "      - type: Container",
+                "        caption: Developer data",
+                "        containerChrome: Framed",
+                "        containerBehavior: Collapsible",
+                "        collapsedText: \"{developer.lastName} {developer.firstName}, {age}\"",
+                "        variant: Compact",
+                "        items:",
+                "          - type: Row",
+                "            items:",
+                "              - fieldRef: developer.lastName",
+                "              - fieldRef: developer.firstName",
+                "              - fieldRef: age",
+                "      - type: Container",
                 "        caption: Review notes",
-                "        showBorder: true",
+                "        containerChrome: None",
                 "        items:",
                 "          - fieldRef: notes",
             });
         }
     }
 }
+

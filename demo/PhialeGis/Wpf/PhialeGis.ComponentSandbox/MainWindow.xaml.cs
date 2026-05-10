@@ -1,4 +1,4 @@
-﻿using DryIoc;
+using DryIoc;
 using MahApps.Metro.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using PhialeGis.ComponentSandbox.ViewModels;

@@ -5,7 +5,8 @@
     xmlns:actions="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Actions"
     xmlns:badges="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Badges"
     xmlns:buttons="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.Buttons"
-    xmlns:local="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.TextBox">
+    xmlns:local="clr-namespace:PhialeTech.YamlApp.Wpf.Controls.TextBox"
+    xmlns:webHost="clr-namespace:PhialeTech.WebHost.Wpf.Controls;assembly=PhialeTech.WebHost.Wpf">
     <Style x:Key="YamlDocument.RootBorderStyle" TargetType="{x:Type Border}">
         <Setter Property="Background" Value="{DynamicResource Brush.FormShell.ContentBackground}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
@@ -198,6 +199,27 @@
         TargetType="{x:Type TextBlock}">
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Margin" Value="{DynamicResource Thickness.FormShell.ActionAreaGap}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ContainerCollapsedSummaryTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Muted}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormSection.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormSection.FontSize}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Margin" Value="{DynamicResource Thickness.YamlDocument.CollapsibleSummary.Margin}" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ContainerExpanderHeaderTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormSection.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormSection.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
     <Style x:Key="YamlDocument.SectionBorderStyle" TargetType="{x:Type Border}">
@@ -395,20 +417,239 @@
     <Style x:Key="YamlDocument.ContainerBorderStyle" TargetType="{x:Type Border}">
         <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
-        <Setter Property="Padding" Value="16" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.YamlDocument.Container.BorderThickness}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource CornerRadius.YamlDocument.Container}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.YamlDocument.Container.Padding}" />
     </Style>
 
     <Style
         x:Key="YamlDocument.ContainerBorderStyle.Compact"
         BasedOn="{StaticResource YamlDocument.ContainerBorderStyle}"
         TargetType="{x:Type Border}">
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Padding" Value="12" />
+        <Setter Property="CornerRadius" Value="{DynamicResource CornerRadius.YamlDocument.Container.Compact}" />
+        <Setter Property="Padding" Value="{DynamicResource Thickness.YamlDocument.Container.Padding.Compact}" />
+    </Style>
+
+    <Style x:Key="YamlDocument.ContainerExpanderStyle" TargetType="{x:Type Expander}">
+        <Setter Property="Background" Value="{DynamicResource Brush.Surface1}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.FormShell.RegionBorder}" />
+        <Setter Property="BorderThickness" Value="{DynamicResource Thickness.YamlDocument.Container.BorderThickness}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormSection.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormSection.FontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Expander}">
+                    <Border
+                        x:Name="ContainerChrome"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource CornerRadius.YamlDocument.Container}"
+                        SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <ToggleButton
+                                x:Name="HeaderSite"
+                                Grid.Row="0"
+                                Padding="{DynamicResource Thickness.YamlDocument.CollapsibleHeader.Padding}"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Center"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"
+                                FocusVisualStyle="{x:Null}"
+                                Foreground="{TemplateBinding Foreground}"
+                                IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                        <Border
+                                            x:Name="HeaderChrome"
+                                            Padding="{TemplateBinding Padding}"
+                                            Background="{TemplateBinding Background}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path
+                                                    x:Name="DisclosureGlyph"
+                                                    Width="8"
+                                                    Height="8"
+                                                    Margin="0,0,8,0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Data="M 0 0 L 4 4 L 8 0"
+                                                    Stroke="{DynamicResource Brush.Text.Secondary}"
+                                                    StrokeEndLineCap="Round"
+                                                    StrokeLineJoin="Round"
+                                                    StrokeStartLineCap="Round"
+                                                    StrokeThickness="1.4">
+                                                    <Path.RenderTransform>
+                                                        <RotateTransform Angle="-90" CenterX="4" CenterY="2" />
+                                                    </Path.RenderTransform>
+                                                </Path>
+                                                <ContentPresenter
+                                                    Grid.Column="1"
+                                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                    Content="{TemplateBinding Content}"
+                                                    RecognizesAccessKey="True"
+                                                    TextElement.Foreground="{TemplateBinding Foreground}" />
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                                <Setter TargetName="DisclosureGlyph" Property="Stroke" Value="{DynamicResource Brush.Focus.Ring}" />
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="DisclosureGlyph" Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <RotateTransform Angle="0" CenterX="4" CenterY="2" />
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                                <ContentPresenter ContentSource="Header" />
+                            </ToggleButton>
+                            <ContentPresenter
+                                x:Name="ExpandSite"
+                                Grid.Row="1"
+                                Margin="{DynamicResource Thickness.YamlDocument.CollapsibleContent.Padding}"
+                                ContentSource="Content" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="ContainerChrome" Property="BorderBrush" Value="{DynamicResource Brush.Focus.Ring}" />
+                        </Trigger>
+                        <Trigger Property="IsExpanded" Value="False">
+                            <Setter TargetName="ExpandSite" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style
+        x:Key="YamlDocument.ContainerExpanderStyle.Compact"
+        BasedOn="{StaticResource YamlDocument.ContainerExpanderStyle}"
+        TargetType="{x:Type Expander}">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Expander}">
+                    <Border
+                        x:Name="ContainerChrome"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource CornerRadius.YamlDocument.Container.Compact}"
+                        SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <ToggleButton
+                                x:Name="HeaderSite"
+                                Grid.Row="0"
+                                Padding="{DynamicResource Thickness.YamlDocument.CollapsibleHeader.Padding.Compact}"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Center"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"
+                                FocusVisualStyle="{x:Null}"
+                                Foreground="{TemplateBinding Foreground}"
+                                IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                        <Border
+                                            x:Name="HeaderChrome"
+                                            Padding="{TemplateBinding Padding}"
+                                            Background="{TemplateBinding Background}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Path
+                                                    x:Name="DisclosureGlyph"
+                                                    Width="8"
+                                                    Height="8"
+                                                    Margin="0,0,8,0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Data="M 0 0 L 4 4 L 8 0"
+                                                    Stroke="{DynamicResource Brush.Text.Secondary}"
+                                                    StrokeEndLineCap="Round"
+                                                    StrokeLineJoin="Round"
+                                                    StrokeStartLineCap="Round"
+                                                    StrokeThickness="1.4">
+                                                    <Path.RenderTransform>
+                                                        <RotateTransform Angle="-90" CenterX="4" CenterY="2" />
+                                                    </Path.RenderTransform>
+                                                </Path>
+                                                <ContentPresenter
+                                                    Grid.Column="1"
+                                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                    Content="{TemplateBinding Content}"
+                                                    RecognizesAccessKey="True"
+                                                    TextElement.Foreground="{TemplateBinding Foreground}" />
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                                <Setter TargetName="DisclosureGlyph" Property="Stroke" Value="{DynamicResource Brush.Focus.Ring}" />
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="DisclosureGlyph" Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <RotateTransform Angle="0" CenterX="4" CenterY="2" />
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                                <ContentPresenter ContentSource="Header" />
+                            </ToggleButton>
+                            <ContentPresenter
+                                x:Name="ExpandSite"
+                                Grid.Row="1"
+                                Margin="{DynamicResource Thickness.YamlDocument.CollapsibleContent.Padding.Compact}"
+                                ContentSource="Content" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="ContainerChrome" Property="BorderBrush" Value="{DynamicResource Brush.Focus.Ring}" />
+                        </Trigger>
+                        <Trigger Property="IsExpanded" Value="False">
+                            <Setter TargetName="ExpandSite" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style x:Key="YamlDocument.ScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+
+    <Style x:Key="YamlDocument.WebComponentScrollHostStyle" TargetType="{x:Type webHost:PhialeWebComponentScrollHost}">
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Padding" Value="0" />
     </Style>

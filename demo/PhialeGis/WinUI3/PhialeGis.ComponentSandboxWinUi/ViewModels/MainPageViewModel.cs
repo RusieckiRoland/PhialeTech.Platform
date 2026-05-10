@@ -1,4 +1,4 @@
-﻿// MainPageViewModel.cs (WinUI)
+// MainPageViewModel.cs (WinUI)
 using Microsoft.UI.Xaml;
 using PhialeGis.ComponentSandboxWinUi.Core;
 using PhialeGis.Library.Abstractions.Interactions;
@@ -163,3 +163,4 @@ namespace PhialeGis.ComponentSandboxWinUi.ViewModels
         }
     }
 }
+

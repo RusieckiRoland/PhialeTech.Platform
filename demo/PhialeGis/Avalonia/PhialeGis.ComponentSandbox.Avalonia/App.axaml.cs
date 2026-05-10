@@ -132,3 +132,4 @@ namespace PhialeGis.ComponentSandbox.Avalonia
         }
     }
 }
+

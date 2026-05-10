@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using PhialeGrid.Core.Commit;
+using PhialeGrid.Core.Details;
 using PhialeGrid.Core.Editing;
 using PhialeGrid.Core.Layout;
 using PhialeGrid.Core.Presentation;
@@ -116,6 +117,7 @@ namespace PhialeGrid.Core.Rendering
                     HasHierarchyChildren = rowDef.HasHierarchyChildren,
                     IsGroupHeader = rowDef.IsGroupHeader,
                     IsLoadMore = rowDef.IsLoadMore,
+                    HasDetails = rowDef.HasDetails,
                     HasDetailsExpanded = rowDef.HasDetailsExpanded,
                     IsDetailsHost = rowDef.IsDetailsHost,
                     IsEditing = IsRecordActivelyEditing(context, rowDef.RowKey, recordState),
@@ -279,7 +281,9 @@ namespace PhialeGrid.Core.Rendering
 
                 var showSelectionCheckbox = context.MultiSelect && row.RepresentsDataRecord;
                 var showRowNumbers = context.ShowRowNumbers;
-                var stateHeaderWidth = context.RowIndicatorWidth +
+                var rowActionWidth = context.RowActionWidth;
+                var stateHeaderWidth = rowActionWidth +
+                    context.RowIndicatorWidth +
                     (context.MultiSelect ? context.SelectionCheckboxWidth : 0d);
                 var rowNumbersWidth = showRowNumbers ? context.RowMarkerWidth : 0d;
                 var isCurrentRow = context.SelectCurrentRow &&
@@ -301,6 +305,9 @@ namespace PhialeGrid.Core.Rendering
                         IsSelectionCheckboxChecked = context.CheckedRowKeys?.Contains(row.RowKey) ?? false,
                         ShowRowNumber = false,
                         RowNumberText = string.Empty,
+                        RowActionWidth = rowActionWidth,
+                        HasDetails = row.HasDetails,
+                        HasDetailsExpanded = row.HasDetailsExpanded,
                         RowIndicatorWidth = context.RowIndicatorWidth,
                         RowMarkerWidth = 0d,
                         SelectionCheckboxWidth = context.MultiSelect ? context.SelectionCheckboxWidth : 0d,
@@ -461,7 +468,11 @@ namespace PhialeGrid.Core.Rendering
                     continue;
                 }
 
-                overlays.Add(new GridOverlaySurfaceItem("details_" + rowDef.RowKey, GridOverlayKind.Custom)
+                var overlayKind = rowDef.DetailsPayload is GridRowDetailSurfacePayload
+                    ? GridOverlayKind.RowDetail
+                    : GridOverlayKind.Custom;
+
+                overlays.Add(new GridOverlaySurfaceItem("details_" + rowDef.RowKey, overlayKind)
                 {
                     TargetKey = rowDef.RowKey,
                     TargetKind = GridOverlayTargetKind.Row,

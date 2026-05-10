@@ -7,28 +7,35 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              d:DesignHeight="360"
-             d:DesignWidth="280">
+             d:DesignWidth="280"
+             Loaded="HandleValidationPanelLoaded">
     <DockPanel LastChildFill="True">
         <TextBlock DockPanel.Dock="Bottom"
                    Margin="{DynamicResource PgWorkspacePanelSectionMargin}"
                    Style="{DynamicResource PgWorkspacePanelBodyTextStyle}"
-                   Text="Fix the issue to clear validation." />
+                   Text="Fix the issue to clear the error." />
 
         <StackPanel>
-            <TextBlock Style="{DynamicResource PgWorkspacePanelHeaderTextStyle}"
-                       Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=ValidationIssueCount, StringFormat={}{0} validation issues}" />
+            <StackPanel Style="{DynamicResource PgWorkspacePanelValidationIssueSummaryPanelStyle}">
+                <Border Style="{DynamicResource PgWorkspacePanelValidationIssueIconBorderStyle}">
+                    <TextBlock Style="{DynamicResource PgWorkspacePanelValidationIssueIconTextStyle}"
+                               Text="!" />
+                </Border>
+                <TextBlock Style="{DynamicResource PgWorkspacePanelHeaderTextStyle}"
+                           Text="{Binding ValidationIssueSummaryText}" />
+            </StackPanel>
 
             <ItemsControl Margin="{DynamicResource PgWorkspacePanelContentMargin}"
-                          ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type grid:PhialeGrid}}, Path=ValidationIssueRowIds}">
+                          ItemsSource="{Binding ValidationIssueItems}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{DynamicResource PgWorkspacePanelWarningCardBorderStyle}">
+                        <Border Style="{DynamicResource PgWorkspacePanelValidationIssueCardBorderStyle}">
                             <StackPanel>
                                 <TextBlock Style="{DynamicResource PgWorkspacePanelCaptionTextStyle}"
-                                           Text="{Binding StringFormat={}Row {0}}" />
+                                           Text="{Binding Title}" />
                                 <TextBlock Margin="{DynamicResource PgWorkspacePanelInlineButtonMargin}"
                                            Style="{DynamicResource PgWorkspacePanelBodyTextStyle}"
-                                           Text="Value required" />
+                                           Text="{Binding Message}" />
                                 <Button Style="{DynamicResource PgWorkspacePanelLinkButtonStyle}"
                                         Content="Go to cell"
                                         Click="HandleGoToCellClick" />

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows.Input;
 
 namespace PhialeGis.ComponentSandboxWinUi.Core
@@ -54,3 +54,4 @@ namespace PhialeGis.ComponentSandboxWinUi.Core
         }
     }
 }
+

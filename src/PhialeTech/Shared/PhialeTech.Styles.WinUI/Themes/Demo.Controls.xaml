@@ -1,0 +1,56 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style x:Key="DemoToolbarButtonStyle" TargetType="Button">
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Background" Value="{ThemeResource DemoToolbarButtonBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource DemoToolbarButtonBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{ThemeResource DemoToolbarButtonTextBrush}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="DemoThemeComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="MinWidth" Value="140" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Background" Value="{ThemeResource DemoInputBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource DemoInputBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{ThemeResource DemoPrimaryTextBrush}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="DemoSurfaceBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource DemoPanelBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource DemoPanelBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+    </Style>
+
+    <Style x:Key="DemoCardSurfaceBorderStyle" TargetType="Border" BasedOn="{StaticResource DemoSurfaceBorderStyle}">
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="18" />
+    </Style>
+
+    <Style x:Key="DemoTokenBorderStyle" TargetType="Border">
+        <Setter Property="Margin" Value="0,0,8,8" />
+        <Setter Property="Padding" Value="8,3" />
+        <Setter Property="Background" Value="{ThemeResource DemoTokenBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource DemoTokenBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+
+    <Style x:Key="DemoCodeTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Background" Value="{ThemeResource DemoCodeBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource DemoCodeTextBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="18" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+    </Style>
+</ResourceDictionary>

@@ -43,3 +43,4 @@ namespace PhialeTech.Components.Shared.Model
         public string TargetForegroundHex { get; }
     }
 }
+

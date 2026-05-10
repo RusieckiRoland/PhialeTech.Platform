@@ -95,3 +95,4 @@ namespace PhialeTech.Shell.Tests.Presentation
         }
     }
 }
+

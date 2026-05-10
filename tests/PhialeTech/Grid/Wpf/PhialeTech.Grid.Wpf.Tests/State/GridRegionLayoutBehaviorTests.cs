@@ -16,6 +16,7 @@ using PhialeGrid.Core.Hierarchy;
 using PhialeGrid.Core.Query;
 using PhialeGrid.Core.Regions;
 using PhialeGrid.Core.State;
+using PhialeGrid.Core.Summaries;
 using PhialeTech.PhialeGrid.Wpf.Controls;
 using PhialeTech.PhialeGrid.Wpf.Surface.Presenters;
 using PhialeTech.Styles.Wpf;
@@ -77,7 +78,8 @@ namespace PhialeGrid.Wpf.Tests.State
                 grid.ApplyViewState(state);
                 FlushDispatcher(grid.Dispatcher);
 
-                var host = (FrameworkElement)grid.FindName("TopCommandBand");
+                var topCommandBand = (PhialeWorkspaceBand)grid.FindName("TopCommandBand");
+                var host = (FrameworkElement)topCommandBand;
                 Assert.That(host.Visibility, Is.EqualTo(Visibility.Collapsed));
             }
             finally
@@ -634,11 +636,12 @@ namespace PhialeGrid.Wpf.Tests.State
                 FlushDispatcher(grid.Dispatcher);
 
                 var row = (RowDefinition)grid.FindName("TopCommandStripRow");
-                var host = (FrameworkElement)grid.FindName("TopCommandBand");
-                var shell = (FrameworkElement)grid.FindName("TopCommandStripShell");
+                var topCommandBand = (PhialeWorkspaceBand)grid.FindName("TopCommandBand");
+                var host = (FrameworkElement)topCommandBand;
+                var shell = (FrameworkElement)topCommandBand.Template.FindName("WorkspaceBandShell", topCommandBand);
                 var content = (FrameworkElement)grid.FindName("TopCommandStripContentHost");
-                var toggle = (FrameworkElement)grid.FindName("TopCommandStripToggleButton");
-                var close = (Button)grid.FindName("TopCommandStripCloseButton");
+                var toggle = (FrameworkElement)topCommandBand.Template.FindName("WorkspaceBandToggleButton", topCommandBand);
+                var close = (Button)topCommandBand.Template.FindName("WorkspaceBandCloseButton", topCommandBand);
                 var expectedCloseStyle = grid.FindResource("PgRegionCloseButtonStyle");
 
                 Assert.Multiple(() =>
@@ -693,7 +696,7 @@ namespace PhialeGrid.Wpf.Tests.State
                 grid.ApplyViewState(state);
                 FlushDispatcher(grid.Dispatcher);
 
-                var topHost = (FrameworkElement)grid.FindName("TopCommandStripHost");
+                var topHost = (PhialeWorkspaceBand)grid.FindName("TopCommandBand");
                 var topWorkspaceBandHost = (FrameworkElement)grid.FindName("TopWorkspaceBandHost");
                 var surfaceHost = (FrameworkElement)grid.FindName("SurfaceTopViewportHost");
                 var sideHost = (FrameworkElement)grid.FindName("SideToolRegionHost");
@@ -758,8 +761,8 @@ namespace PhialeGrid.Wpf.Tests.State
                 var outerFrame = (Border)grid.FindName("GridOuterFrame");
                 var rootFrame = (Grid)grid.FindName("GridRootFrame");
                 var regionFrame = (Grid)grid.FindName("RegionLayoutFrame");
-                var topHost = (Grid)grid.FindName("TopCommandStripHost");
-                var topShell = (Border)grid.FindName("TopCommandStripShell");
+                var topHost = (PhialeWorkspaceBand)grid.FindName("TopCommandBand");
+                var topShell = (Border)((PhialeWorkspaceBand)topHost).Template.FindName("WorkspaceBandShell", topHost);
                 var viewportHost = (Grid)grid.FindName("SurfaceTopViewportHost");
                 var sideHost = (Grid)grid.FindName("SideToolRegionHost");
                 var sideShell = (Border)grid.FindName("SideToolRegionExpandedShell");
@@ -785,7 +788,7 @@ namespace PhialeGrid.Wpf.Tests.State
                     Assert.That(RoundedChildClipBehavior.GetClipChildToBorder(sideShell), Is.False);
                     Assert.That(rootFrame.Background, Is.SameAs(expectedBrush));
                     Assert.That(regionFrame.Background, Is.SameAs(expectedBrush));
-                    Assert.That(topHost.Background, Is.SameAs(expectedBrush));
+                    Assert.That(topHost.BandBackground, Is.SameAs(expectedBrush));
                     Assert.That(topShell.Background, Is.SameAs(expectedBrush));
                     Assert.That(viewportHost.Background, Is.SameAs(expectedBrush));
                     Assert.That(sideHost.Background, Is.SameAs(expectedBrush));
@@ -840,7 +843,7 @@ namespace PhialeGrid.Wpf.Tests.State
                 var topWorkspaceBandHost = (FrameworkElement)grid.FindName("TopWorkspaceBandHost");
                 var regionFrame = (FrameworkElement)grid.FindName("RegionLayoutFrame");
                 var surfaceHost = (FrameworkElement)grid.FindName("SurfaceTopViewportHost");
-                var topBand = (FrameworkElement)grid.FindName("TopCommandStripHost");
+                var topBand = (FrameworkElement)grid.FindName("TopCommandBand");
                 var expander = (Button)grid.FindName("SideToolRegionExpanderButton");
                 var exported = grid.ExportViewState();
                 var sideState = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion);
@@ -921,6 +924,58 @@ namespace PhialeGrid.Wpf.Tests.State
         }
 
         [Test]
+        public void ApplyViewState_WhenSummaryDesignerAndSummariesBandHaveContent_RendersThemAroundGrid()
+        {
+            var grid = CreateGrid(new object[]
+            {
+                new TestRow { Category = "Road", ObjectName = "Road 1" },
+                new TestRow { Category = "Road", ObjectName = "Road 2" },
+            });
+            grid.SummaryDesignerContent = new Border { Width = 120, Height = 80 };
+            grid.Summaries = new[]
+            {
+                new GridSummaryDescriptor("ObjectName", GridSummaryType.Count, typeof(string)),
+            };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var viewState = CreateRegionViewState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Open, 320d);
+                var summariesBand = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SummaryBottomRegion);
+                summariesBand.State = GridRegionState.Open;
+                summariesBand.Size = 56d;
+                viewState.Summaries.Add(new GridViewSummaryState
+                {
+                    ColumnId = "ObjectName",
+                    Type = GridSummaryType.Count,
+                });
+
+                grid.ApplyViewState(viewState);
+                FlushDispatcher(grid.Dispatcher);
+
+                var designerHost = (FrameworkElement)grid.FindName("SummaryDesignerRegionHost");
+                var designerContent = (FrameworkElement)grid.FindName("SummaryDesignerContentScrollViewer");
+                var summariesBandHost = (FrameworkElement)grid.FindName("SummaryBottomRegionHost");
+                var summariesBandContent = (FrameworkElement)grid.FindName("SummaryBottomRegionContentScrollViewer");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(designerHost.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(designerContent.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(summariesBandHost.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(summariesBandContent.Visibility, Is.EqualTo(Visibility.Visible));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
         public void ApplyViewState_WhenWorkspacePanelTabsAreVisible_SizesTabsToTextPlusOneAOnEachSide()
         {
             var grid = CreateGrid();
@@ -969,6 +1024,7 @@ namespace PhialeGrid.Wpf.Tests.State
             grid.SideToolContent = new Border { Width = 120, Height = 80 };
             grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
             grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+            grid.SummaryDesignerContent = new Border { Width = 120, Height = 80 };
 
             var window = CreateWindow(grid);
             try
@@ -1005,12 +1061,109 @@ namespace PhialeGrid.Wpf.Tests.State
         }
 
         [Test]
+        public void ApplyViewState_WhenSummaryDesignerIsWorkspacePanel_ShowsTheSameTabsAsOtherPanels()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border { Width = 120, Height = 80 };
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+            grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+            grid.SummaryDesignerContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var viewState = CreateRegionViewState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Open, 520d);
+                viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion).State = GridRegionState.Collapsed;
+                viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion).State = GridRegionState.Collapsed;
+                var validation = viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ValidationPanelRegion);
+                validation.State = GridRegionState.Collapsed;
+                validation.PlacementOverride = GridRegionPlacement.Right;
+
+                grid.ApplyViewState(viewState);
+                FlushDispatcher(grid.Dispatcher);
+                FlushDispatcher(grid.Dispatcher);
+
+                var shell = (Border)grid.FindName("SummaryDesignerExpandedShell");
+                var tabStrip = (FrameworkElement)grid.FindName("SummaryDesignerExpandedTabStrip");
+                var toolsTab = (Button)grid.FindName("SummaryDesignerPanelToolsTabButton");
+                var changesTab = (Button)grid.FindName("SummaryDesignerPanelChangesTabButton");
+                var validationTab = (Button)grid.FindName("SummaryDesignerPanelValidationTabButton");
+                var summaryDesignerTab = (Button)grid.FindName("SummaryDesignerPanelSummaryDesignerTabButton");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(shell.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(tabStrip.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(toolsTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(changesTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(validationTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(summaryDesignerTab.Visibility, Is.EqualTo(Visibility.Visible));
+                    Assert.That(summaryDesignerTab.Style, Is.SameAs(grid.TryFindResource("PgWorkspacePanelExpandedActiveTabButtonStyle")));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void Click_WhenWorkspacePanelsAreExpanded_CollapsesSummaryDesignerWithTheOtherPanels()
+        {
+            var grid = CreateGrid();
+            grid.SideToolContent = new Border { Width = 120, Height = 80 };
+            grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
+            grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+            grid.SummaryDesignerContent = new Border { Width = 120, Height = 80 };
+
+            var window = CreateWindow(grid);
+            try
+            {
+                window.Show();
+                FlushDispatcher(grid.Dispatcher);
+
+                var viewState = CreateRegionViewState(GridRegionKind.SideToolRegion, GridRegionState.Open, 320d);
+                viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion).State = GridRegionState.Open;
+                viewState.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SummaryDesignerRegion).State = GridRegionState.Open;
+
+                grid.ApplyViewState(viewState);
+                FlushDispatcher(grid.Dispatcher);
+
+                var expander = (Button)grid.FindName("SideToolRegionExpanderButton");
+                expander.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                FlushDispatcher(grid.Dispatcher);
+
+                var exported = grid.ExportViewState();
+                var sideTool = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SideToolRegion);
+                var changes = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.ChangePanelRegion);
+                var summaryDesigner = exported.RegionLayout.Single(region => region.RegionKind == GridRegionKind.SummaryDesignerRegion);
+                var summaryDesignerShell = (FrameworkElement)grid.FindName("SummaryDesignerExpandedShell");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(sideTool.State, Is.EqualTo(GridRegionState.Collapsed));
+                    Assert.That(changes.State, Is.EqualTo(GridRegionState.Collapsed));
+                    Assert.That(summaryDesigner.State, Is.EqualTo(GridRegionState.Collapsed));
+                    Assert.That(summaryDesignerShell.Visibility, Is.Not.EqualTo(Visibility.Visible));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
         public void ApplyViewState_WhenWorkspacePanelTabsDoNotFit_ShowsOverflowMenuForHiddenTabs()
         {
             var grid = CreateGrid();
             grid.SideToolContent = new Border { Width = 120, Height = 80 };
             grid.ChangePanelContent = new Border { Width = 120, Height = 80 };
             grid.ValidationPanelContent = new Border { Width = 120, Height = 80 };
+            grid.SummaryDesignerContent = new Border { Width = 120, Height = 80 };
 
             var window = CreateWindow(grid);
             try
@@ -1605,9 +1758,9 @@ namespace PhialeGrid.Wpf.Tests.State
                 FlushDispatcher(grid.Dispatcher);
 
                 var row = (RowDefinition)grid.FindName("GroupingRegionRow");
-                var groupingHost = (FrameworkElement)grid.FindName("GroupingRegionHost");
+                var groupingHost = (PhialeWorkspaceBand)grid.FindName("GroupingRegionHost");
                 var groupingBand = (FrameworkElement)grid.FindName("GroupingBandContentHost");
-                var close = (FrameworkElement)grid.FindName("GroupingRegionCloseButton");
+                var close = (FrameworkElement)groupingHost.Template.FindName("WorkspaceBandCloseButton", groupingHost);
 
                 Assert.Multiple(() =>
                 {
@@ -1640,17 +1793,17 @@ namespace PhialeGrid.Wpf.Tests.State
                 grid.ApplyViewState(CreateRegionViewState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d));
                 FlushDispatcher(grid.Dispatcher);
 
-                var groupingShell = (Border)grid.FindName("GroupingRegionShell");
-                var summaryShell = (Border)grid.FindName("SummaryBottomRegionShell");
+                var groupingHost = (PhialeWorkspaceBand)grid.FindName("GroupingRegionHost");
+                var summaryHost = (PhialeWorkspaceBand)grid.FindName("SummaryBottomRegionHost");
                 var statusHost = (FrameworkElement)grid.FindName("BottomStatusStripHost");
 
                 Assert.Multiple(() =>
                 {
-                    Assert.That(groupingShell.BorderThickness.Bottom, Is.EqualTo(1d));
-                    Assert.That(groupingShell.BorderThickness.Left, Is.EqualTo(0d));
-                    Assert.That(groupingShell.CornerRadius.TopLeft, Is.EqualTo(0d));
-                    Assert.That(summaryShell.BorderThickness.Top, Is.EqualTo(1d));
-                    Assert.That(summaryShell.BorderThickness.Left, Is.EqualTo(0d));
+                    Assert.That(groupingHost.BandBorderThickness.Bottom, Is.EqualTo(1d));
+                    Assert.That(groupingHost.BandBorderThickness.Left, Is.EqualTo(0d));
+                    Assert.That(groupingHost.BandCornerRadius.TopLeft, Is.EqualTo(0d));
+                    Assert.That(summaryHost.BandBorderThickness.Top, Is.EqualTo(1d));
+                    Assert.That(summaryHost.BandBorderThickness.Left, Is.EqualTo(0d));
                     Assert.That(statusHost, Is.Not.Null);
                 });
             }
@@ -1713,7 +1866,8 @@ namespace PhialeGrid.Wpf.Tests.State
                 grid.ApplyViewState(CreateRegionViewState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d));
                 FlushDispatcher(grid.Dispatcher);
 
-                var closeButton = (Button)grid.FindName("TopCommandStripCloseButton");
+                var topCommandBand = (PhialeWorkspaceBand)grid.FindName("TopCommandBand");
+                var closeButton = (Button)topCommandBand.Template.FindName("WorkspaceBandCloseButton", topCommandBand);
                 closeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 FlushDispatcher(grid.Dispatcher);
 
@@ -1983,6 +2137,7 @@ namespace PhialeGrid.Wpf.Tests.State
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.TopCommandRegion, State = GridRegionState.Open, Size = 52d, IsActive = false });
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.GroupingRegion, State = GridRegionState.Open, Size = 56d, IsActive = false });
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SummaryBottomRegion, State = GridRegionState.Open, Size = 56d, IsActive = false });
+            viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SummaryDesignerRegion, State = GridRegionState.Closed, Size = 320d, IsActive = false });
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.SideToolRegion, State = GridRegionState.Closed, Size = 320d, IsActive = false });
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.ChangePanelRegion, State = GridRegionState.Closed, Size = 320d, IsActive = false });
             viewState.RegionLayout.Add(new GridViewRegionState { RegionKind = GridRegionKind.ValidationPanelRegion, State = GridRegionState.Closed, Size = 320d, IsActive = false });
@@ -2048,3 +2203,4 @@ namespace PhialeGrid.Wpf.Tests.State
         }
     }
 }
+

@@ -262,9 +262,14 @@ namespace PhialeTech.DocumentEditor
                     _html = ReadString(root, "html");
                     _markdown = ReadString(root, "markdown");
                     _documentJson = ReadString(root, "documentJson");
-                    string nextTheme = NormalizeTheme(ReadString(root, "theme"));
-                    var themeChanged = !string.Equals(_theme, nextTheme, StringComparison.OrdinalIgnoreCase);
-                    _theme = nextTheme;
+                    var themeChanged = false;
+                    string rawTheme;
+                    if (TryReadString(root, "theme", out rawTheme))
+                    {
+                        string nextTheme = NormalizeTheme(rawTheme);
+                        themeChanged = !string.Equals(_theme, nextTheme, StringComparison.OrdinalIgnoreCase);
+                        _theme = nextTheme;
+                    }
                     _state = new DocumentEditorState
                     {
                         IsReadOnly = ReadBoolean(root, "isReadOnly"),
@@ -393,6 +398,18 @@ namespace PhialeTech.DocumentEditor
             return value.ValueKind == JsonValueKind.String
                 ? value.GetString() ?? string.Empty
                 : string.Empty;
+        }
+
+        private static bool TryReadString(JsonElement root, string propertyName, out string result)
+        {
+            result = string.Empty;
+            if (!root.TryGetProperty(propertyName, out var value) || value.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            result = value.GetString() ?? string.Empty;
+            return true;
         }
 
         private static bool ReadBoolean(JsonElement root, string propertyName)

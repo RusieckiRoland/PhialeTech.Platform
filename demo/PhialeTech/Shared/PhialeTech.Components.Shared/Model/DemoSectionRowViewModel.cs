@@ -13,3 +13,4 @@ namespace PhialeTech.Components.Shared.Model
         public IReadOnlyList<DemoExampleCardViewModel> Examples { get; }
     }
 }
+

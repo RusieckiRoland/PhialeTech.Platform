@@ -6,8 +6,52 @@
         Height="920"
         MinWidth="1280"
         MinHeight="760"
-        Background="#F3F1EC"
+        Background="{DynamicResource DemoWindowBackgroundBrush}"
         Title="{Binding AppTitle}">
+  <Window.Resources>
+    <DataTemplate x:Key="ColorTokenTemplate">
+      <Border Margin="0,0,0,10"
+              Padding="12"
+              Background="{DynamicResource DemoHintBackgroundBrush}"
+              BorderBrush="{DynamicResource DemoInputBorderBrush}"
+              BorderThickness="1"
+              CornerRadius="10">
+        <Grid ColumnDefinitions="*,78,78">
+          <StackPanel>
+            <TextBlock Text="{Binding TokenName}" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource DemoHeaderTextBrush}" />
+            <TextBlock Text="{Binding Usage}" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" TextWrapping="Wrap" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Margin="8,0,0,0">
+            <TextBlock Text="Day" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+            <Border Height="28" Margin="0,4" CornerRadius="5" BorderBrush="{DynamicResource DemoInputBorderBrush}" BorderThickness="1" Background="{Binding DayHex}" />
+            <TextBlock Text="{Binding DayHex}" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Margin="8,0,0,0">
+            <TextBlock Text="Night" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+            <Border Height="28" Margin="0,4" CornerRadius="5" BorderBrush="{DynamicResource DemoInputBorderBrush}" BorderThickness="1" Background="{Binding NightHex}" />
+            <TextBlock Text="{Binding NightHex}" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </DataTemplate>
+
+    <DataTemplate x:Key="MeasureTokenTemplate">
+      <Grid Margin="0,0,0,10" ColumnDefinitions="*,Auto">
+        <StackPanel>
+          <TextBlock Text="{Binding TokenName}" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource DemoHeaderTextBrush}" />
+          <TextBlock Text="{Binding Usage}" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" TextWrapping="Wrap" />
+        </StackPanel>
+        <Border Grid.Column="1"
+                Padding="8,3"
+                Background="{DynamicResource DemoTokenBackgroundBrush}"
+                BorderBrush="{DynamicResource DemoTokenBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+          <TextBlock Text="{Binding Value}" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+        </Border>
+      </Grid>
+    </DataTemplate>
+  </Window.Resources>
   <Grid ColumnDefinitions="296,*">
     <Border Background="#ECE8DE"
             BorderBrush="#D8D2C4"
@@ -201,18 +245,35 @@
                   BorderBrush="#D5D0C5"
                   Command="{Binding ShowOverviewCommand}"
                   Content="{Binding BackToOverviewText}" />
-          <Border Grid.Column="2"
-                  Padding="12,8"
-                  Background="#E6F4F1"
-                  BorderBrush="#B8DDD7"
-                  BorderThickness="1"
-                  CornerRadius="10">
-            <TextBlock Text="{Binding PlatformBadgeText}"
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+            <Border Padding="12,8"
+                    Background="{DynamicResource DemoPlatformBadgeBackgroundBrush}"
+                    BorderBrush="{DynamicResource DemoPlatformBadgeBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10">
+              <TextBlock Text="{Binding PlatformBadgeText}"
+                         FontFamily="Bahnschrift"
+                         FontWeight="SemiBold"
+                         FontSize="13"
+                         Foreground="{DynamicResource DemoPlatformBadgeTextBrush}" />
+            </Border>
+            <TextBlock x:Name="ThemeLabelTextBlock"
+                       VerticalAlignment="Center"
+                       Text="{Binding ThemeLabelText}"
                        FontFamily="Bahnschrift"
                        FontWeight="SemiBold"
                        FontSize="13"
-                       Foreground="#0F766E" />
-          </Border>
+                       Foreground="{DynamicResource DemoHeaderTextBrush}" />
+            <ComboBox x:Name="ThemeComboBox"
+                      Classes="demo-theme-combo"
+                      SelectionChanged="HandleThemeSelectionChanged">
+              <ComboBox.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding DisplayName}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </StackPanel>
         </Grid>
 
         <StackPanel Grid.Row="1" Margin="0,26,0,20">
@@ -324,6 +385,149 @@
                             </ItemsControl>
                           </ScrollViewer>
                         </Grid>
+                      </Border>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </ScrollViewer>
+              <ScrollViewer x:Name="FoundationsSurfaceScrollViewer"
+                            IsVisible="False"
+                            VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,20,8,0" Spacing="16">
+                  <Border Classes="demo-card-surface">
+                    <StackPanel>
+                      <TextBlock Classes="demo-section-title" Text="{Binding FoundationsIntroTitle}" />
+                      <TextBlock Text="{Binding FoundationsIntroDescription}"
+                                 FontSize="14"
+                                 Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                 TextWrapping="Wrap" />
+                      <ItemsControl Margin="0,14,0,0" ItemsSource="{Binding FoundationsHighlights}">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <WrapPanel />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Border Classes="demo-token-chip">
+                              <TextBlock Text="{Binding}"
+                                         FontSize="11"
+                                         Foreground="{DynamicResource DemoTokenTextBrush}" />
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                      <TextBlock Classes="demo-subsection-title"
+                                 Margin="0,10,0,8"
+                                 Text="Workspace playground" />
+                      <Border Background="{DynamicResource DemoHintBackgroundBrush}"
+                              BorderBrush="{DynamicResource DemoInputBorderBrush}"
+                              BorderThickness="1"
+                              CornerRadius="8"
+                              Padding="10,6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <Border Classes="demo-token-chip">
+                            <StackPanel>
+                              <TextBlock Text="Category" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource DemoHeaderTextBrush}" />
+                              <TextBlock Text="Count" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+                            </StackPanel>
+                          </Border>
+                          <Border Classes="demo-token-chip">
+                            <StackPanel>
+                              <TextBlock Text="Area [m2]" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource DemoHeaderTextBrush}" />
+                              <TextBlock Text="Sum" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+                            </StackPanel>
+                          </Border>
+                          <Border Classes="demo-token-chip">
+                            <StackPanel>
+                              <TextBlock Text="Count" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource DemoHeaderTextBrush}" />
+                              <TextBlock Text="Category530" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+                            </StackPanel>
+                          </Border>
+                        </StackPanel>
+                      </Border>
+                    </StackPanel>
+                  </Border>
+
+                  <Grid ColumnDefinitions="1.2*,16,0.85*">
+                    <Border Classes="demo-card-surface">
+                      <StackPanel>
+                        <TextBlock Classes="demo-section-title" Text="{Binding FoundationsTypographyTitle}" />
+                        <TextBlock Margin="0,0,0,14"
+                                   Text="{Binding FoundationsTypographyDescription}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                   TextWrapping="Wrap" />
+                        <ItemsControl ItemsSource="{Binding FoundationsTypographyTokens}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Border Margin="0,0,0,12"
+                                      Padding="14"
+                                      Background="{DynamicResource DemoHintBackgroundBrush}"
+                                      BorderBrush="{DynamicResource DemoInputBorderBrush}"
+                                      BorderThickness="1"
+                                      CornerRadius="10">
+                                <Grid ColumnDefinitions="260,*">
+                                  <StackPanel>
+                                    <TextBlock Text="{Binding TokenName}" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource DemoHeaderTextBrush}" />
+                                    <TextBlock Text="{Binding Role}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource DemoPrimaryTextBrush}" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Usage}" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" TextWrapping="Wrap" />
+                                  </StackPanel>
+                                  <Border Grid.Column="1"
+                                          Padding="16"
+                                          Background="{DynamicResource DemoPanelBackgroundBrush}"
+                                          BorderBrush="{DynamicResource DemoPanelBorderBrush}"
+                                          BorderThickness="1"
+                                          CornerRadius="10">
+                                    <StackPanel>
+                                      <TextBlock Text="{Binding SampleText}"
+                                                 FontFamily="{Binding FontFamily}"
+                                                 FontWeight="SemiBold"
+                                                 FontSize="{Binding FontSize}"
+                                                 Foreground="{DynamicResource DemoPrimaryTextBrush}"
+                                                 TextWrapping="Wrap" />
+                                      <TextBlock Margin="0,8,0,0" Text="{Binding StyleSummary}" FontSize="12" Foreground="{DynamicResource DemoSecondaryTextBrush}" />
+                                    </StackPanel>
+                                  </Border>
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Column="2" Spacing="16">
+                      <Border Classes="demo-card-surface">
+                        <StackPanel>
+                          <TextBlock Classes="demo-section-title" Text="{Binding FoundationsColorsTitle}" />
+                          <TextBlock Margin="0,0,0,14"
+                                     Text="{Binding FoundationsColorsDescription}"
+                                     FontSize="13"
+                                     Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                     TextWrapping="Wrap" />
+                          <TextBlock Classes="demo-subsection-title" Text="{Binding FoundationsTextColorsTitle}" />
+                          <ItemsControl ItemsSource="{Binding FoundationsTextColorTokens}" ItemTemplate="{StaticResource ColorTokenTemplate}" />
+                          <TextBlock Classes="demo-subsection-title" Margin="0,8,0,8" Text="{Binding FoundationsSurfaceColorsTitle}" />
+                          <ItemsControl ItemsSource="{Binding FoundationsSurfaceTokens}" ItemTemplate="{StaticResource ColorTokenTemplate}" />
+                          <TextBlock Classes="demo-subsection-title" Margin="0,8,0,8" Text="{Binding FoundationsAccentColorsTitle}" />
+                          <ItemsControl ItemsSource="{Binding FoundationsAccentTokens}" ItemTemplate="{StaticResource ColorTokenTemplate}" />
+                        </StackPanel>
+                      </Border>
+                      <Border Classes="demo-card-surface">
+                        <StackPanel>
+                          <TextBlock Classes="demo-section-title" Text="{Binding FoundationsRhythmTitle}" />
+                          <TextBlock Margin="0,0,0,14"
+                                     Text="{Binding FoundationsRhythmDescription}"
+                                     FontSize="13"
+                                     Foreground="{DynamicResource DemoSecondaryTextBrush}"
+                                     TextWrapping="Wrap" />
+                          <TextBlock Classes="demo-subsection-title" Text="{Binding FoundationsShapesTitle}" />
+                          <ItemsControl ItemsSource="{Binding FoundationsShapeTokens}" ItemTemplate="{StaticResource MeasureTokenTemplate}" />
+                          <TextBlock Classes="demo-subsection-title" Margin="0,8,0,8" Text="{Binding FoundationsSpacingTitle}" />
+                          <ItemsControl ItemsSource="{Binding FoundationsSpacingTokens}" ItemTemplate="{StaticResource MeasureTokenTemplate}" />
+                        </StackPanel>
                       </Border>
                     </StackPanel>
                   </Grid>

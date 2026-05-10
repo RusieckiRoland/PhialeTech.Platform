@@ -16,12 +16,23 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             InitializeComponent();
         }
 
+        private void HandleChangePanelLoaded(object sender, RoutedEventArgs e)
+        {
+            var grid = FindAncestorGrid(this);
+            if (grid == null)
+            {
+                throw new InvalidOperationException("Change panel requires a PhialeGrid ancestor.");
+            }
+
+            DataContext = grid;
+        }
+
         private void HandleGoToRowClick(object sender, RoutedEventArgs e)
         {
-            var rowId = (sender as FrameworkElement)?.DataContext as string;
-            if (string.IsNullOrWhiteSpace(rowId))
+            var change = (sender as FrameworkElement)?.DataContext as PhialeGrid.ChangePanelItem;
+            if (change == null)
             {
-                throw new InvalidOperationException("Change panel row navigation requires a row id.");
+                throw new InvalidOperationException("Change panel row navigation requires a change panel item.");
             }
 
             var grid = FindAncestorGrid(sender as DependencyObject);
@@ -30,10 +41,26 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 throw new InvalidOperationException("Change panel row navigation requires a PhialeGrid ancestor.");
             }
 
-            if (!grid.ScrollCellIntoView(rowId, "ObjectName", GridScrollAlignment.Start, setCurrentCell: true))
+            if (string.IsNullOrWhiteSpace(change.RowId) || string.IsNullOrWhiteSpace(change.NavigationColumnId))
             {
-                throw new InvalidOperationException("Change panel row navigation failed for row '" + rowId + "'.");
+                throw new InvalidOperationException("Change panel row navigation requires a row id and column id.");
             }
+
+            if (!grid.ScrollCellIntoView(change.RowId, change.NavigationColumnId, GridScrollAlignment.Start, setCurrentCell: true))
+            {
+                throw new InvalidOperationException("Change panel row navigation failed for row '" + change.RowId + "' and column '" + change.NavigationColumnId + "'.");
+            }
+        }
+
+        private void HandleChangedRowsFilterToggleClick(object sender, RoutedEventArgs e)
+        {
+            var grid = FindAncestorGrid(sender as DependencyObject);
+            if (grid == null)
+            {
+                throw new InvalidOperationException("Change panel changed rows filter requires a PhialeGrid ancestor.");
+            }
+
+            grid.ToggleChangePanelChangedRowsFilter();
         }
 
         private static PhialeGrid FindAncestorGrid(DependencyObject source)

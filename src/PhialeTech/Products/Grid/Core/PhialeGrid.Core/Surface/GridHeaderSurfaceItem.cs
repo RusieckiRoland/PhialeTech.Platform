@@ -71,6 +71,16 @@ namespace PhialeGrid.Core.Surface
         public double RowActionWidth { get; set; }
 
         /// <summary>
+        /// Czy wiersz ma rozwijany custom detail.
+        /// </summary>
+        public bool HasDetails { get; set; }
+
+        /// <summary>
+        /// Czy custom detail wiersza jest rozwinięty.
+        /// </summary>
+        public bool HasDetailsExpanded { get; set; }
+
+        /// <summary>
         /// Szerokość slotu wskaźnika wiersza.
         /// </summary>
         public double RowIndicatorWidth { get; set; }

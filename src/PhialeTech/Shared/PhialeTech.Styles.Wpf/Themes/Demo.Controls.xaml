@@ -281,4 +281,11 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="14" />
     </Style>
+
+    <Style x:Key="DemoYamlMonacoScrollHostStyle"
+           TargetType="{x:Type webHost:PhialeWebComponentScrollHost}"
+           BasedOn="{StaticResource {x:Type webHost:PhialeWebComponentScrollHost}}">
+        <Setter Property="CornerRadius" Value="{DynamicResource CornerRadius.Grid.RegionSurface}" />
+        <Setter Property="ViewportPadding" Value="{DynamicResource Thickness.WebComponentScrollHost.ViewportPadding}" />
+    </Style>
 </ResourceDictionary>

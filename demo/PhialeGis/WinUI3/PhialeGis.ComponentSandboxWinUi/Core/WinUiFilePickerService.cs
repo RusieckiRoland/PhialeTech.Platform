@@ -1,4 +1,4 @@
-﻿// Services/WinUiFilePickerService.cs
+// Services/WinUiFilePickerService.cs
 using Microsoft.UI.Xaml;
 using System;
 using System.IO;
@@ -37,3 +37,4 @@ namespace PhialeGis.ComponentSandboxWinUi.Core
         }
     }
 }
+

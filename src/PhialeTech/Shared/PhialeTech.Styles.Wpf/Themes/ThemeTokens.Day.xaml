@@ -26,6 +26,9 @@
     <Color x:Key="Color.Warning.Fill">#FDF6E3</Color>
     <Color x:Key="Color.Warning.Border">#F59E0B</Color>
     <Color x:Key="Color.Warning.Text">#92400E</Color>
+    <Color x:Key="Color.Review.Fill">#EFF6FF</Color>
+    <Color x:Key="Color.Review.Border">#93C5FD</Color>
+    <Color x:Key="Color.Review.Text">#1D4ED8</Color>
     <Color x:Key="Color.Danger.Fill">#FEECEC</Color>
     <Color x:Key="Color.Danger.Border">#DC2626</Color>
     <Color x:Key="Color.Danger.Text">#8B1D1D</Color>
@@ -165,7 +168,17 @@
     <Thickness x:Key="Thickness.FormShell.ErrorBorderThickness">1</Thickness>
     <Thickness x:Key="Thickness.FormShell.ErrorPadding">16</Thickness>
     <Thickness x:Key="Thickness.FormShell.RootBorderThickness">1</Thickness>
+    <Thickness x:Key="Thickness.YamlDocument.Container.BorderThickness">1</Thickness>
+    <Thickness x:Key="Thickness.YamlDocument.Container.Padding">16</Thickness>
+    <Thickness x:Key="Thickness.YamlDocument.Container.Padding.Compact">12</Thickness>
+    <Thickness x:Key="Thickness.YamlDocument.CollapsibleHeader.Padding">16,12</Thickness>
+    <Thickness x:Key="Thickness.YamlDocument.CollapsibleHeader.Padding.Compact">12,10</Thickness>
+    <Thickness x:Key="Thickness.YamlDocument.CollapsibleSummary.Margin">14,0,0,0</Thickness>
+    <Thickness x:Key="Thickness.YamlDocument.CollapsibleContent.Padding">16,0,16,16</Thickness>
+    <Thickness x:Key="Thickness.YamlDocument.CollapsibleContent.Padding.Compact">12,0,12,12</Thickness>
     <CornerRadius x:Key="CornerRadius.FormShell.Root">18</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.YamlDocument.Container">12</CornerRadius>
+    <CornerRadius x:Key="CornerRadius.YamlDocument.Container.Compact">10</CornerRadius>
     <sys:Double x:Key="Size.FormShell.ActionButton.VerticalMinWidth">132</sys:Double>
     <SolidColorBrush x:Key="Brush.ComponentHost.Overlay.Scrim" Color="#A6E7EDF7" />
     <SolidColorBrush x:Key="Brush.ComponentHost.Overlay.Highlight" Color="#6EFFFFFF" />
@@ -249,6 +262,7 @@
     <Thickness x:Key="Thickness.Shell.StatusBar.BorderThickness">1,1,0,0</Thickness>
     <Thickness x:Key="Thickness.Shell.StatusItem.Margin">0,0,18,0</Thickness>
     <Thickness x:Key="Thickness.Shell.StatusItem.LabelMargin">0,0,6,0</Thickness>
+    <Thickness x:Key="Thickness.WebComponentScrollHost.ViewportPadding">1</Thickness>
     <CornerRadius x:Key="CornerRadius.Shell.Window.Root">14</CornerRadius>
     <CornerRadius x:Key="CornerRadius.Shell.CommandButton">8</CornerRadius>
     <CornerRadius x:Key="CornerRadius.Shell.NavigationButton">10</CornerRadius>

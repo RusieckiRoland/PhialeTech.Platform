@@ -84,6 +84,11 @@ namespace PhialeGrid.Core.Regions.Tests
                 Assert.That(definitions[GridRegionKind.SummaryBottomRegion].Placement, Is.EqualTo(GridRegionPlacement.Bottom));
                 Assert.That(definitions[GridRegionKind.SummaryBottomRegion].ContentKind, Is.EqualTo(GridRegionContentKind.Summary));
 
+                Assert.That(definitions[GridRegionKind.SummaryDesignerRegion].HostKind, Is.EqualTo(GridRegionHostKind.WorkspacePanel));
+                Assert.That(definitions[GridRegionKind.SummaryDesignerRegion].Placement, Is.EqualTo(GridRegionPlacement.Right));
+                Assert.That(definitions[GridRegionKind.SummaryDesignerRegion].ContentKind, Is.EqualTo(GridRegionContentKind.ToolPane));
+
+
                 Assert.That(definitions[GridRegionKind.SideToolRegion].HostKind, Is.EqualTo(GridRegionHostKind.WorkspacePanel));
                 Assert.That(definitions[GridRegionKind.SideToolRegion].Placement, Is.EqualTo(GridRegionPlacement.Right));
                 Assert.That(definitions[GridRegionKind.SideToolRegion].ContentKind, Is.EqualTo(GridRegionContentKind.ToolPane));
@@ -224,6 +229,7 @@ namespace PhialeGrid.Core.Regions.Tests
                 new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
                 new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                 new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false ),
+                new GridRegionLayoutState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Closed, 320d, false),
                 new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 360d, true),
                 new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
                 new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
@@ -263,6 +269,7 @@ namespace PhialeGrid.Core.Regions.Tests
                     new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
                     new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                     new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false),
+                    new GridRegionLayoutState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Closed, 320d, false),
                     new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Closed, 320d, false),
                     new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
                     new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
@@ -277,6 +284,7 @@ namespace PhialeGrid.Core.Regions.Tests
                         new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
                         new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                         new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Collapsed, 56d, false ),
+                        new GridRegionLayoutState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Closed, 320d, false),
                         new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 320d, false),
                         new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
                         new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
@@ -336,6 +344,7 @@ namespace PhialeGrid.Core.Regions.Tests
                 new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
                 new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                 new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false ),
+                new GridRegionLayoutState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Closed, 320d, false),
                 new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 420d, true),
                 new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
                 new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
@@ -406,6 +415,7 @@ namespace PhialeGrid.Core.Regions.Tests
         }
     }
 }
+
 
 
 

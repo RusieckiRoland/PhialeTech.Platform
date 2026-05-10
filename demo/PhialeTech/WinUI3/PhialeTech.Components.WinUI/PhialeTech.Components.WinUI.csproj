@@ -17,9 +17,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\Grid\Platforms\WinUI3\PhialeGrid.WinUI\PhialeGrid.WinUI.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\MonacoEditor\Platforms\WinUI3\PhialeTech.MonacoEditor.WinUI\PhialeTech.MonacoEditor.WinUI.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\PdfViewer\Platforms\WinUI3\PhialeTech.PdfViewer.WinUI\PhialeTech.PdfViewer.WinUI.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\ReportDesigner\Platforms\WinUI3\PhialeTech.ReportDesigner.WinUI\PhialeTech.ReportDesigner.WinUI.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\Platforms\WinUI3\PhialeTech.WebHost.WinUI\PhialeTech.WebHost.WinUI.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.Styles.WinUI\PhialeTech.Styles.WinUI.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.WebAssets\PhialeTech.WebAssets.csproj" />
     <ProjectReference Include="..\..\Shared\PhialeTech.Components.Shared\PhialeTech.Components.Shared.csproj" />
   </ItemGroup>
@@ -37,6 +39,12 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\src\PhialeGis\Core\PhialeGis.WebAssets\Assets\Monaco\**\*">
+      <Link>Assets\Monaco\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>

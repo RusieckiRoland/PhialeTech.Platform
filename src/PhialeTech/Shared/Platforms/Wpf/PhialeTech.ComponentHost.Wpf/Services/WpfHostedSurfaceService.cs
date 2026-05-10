@@ -70,7 +70,7 @@ namespace PhialeTech.ComponentHost.Wpf.Services
                 }
                 catch (Exception ex)
                 {
-                    _currentContent = BuildFailureContent(ex);
+                    _currentContent = BuildFailureContent(ex, _manager);
                 }
             }
 
@@ -87,19 +87,45 @@ namespace PhialeTech.ComponentHost.Wpf.Services
             _currentContent = null;
         }
 
-        private static FrameworkElement BuildFailureContent(Exception ex)
+        private static FrameworkElement BuildFailureContent(Exception ex, IHostedSurfaceManager manager)
         {
-            return new Border
+            var message = new TextBlock
+            {
+                Text = ex == null ? "Unknown hosted surface failure." : ex.Message,
+                TextWrapping = TextWrapping.Wrap,
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            message.SetResourceReference(TextBlock.ForegroundProperty, "Brush.Danger.Text");
+
+            var closeButton = new Button
+            {
+                Name = "HostedSurfaceFailureCloseButton",
+                Content = "Close",
+                HorizontalAlignment = HorizontalAlignment.Right,
+                MinWidth = 88,
+                Margin = new Thickness(16, 0, 0, 0)
+            };
+            closeButton.Click += (sender, args) => manager?.TryDismissCurrent(HostedSurfaceCommandIds.Dismiss);
+            closeButton.SetResourceReference(FrameworkElement.StyleProperty, "Button.Secondary");
+
+            var layout = new Grid();
+            layout.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            layout.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            layout.Children.Add(message);
+            Grid.SetColumn(closeButton, 1);
+            layout.Children.Add(closeButton);
+
+            var border = new Border
             {
                 Padding = new Thickness(18),
-                Child = new TextBlock
-                {
-                    Text = ex == null ? "Unknown hosted surface failure." : ex.Message,
-                    TextWrapping = TextWrapping.Wrap,
-                    Foreground = System.Windows.Media.Brushes.IndianRed,
-                    FontSize = 13,
-                }
+                Child = layout
             };
+            border.SetResourceReference(Border.BackgroundProperty, "Brush.ComponentHost.Sheet.Background");
+            border.SetResourceReference(Border.BorderBrushProperty, "Brush.ComponentHost.Sheet.Border");
+            border.BorderThickness = new Thickness(1);
+
+            return border;
         }
     }
 }

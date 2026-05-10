@@ -28,8 +28,14 @@ namespace PhialeTech.WebHost.WinUI.Controls
 
         public PhialeWebComponentHost(WebComponentHostOptions options)
         {
-            _root = new Grid();
+            _root = new Grid
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
             Content = _root;
+            HorizontalAlignment = HorizontalAlignment.Stretch;
+            VerticalAlignment = VerticalAlignment.Stretch;
             IsTabStop = true;
 
             _bridge = new WinUiWebComponentPlatformBridge(_root, DispatcherQueue);
@@ -127,7 +133,11 @@ namespace PhialeTech.WebHost.WinUI.Controls
                     if (IsInitialized || _disposed)
                         return;
 
-                    _webView = new WebView2();
+                    _webView = new WebView2
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        VerticalAlignment = VerticalAlignment.Stretch
+                    };
                     _host.Children.Clear();
                     _host.Children.Add(_webView);
 

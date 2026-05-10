@@ -1,8 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using System;
 using System.ComponentModel;
+using System.Linq;
+using PhialeTech.Components.Shared.Model;
 using PhialeTech.Components.Shared.Services;
 using PhialeTech.Components.Shared.ViewModels;
 
@@ -30,6 +34,8 @@ public partial class MainWindow : Window
         _viewModel = new DemoShellViewModel("Avalonia", definitionManager: _applicationServices.DefinitionManager);
         _viewModel.PropertyChanged += HandleViewModelPropertyChanged;
         DataContext = _viewModel;
+        InitializeThemeSelector();
+        ApplySelectedTheme();
         RefreshWebComponentSurface();
         Closed += HandleClosed;
     }
@@ -62,6 +68,13 @@ public partial class MainWindow : Window
         if (e.PropertyName == nameof(DemoShellViewModel.LanguageCode) ||
             e.PropertyName == nameof(DemoShellViewModel.SelectedThemeCode))
         {
+            if (e.PropertyName == nameof(DemoShellViewModel.SelectedThemeCode))
+            {
+                ApplySelectedTheme();
+            }
+
+            SyncThemeSelector();
+
             if (_reportDesignerShowcaseView != null)
             {
                 _ = _reportDesignerShowcaseView.ApplyEnvironmentAsync(_viewModel.LanguageCode, ResolveReportDesignerTheme());
@@ -72,7 +85,9 @@ public partial class MainWindow : Window
     private void RefreshWebComponentSurface()
     {
         var shouldShowWebComponents = _viewModel.ShowWebComponentsSurface;
-        DefaultDemoSurfaceScrollViewer.IsVisible = !shouldShowWebComponents;
+        var shouldShowFoundations = _viewModel.ShowFoundationsSurface;
+        DefaultDemoSurfaceScrollViewer.IsVisible = !shouldShowWebComponents && !shouldShowFoundations;
+        FoundationsSurfaceScrollViewer.IsVisible = shouldShowFoundations;
         WebHostSurfaceContainer.IsVisible = shouldShowWebComponents;
 
         if (!shouldShowWebComponents)
@@ -150,4 +165,83 @@ public partial class MainWindow : Window
 
         return Application.Current?.ActualThemeVariant == ThemeVariant.Dark ? "dark" : "light";
     }
+
+    private void InitializeThemeSelector()
+    {
+        ThemeComboBox.ItemsSource = _viewModel.ThemeOptions;
+        SyncThemeSelector();
+    }
+
+    private void SyncThemeSelector()
+    {
+        var selectedTheme = _viewModel.ThemeOptions.FirstOrDefault(option =>
+            string.Equals(option.Code, _viewModel.SelectedThemeCode, StringComparison.OrdinalIgnoreCase));
+        if (!ReferenceEquals(ThemeComboBox.SelectedItem, selectedTheme))
+        {
+            ThemeComboBox.SelectedItem = selectedTheme;
+        }
+    }
+
+    private void HandleThemeSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (ThemeComboBox.SelectedItem is DemoThemeOption selectedTheme)
+        {
+            _viewModel.SelectedThemeCode = selectedTheme.Code;
+        }
+    }
+
+    private void ApplySelectedTheme()
+    {
+        var selectedTheme = _viewModel.SelectedThemeCode;
+        if (string.Equals(selectedTheme, "night", StringComparison.OrdinalIgnoreCase))
+        {
+            Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+            ApplyThemeDictionary("Demo.Theme.Night.axaml");
+            return;
+        }
+
+        if (string.Equals(selectedTheme, "day", StringComparison.OrdinalIgnoreCase))
+        {
+            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+            ApplyThemeDictionary("Demo.Theme.Day.axaml");
+            return;
+        }
+
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
+        ApplyThemeDictionary(Application.Current.ActualThemeVariant == ThemeVariant.Dark
+            ? "Demo.Theme.Night.axaml"
+            : "Demo.Theme.Day.axaml");
+    }
+
+    private static void ApplyThemeDictionary(string themeFileName)
+    {
+        if (Application.Current == null)
+        {
+            return;
+        }
+
+        var styles = Application.Current.Styles;
+        var existing = styles.OfType<StyleInclude>().FirstOrDefault(style =>
+            style.Source?.OriginalString.Contains("/Themes/Demo.Theme.", StringComparison.OrdinalIgnoreCase) == true);
+        var replacement = new StyleInclude(new Uri("avares://PhialeTech.Components.Avalonia/App.axaml"))
+        {
+            Source = new Uri("avares://PhialeTech.Styles.Avalonia/Themes/" + themeFileName),
+        };
+
+        if (existing == null)
+        {
+            styles.Insert(Math.Min(1, styles.Count), replacement);
+            return;
+        }
+
+        if (string.Equals(existing.Source?.OriginalString, replacement.Source.OriginalString, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var index = styles.IndexOf(existing);
+        styles.RemoveAt(index);
+        styles.Insert(index, replacement);
+    }
 }
+

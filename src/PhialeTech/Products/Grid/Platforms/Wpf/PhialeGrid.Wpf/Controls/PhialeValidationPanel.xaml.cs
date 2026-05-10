@@ -16,12 +16,23 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             InitializeComponent();
         }
 
+        private void HandleValidationPanelLoaded(object sender, RoutedEventArgs e)
+        {
+            var grid = FindAncestorGrid(this);
+            if (grid == null)
+            {
+                throw new InvalidOperationException("Validation panel requires a PhialeGrid ancestor.");
+            }
+
+            DataContext = grid;
+        }
+
         private void HandleGoToCellClick(object sender, RoutedEventArgs e)
         {
-            var rowId = (sender as FrameworkElement)?.DataContext as string;
-            if (string.IsNullOrWhiteSpace(rowId))
+            var issue = (sender as FrameworkElement)?.DataContext as PhialeGrid.ValidationIssuePanelItem;
+            if (issue == null)
             {
-                throw new InvalidOperationException("Validation panel cell navigation requires a row id.");
+                throw new InvalidOperationException("Validation panel cell navigation requires a validation issue item.");
             }
 
             var grid = FindAncestorGrid(sender as DependencyObject);
@@ -30,15 +41,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 throw new InvalidOperationException("Validation panel cell navigation requires a PhialeGrid ancestor.");
             }
 
-            var columnId = grid.GetPrimaryValidationColumnId(rowId);
-            if (string.IsNullOrWhiteSpace(columnId))
+            if (string.IsNullOrWhiteSpace(issue.RowId) || string.IsNullOrWhiteSpace(issue.ColumnId))
             {
-                throw new InvalidOperationException("Validation panel cell navigation requires a validation column for row '" + rowId + "'.");
+                throw new InvalidOperationException("Validation panel cell navigation requires a row id and column id.");
             }
 
-            if (!grid.ScrollCellIntoView(rowId, columnId, GridScrollAlignment.Start, setCurrentCell: true))
+            if (!grid.ScrollCellIntoView(issue.RowId, issue.ColumnId, GridScrollAlignment.Start, setCurrentCell: true))
             {
-                throw new InvalidOperationException("Validation panel cell navigation failed for row '" + rowId + "' and column '" + columnId + "'.");
+                throw new InvalidOperationException("Validation panel cell navigation failed for row '" + issue.RowId + "' and column '" + issue.ColumnId + "'.");
             }
         }
 

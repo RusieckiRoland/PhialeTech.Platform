@@ -107,6 +107,19 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
 
             var columnIndex = 0;
 
+            if (headerData.RowActionWidth > 0d)
+            {
+                host.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(System.Math.Max(0d, headerData.RowActionWidth)) });
+                var detailsSlot = CreateSlotBorder(headerData.IsCurrentRow);
+                AutomationProperties.SetAutomationId(detailsSlot, "surface.row-detail-toggle." + headerData.HeaderKey);
+                AutomationProperties.SetName(detailsSlot, headerData.HasDetailsExpanded ? "Collapse row detail" : "Expand row detail");
+                detailsSlot.Child = headerData.HasDetails
+                    ? BuildDetailToggleGlyph(headerData.HasDetailsExpanded)
+                    : (FrameworkElement)new Border { Background = Brushes.Transparent };
+                Grid.SetColumn(detailsSlot, columnIndex++);
+                host.Children.Add(detailsSlot);
+            }
+
             if (headerData.RowIndicatorWidth > 0d)
             {
                 host.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(System.Math.Max(0d, headerData.RowIndicatorWidth)) });
@@ -144,6 +157,22 @@ namespace PhialeTech.PhialeGrid.Wpf.Surface.Presenters
             }
 
             return host;
+        }
+
+        private static FrameworkElement BuildDetailToggleGlyph(bool isExpanded)
+        {
+            var text = new TextBlock
+            {
+                Text = isExpanded ? "-" : "+",
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
+                IsHitTestVisible = false,
+            };
+            text.SetResourceReference(TextBlock.ForegroundProperty, "PgAccentBrush");
+            return text;
         }
 
         private static void AttachIndicatorClickPopupBehavior(Border indicatorSlot, string toolTipText)

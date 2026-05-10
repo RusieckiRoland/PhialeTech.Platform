@@ -25,3 +25,4 @@ namespace PhialeTech.Components.Shared.Model
         public bool OpensDirectly { get; }
     }
 }
+

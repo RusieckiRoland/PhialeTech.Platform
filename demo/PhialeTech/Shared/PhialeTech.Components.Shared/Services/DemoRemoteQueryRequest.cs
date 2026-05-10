@@ -31,3 +31,4 @@ namespace PhialeTech.Components.Shared.Services
         public int RefreshGeneration { get; }
     }
 }
+

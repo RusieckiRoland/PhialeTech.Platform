@@ -1,4 +1,4 @@
-﻿// Services/WinUiSecondaryViewService.cs
+// Services/WinUiSecondaryViewService.cs
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using PhialeGis.ComponentSandboxWinUi.ViewModels;
@@ -29,3 +29,4 @@ namespace PhialeGis.ComponentSandboxWinUi.Core
         }
     }
 }
+

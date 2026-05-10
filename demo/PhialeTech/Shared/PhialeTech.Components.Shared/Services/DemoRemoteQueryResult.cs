@@ -31,3 +31,4 @@ namespace PhialeTech.Components.Shared.Services
         public IReadOnlyList<DemoGisRecordViewModel> Items { get; }
     }
 }
+

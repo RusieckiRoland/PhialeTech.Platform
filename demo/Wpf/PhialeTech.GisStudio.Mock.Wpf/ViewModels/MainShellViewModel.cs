@@ -653,3 +653,4 @@ public sealed class MainShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsPrintInspectorSelected));
     }
 }
+

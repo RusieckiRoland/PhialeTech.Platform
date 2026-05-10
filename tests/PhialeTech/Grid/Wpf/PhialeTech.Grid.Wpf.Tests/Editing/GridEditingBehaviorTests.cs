@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -15,12 +16,14 @@ using NUnit.Framework;
 using PhialeGrid.Core;
 using PhialeGrid.Core.Columns;
 using PhialeGrid.Core.Query;
+using PhialeGrid.Core.Regions;
 using PhialeGrid.Localization;
 using PhialeTech.Components.Shared.Model;
 using PhialeTech.Components.Shared.ViewModels;
 using PhialeTech.Components.Wpf;
 using PhialeTech.PhialeGrid.Wpf.Controls;
 using PhialeTech.PhialeGrid.Wpf.Controls.Editing;
+using PhialeTech.PhialeGrid.Wpf.Surface;
 using PhialeTech.PhialeGrid.Wpf.Surface.Presenters;
 using PhialeGrid.Wpf.Tests.Surface;
 using WpfGrid = PhialeTech.PhialeGrid.Wpf.Controls.PhialeGrid;
@@ -134,6 +137,355 @@ namespace PhialeGrid.Wpf.Tests.Editing
                 Assert.That(grid.HasValidationIssues, Is.True);
                 Assert.That(grid.PendingEditBannerText, Does.Contain("validation").IgnoreCase);
             });
+        }
+
+        [Test]
+        public void ChangePanelItems_WhenRowsHavePendingEdits_ExposeSummaryCardsAndNavigationTargets()
+        {
+            var grid = new WpfGrid
+            {
+                LanguageDirectory = GetLanguageDirectory(),
+                Width = 900,
+                Height = 600,
+            };
+            var row1 = CreateRow("GIS-1", "Valve A", "Operations");
+            var row2 = CreateRow("GIS-2", "Valve B", "Infrastructure");
+            grid.ItemsSource = new[] { row1, row2 };
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 900, height: 600);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.That(grid.EditSessionContext.TrySetFieldValue(row2.ObjectId, nameof(DemoGisRecordViewModel.Owner), "Field team"), Is.True);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var item = grid.ChangePanelItems.Single();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(grid.ChangeSummaryText, Is.EqualTo("1 changed row"));
+                    Assert.That(item.RowId, Is.EqualTo(row2.ObjectId));
+                    Assert.That(item.NavigationColumnId, Is.EqualTo("ObjectName"));
+                    Assert.That(item.Title, Is.EqualTo("Row 2"));
+                    Assert.That(item.Description, Is.EqualTo("Valve B"));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ChangePanel_WhenHostedAsWorkspaceContent_RendersSummaryAndCardText()
+        {
+            var grid = new WpfGrid
+            {
+                LanguageDirectory = GetLanguageDirectory(),
+                Width = 900,
+                Height = 600,
+                ChangePanelContent = new PhialeChangePanel(),
+            };
+            var row = CreateRow("GIS-2", "Valve B", "Infrastructure");
+            grid.ItemsSource = new[] { row };
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 900, height: 600);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.That(grid.EditSessionContext.TrySetFieldValue(row.ObjectId, nameof(DemoGisRecordViewModel.Owner), "Field team"), Is.True);
+                grid.OpenWorkspacePanel(GridRegionKind.ChangePanelRegion);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var visibleTexts = GridSurfaceTestHost.FindVisualChildren<TextBlock>(grid)
+                    .Select(block => block.Text)
+                    .Where(text => !string.IsNullOrWhiteSpace(text))
+                    .ToArray();
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(visibleTexts, Does.Contain("1 changed row"));
+                    Assert.That(visibleTexts, Does.Contain("Row 1"));
+                    Assert.That(visibleTexts, Does.Contain("Valve B"));
+                    Assert.That(GridSurfaceTestHost.FindVisualChildren<Button>(grid).Any(button => Equals(button.Content, "Go to row")), Is.True);
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ChangePanelFilter_WhenToggledByButton_FiltersRowsAndClearsWhenPanelIsHidden()
+        {
+            var grid = new WpfGrid
+            {
+                LanguageDirectory = GetLanguageDirectory(),
+                Width = 900,
+                Height = 600,
+                ChangePanelContent = new PhialeChangePanel(),
+                ValidationPanelContent = new PhialeValidationPanel(),
+            };
+            var row1 = CreateRow("GIS-1", "Valve A", "Operations");
+            var row2 = CreateRow("GIS-2", "Valve B", "Infrastructure");
+            var row3 = CreateRow("GIS-3", "Valve C", "Field");
+            grid.ItemsSource = new[] { row1, row2, row3 };
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 900, height: 600);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.That(grid.EditSessionContext.TrySetFieldValue(row1.ObjectId, nameof(DemoGisRecordViewModel.Owner), "Field team"), Is.True);
+                Assert.That(grid.EditSessionContext.TrySetFieldValue(row3.ObjectId, nameof(DemoGisRecordViewModel.Owner), "Depot"), Is.True);
+                grid.OpenWorkspacePanel(GridRegionKind.ChangePanelRegion);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var toggleButton = GridSurfaceTestHost.FindVisualChildren<Button>(grid)
+                    .FirstOrDefault(button => Equals(button.Content, "Show only changed rows"));
+                Assert.That(toggleButton, Is.Not.Null);
+
+                toggleButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(grid.IsChangePanelChangedRowsFilterActive, Is.True);
+                    Assert.That(CountVisibleDataRows(grid), Is.EqualTo(2));
+                    Assert.That(GridSurfaceTestHost.FindVisualChildren<Button>(grid).Any(button => Equals(button.Content, "Show all rows")), Is.True);
+                });
+
+                grid.OpenWorkspacePanel(GridRegionKind.ValidationPanelRegion);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(grid.IsChangePanelChangedRowsFilterActive, Is.False);
+                    Assert.That(CountVisibleDataRows(grid), Is.EqualTo(3));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ChangePanelFilter_WhenChangePanelIsClosed_RestoresAllRows()
+        {
+            var grid = new WpfGrid
+            {
+                LanguageDirectory = GetLanguageDirectory(),
+                Width = 900,
+                Height = 600,
+                ChangePanelContent = new PhialeChangePanel(),
+            };
+            var row1 = CreateRow("GIS-1", "Valve A", "Operations");
+            var row2 = CreateRow("GIS-2", "Valve B", "Infrastructure");
+            var row3 = CreateRow("GIS-3", "Valve C", "Field");
+            grid.ItemsSource = new[] { row1, row2, row3 };
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 900, height: 600);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.That(grid.EditSessionContext.TrySetFieldValue(row1.ObjectId, nameof(DemoGisRecordViewModel.Owner), "Field team"), Is.True);
+                Assert.That(grid.EditSessionContext.TrySetFieldValue(row3.ObjectId, nameof(DemoGisRecordViewModel.Owner), "Depot"), Is.True);
+                grid.OpenWorkspacePanel(GridRegionKind.ChangePanelRegion);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var toggleButton = GridSurfaceTestHost.FindVisualChildren<Button>(grid)
+                    .FirstOrDefault(button => Equals(button.Content, "Show only changed rows"));
+                Assert.That(toggleButton, Is.Not.Null);
+                toggleButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                GridSurfaceTestHost.FlushDispatcher(grid);
+                Assert.That(CountVisibleDataRows(grid), Is.EqualTo(2));
+
+                grid.SetRegionVisibility(GridRegionKind.ChangePanelRegion, false);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(grid.IsChangePanelChangedRowsFilterActive, Is.False);
+                    Assert.That(CountVisibleDataRows(grid), Is.EqualTo(3));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ChangePanelFilter_WhenShowAllRowsIsClicked_RestoresAllRowsAndLeavesViewportAtTop()
+        {
+            var grid = new WpfGrid
+            {
+                LanguageDirectory = GetLanguageDirectory(),
+                Width = 900,
+                Height = 600,
+                ChangePanelContent = new PhialeChangePanel(),
+            };
+            var rows = Enumerable.Range(1, 12)
+                .Select(index => CreateRow("GIS-" + index.ToString(CultureInfo.InvariantCulture), "Valve " + index.ToString(CultureInfo.InvariantCulture), "Operations"))
+                .ToArray();
+            grid.ItemsSource = rows;
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 900, height: 600);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.That(grid.EditSessionContext.TrySetFieldValue(rows[4].ObjectId, nameof(DemoGisRecordViewModel.Owner), "Field team"), Is.True);
+                Assert.That(grid.EditSessionContext.TrySetFieldValue(rows[9].ObjectId, nameof(DemoGisRecordViewModel.Owner), "Depot"), Is.True);
+                grid.OpenWorkspacePanel(GridRegionKind.ChangePanelRegion);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var showOnlyButton = GridSurfaceTestHost.FindVisualChildren<Button>(grid)
+                    .FirstOrDefault(button => Equals(button.Content, "Show only changed rows"));
+                Assert.That(showOnlyButton, Is.Not.Null);
+                showOnlyButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(grid.IsChangePanelChangedRowsFilterActive, Is.True);
+                    Assert.That(CountVisibleDataRows(grid), Is.EqualTo(2));
+                });
+
+                var showAllButton = GridSurfaceTestHost.FindVisualChildren<Button>(grid)
+                    .FirstOrDefault(button => Equals(button.Content, "Show all rows"));
+                Assert.That(showAllButton, Is.Not.Null);
+                showAllButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var surfaceHost = GridSurfaceTestHost.FindVisualChildren<GridSurfaceHost>(grid).First();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(grid.IsChangePanelChangedRowsFilterActive, Is.False);
+                    Assert.That(grid.ChangePanelRowsFilterToggleText, Is.EqualTo("Show only changed rows"));
+                    Assert.That(CountVisibleDataRows(grid), Is.EqualTo(rows.Length));
+                    Assert.That(surfaceHost.CurrentSnapshot.ViewportState.VerticalOffset, Is.EqualTo(0d));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ValidationIssueItems_WhenCommitFindsInvalidCell_ExposePanelCardDetailsAndNavigationTarget()
+        {
+            var grid = new WpfGrid();
+            grid.LanguageDirectory = GetLanguageDirectory();
+            var row = CreateRow("GIS-2", "Valve B", "Infrastructure");
+            grid.ItemsSource = new[] { row };
+
+            Assert.That(grid.EditSessionContext.TrySetFieldValue(row.ObjectId, nameof(DemoGisRecordViewModel.Owner), string.Empty), Is.True);
+
+            grid.CommitEdits();
+
+            var item = grid.ValidationIssueItems.Single();
+            Assert.Multiple(() =>
+            {
+                Assert.That(item.RowId, Is.EqualTo(row.ObjectId));
+                Assert.That(item.ColumnId, Is.EqualTo(nameof(DemoGisRecordViewModel.Owner)));
+                Assert.That(item.ColumnDisplayName, Is.EqualTo("Owner"));
+                Assert.That(item.Message, Is.EqualTo("Owner is required."));
+                Assert.That(item.Title, Is.EqualTo("Row GIS-2 - Owner"));
+            });
+        }
+
+        [Test]
+        public void ValidationIssueCount_WhenInvalidCellIsVisible_CountsPanelIssueOnce()
+        {
+            const string invalidRowId = "BLD-WRO-FAB-0002";
+            var viewModel = new DemoShellViewModel("Wpf");
+            var grid = CreateBoundDemoGrid(viewModel);
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 1400, height: 760);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                viewModel.SelectExample("editing");
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.That(grid.SetRowValueForDemo(invalidRowId, "ObjectName", "Building Fabryczna 2 (edited)"), Is.True);
+                Assert.That(grid.SetRowValueForDemo(invalidRowId, "Owner", string.Empty), Is.True);
+                Assert.That(grid.FocusRow(invalidRowId, "Owner"), Is.True);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var surfaceHost = GridSurfaceTestHost.FindSurfaceHost(grid);
+                var invalidCell = surfaceHost.CurrentSnapshot.Cells.First(cell =>
+                    string.Equals(cell.RowKey, invalidRowId, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(cell.ColumnKey, "Owner", StringComparison.OrdinalIgnoreCase));
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(invalidCell.HasValidationError, Is.True);
+                    Assert.That(grid.ValidationIssueItems, Has.Count.EqualTo(1));
+                    Assert.That(grid.ValidationIssueCount, Is.EqualTo(grid.ValidationIssueItems.Count));
+                    Assert.That(grid.ValidationIssueSummaryText, Is.EqualTo("1 validation issue"));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void ValidationPanel_WhenHostedAsWorkspaceContent_RendersIssueSummaryAndCardText()
+        {
+            var grid = new WpfGrid
+            {
+                LanguageDirectory = GetLanguageDirectory(),
+                Width = 900,
+                Height = 600,
+                ValidationPanelContent = new PhialeValidationPanel(),
+            };
+            var row = CreateRow("GIS-2", "Valve B", "Infrastructure");
+            grid.ItemsSource = new[] { row };
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 900, height: 600);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.That(grid.EditSessionContext.TrySetFieldValue(row.ObjectId, nameof(DemoGisRecordViewModel.Owner), string.Empty), Is.True);
+                grid.CommitEdits();
+                grid.OpenWorkspacePanel(GridRegionKind.ValidationPanelRegion);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var visibleTexts = GridSurfaceTestHost.FindVisualChildren<TextBlock>(grid)
+                    .Select(block => block.Text)
+                    .Where(text => !string.IsNullOrWhiteSpace(text))
+                    .ToArray();
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(visibleTexts, Does.Contain("1 validation issue"));
+                    Assert.That(visibleTexts, Does.Contain("Row GIS-2 - Owner"));
+                    Assert.That(visibleTexts, Does.Contain("Owner is required."));
+                    Assert.That(GridSurfaceTestHost.FindVisualChildren<Button>(grid).Any(button => Equals(button.Content, "Go to cell")), Is.True);
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
         }
 
         [Test]
@@ -1166,13 +1518,169 @@ namespace PhialeGrid.Wpf.Tests.Editing
                 viewModel.AddSelectedSummary();
                 GridSurfaceTestHost.FlushDispatcher(grid);
 
+                var summaryHost = (FrameworkElement)grid.FindName("SummaryBottomRegionHost");
+                var summaryContent = (FrameworkElement)grid.FindName("SummaryBottomRegionContentScrollViewer");
+                var displayedTexts = GridSurfaceTestHost.FindVisualChildren<TextBlock>(summaryHost)
+                    .Select(text => text.Text)
+                    .Where(text => !string.IsNullOrWhiteSpace(text))
+                    .ToArray();
+
                 Assert.That(grid.SummaryItems.Count, Is.EqualTo(initialCount + 1));
                 Assert.That(grid.SummaryItems.Any(item => item.Label.IndexOf("Priority", StringComparison.OrdinalIgnoreCase) >= 0), Is.True);
+                var prioritySummary = grid.SummaryItems.Single(item => string.Equals(item.ColumnLabel, "Priority", StringComparison.OrdinalIgnoreCase));
+                Assert.Multiple(() =>
+                {
+                    Assert.That(prioritySummary.TypeLabel, Is.EqualTo("Min"));
+                    Assert.That(prioritySummary.ValueText, Is.Not.Empty);
+                });
+                Assert.That(summaryContent.Visibility, Is.EqualTo(Visibility.Visible));
+                Assert.That(summaryHost.ActualHeight, Is.GreaterThan(24d));
+                Assert.That(displayedTexts, Does.Not.Contain("Summaries"));
+                var summaryPlayground = summaryContent as PhialeTech.PhialeGrid.Wpf.Controls.PhialeWorkspacePlayground;
+                Assert.That(
+                    displayedTexts.Any(text => text.IndexOf("Priority", StringComparison.OrdinalIgnoreCase) >= 0),
+                    Is.True,
+                    "Rendered summary texts: " + string.Join(" | ", displayedTexts)
+                    + "; content type: " + summaryContent.GetType().FullName
+                    + "; playground content set: " + (summaryPlayground?.PlaygroundContent != null));
 
                 viewModel.ResetSummaries();
                 GridSurfaceTestHost.FlushDispatcher(grid);
 
                 Assert.That(grid.SummaryItems.Count, Is.EqualTo(3));
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void DemoBinding_WhenLanguageChanges_SummaryResultChipsUseLocalizedAggregationLabels()
+        {
+            var viewModel = new DemoShellViewModel("Wpf");
+            var grid = CreateBoundDemoGrid(viewModel);
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 1200, height: 700);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                viewModel.SelectExample("summaries");
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var englishCountSummary = grid.SummaryItems.Single(item =>
+                    string.Equals(item.TypeLabel, "Count", StringComparison.Ordinal));
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(englishCountSummary.ValueText, Is.Not.Empty);
+                    Assert.That(englishCountSummary.Label, Is.EqualTo(englishCountSummary.ColumnLabel + " Count"));
+                });
+
+                grid.LanguageCode = "pl";
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var localizedCountSummary = grid.SummaryItems.Single(item =>
+                    string.Equals(item.ColumnLabel, englishCountSummary.ColumnLabel, StringComparison.Ordinal) &&
+                    string.Equals(item.TypeLabel, "Ilość", StringComparison.Ordinal));
+                var summaryHost = (FrameworkElement)grid.FindName("SummaryBottomRegionHost");
+                var renderedTexts = GridSurfaceTestHost.FindVisualChildren<TextBlock>(summaryHost)
+                    .Select(text => text.Text)
+                    .Where(text => !string.IsNullOrWhiteSpace(text))
+                    .ToArray();
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(localizedCountSummary.ValueText, Is.EqualTo(englishCountSummary.ValueText));
+                    Assert.That(localizedCountSummary.Label, Is.EqualTo(englishCountSummary.ColumnLabel + " Ilość"));
+                    Assert.That(renderedTexts, Does.Contain("Ilość"));
+                    Assert.That(renderedTexts, Does.Contain(":"));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void DemoBinding_WhenScenarioClearsSummaries_SummaryBandAndDesignerChipsClearTogether()
+        {
+            var viewModel = new DemoShellViewModel("Wpf");
+            var grid = CreateBoundDemoGrid(viewModel);
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 1200, height: 700);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                viewModel.SelectExample("summaries");
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(viewModel.GridSummaries.Count, Is.GreaterThan(0));
+                    Assert.That(viewModel.ConfiguredSummaries.Count, Is.EqualTo(viewModel.GridSummaries.Count));
+                    Assert.That(grid.SummaryItems.Count, Is.EqualTo(viewModel.GridSummaries.Count));
+                });
+
+                viewModel.SelectExample("editing");
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                var summaryHost = (FrameworkElement)grid.FindName("SummaryBottomRegionHost");
+                var displayedTexts = GridSurfaceTestHost.FindVisualChildren<TextBlock>(summaryHost)
+                    .Select(text => text.Text)
+                    .Where(text => !string.IsNullOrWhiteSpace(text))
+                    .ToArray();
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(viewModel.GridSummaries.Count, Is.EqualTo(0));
+                    Assert.That(viewModel.ConfiguredSummaries.Count, Is.EqualTo(0));
+                    Assert.That(grid.SummaryItems.Count, Is.EqualTo(0));
+                    Assert.That(displayedTexts.Any(text => text.IndexOf("Count", StringComparison.OrdinalIgnoreCase) >= 0), Is.False);
+                    Assert.That(displayedTexts.Any(text => text.IndexOf("Sum", StringComparison.OrdinalIgnoreCase) >= 0), Is.False);
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
+        public void DemoBinding_WhenViewStateRestoresSummaries_DesignerChipsUseTheSameDefinitionsAsSummaryBand()
+        {
+            var viewModel = new DemoShellViewModel("Wpf");
+            var grid = CreateBoundDemoGrid(viewModel);
+            var window = GridSurfaceTestHost.CreateHostWindow(grid, width: 1200, height: 700);
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                viewModel.SelectExample("summaries");
+                GridSurfaceTestHost.FlushDispatcher(grid);
+                var savedSummaryState = grid.ExportViewState();
+
+                viewModel.SelectExample("editing");
+                GridSurfaceTestHost.FlushDispatcher(grid);
+                Assert.That(viewModel.ConfiguredSummaries.Count, Is.EqualTo(0));
+
+                grid.ApplyViewState(savedSummaryState);
+                GridSurfaceTestHost.FlushDispatcher(grid);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(grid.SummaryItems.Count, Is.GreaterThan(0));
+                    Assert.That(viewModel.GridSummaries.Count, Is.EqualTo(grid.SummaryItems.Count));
+                    Assert.That(viewModel.ConfiguredSummaries.Count, Is.EqualTo(grid.SummaryItems.Count));
+                    Assert.That(viewModel.ConfiguredSummaries.Select(summary => summary.ColumnId), Is.EqualTo(viewModel.GridSummaries.Select(summary => summary.ColumnId)));
+                });
             }
             finally
             {
@@ -1194,7 +1702,7 @@ namespace PhialeGrid.Wpf.Tests.Editing
             BindingOperations.SetBinding(grid, WpfGrid.EditSessionContextProperty, new Binding(nameof(DemoShellViewModel.GridEditSessionContext)));
             BindingOperations.SetBinding(grid, WpfGrid.GroupsProperty, new Binding(nameof(DemoShellViewModel.GridGroups)) { Mode = BindingMode.TwoWay });
             BindingOperations.SetBinding(grid, WpfGrid.SortsProperty, new Binding(nameof(DemoShellViewModel.GridSorts)) { Mode = BindingMode.TwoWay });
-            BindingOperations.SetBinding(grid, WpfGrid.SummariesProperty, new Binding(nameof(DemoShellViewModel.GridSummaries)));
+            BindingOperations.SetBinding(grid, WpfGrid.SummariesProperty, new Binding(nameof(DemoShellViewModel.GridSummaries)) { Mode = BindingMode.TwoWay });
             BindingOperations.SetBinding(grid, WpfGrid.IsGridReadOnlyProperty, new Binding(nameof(DemoShellViewModel.IsGridReadOnly)));
             return grid;
         }
@@ -1223,6 +1731,11 @@ namespace PhialeGrid.Wpf.Tests.Editing
         private static DemoGisRecordViewModel CreateRow(string id, string objectName, string owner)
         {
             return CreateRow(id, "Valve", objectName, owner);
+        }
+
+        private static int CountVisibleDataRows(WpfGrid grid)
+        {
+            return grid.RowsView.Cast<object>().OfType<GridDataRowModel>().Count();
         }
 
         private static DemoGisRecordViewModel CreateRow(string id, string category, string objectName, string owner)
@@ -1395,3 +1908,4 @@ namespace PhialeGrid.Wpf.Tests.Editing
         }
     }
 }
+

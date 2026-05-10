@@ -57,7 +57,7 @@ namespace PhialeTech.DocumentEditor
             var payload = new
             {
                 isReadOnly = _options.IsReadOnly,
-                theme = _options.InitialTheme,
+                theme = NormalizeTheme(_options.InitialTheme),
                 languageCode = NormalizeLanguageCode(_options.InitialLanguageCode),
                 overlayMode = ToMessageOverlayMode(_options.OverlayMode),
                 placeholder = _options.Placeholder ?? string.Empty,
@@ -144,6 +144,14 @@ namespace PhialeTech.DocumentEditor
             return string.Equals(languageCode, "pl", StringComparison.OrdinalIgnoreCase)
                 ? "pl"
                 : "en";
+        }
+
+        private static string NormalizeTheme(string theme)
+        {
+            return string.Equals(theme, "dark", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(theme, "night", StringComparison.OrdinalIgnoreCase)
+                ? "dark"
+                : "light";
         }
 
         private static string ToMessageOverlayMode(DocumentEditorOverlayMode overlayMode)

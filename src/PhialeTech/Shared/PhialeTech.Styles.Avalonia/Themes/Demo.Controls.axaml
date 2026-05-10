@@ -1,0 +1,55 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="TextBlock.demo-section-title">
+    <Setter Property="FontFamily" Value="Bahnschrift" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="Foreground" Value="{DynamicResource DemoPrimaryTextBrush}" />
+    <Setter Property="Margin" Value="0,0,0,14" />
+  </Style>
+
+  <Style Selector="TextBlock.demo-subsection-title">
+    <Setter Property="FontFamily" Value="Bahnschrift" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{DynamicResource DemoPrimaryTextBrush}" />
+    <Setter Property="Margin" Value="0,0,0,8" />
+  </Style>
+
+  <Style Selector="Border.demo-card-surface">
+    <Setter Property="Background" Value="{DynamicResource DemoPanelBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource DemoPanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="18" />
+  </Style>
+
+  <Style Selector="Border.demo-token-chip">
+    <Setter Property="Background" Value="{DynamicResource DemoTokenBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource DemoTokenBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="8,3" />
+    <Setter Property="Margin" Value="0,0,8,8" />
+  </Style>
+
+  <Style Selector="Button.demo-toolbar-button">
+    <Setter Property="Padding" Value="14,8" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Background" Value="{DynamicResource DemoToolbarButtonBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource DemoToolbarButtonBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource DemoToolbarButtonTextBrush}" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+
+  <Style Selector="ComboBox.demo-theme-combo">
+    <Setter Property="MinWidth" Value="140" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="Background" Value="{DynamicResource DemoInputBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource DemoInputBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource DemoPrimaryTextBrush}" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+</Styles>

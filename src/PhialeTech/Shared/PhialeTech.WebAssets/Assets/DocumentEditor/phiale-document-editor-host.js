@@ -28764,6 +28764,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
   var isOverlayOpen = false;
   var textStyles = JSON.parse(JSON.stringify(DEFAULT_TEXT_STYLES));
   var toolbarSettingsDraft = null;
+  var readyAnnounced = false;
   function postMessage(message) {
     try {
       if (window.PhialeWebHost && typeof window.PhialeWebHost.postMessage === "function") {
@@ -29008,6 +29009,23 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     document.documentElement.dataset.theme = bootstrap.theme;
     document.body.dataset.theme = bootstrap.theme;
     shell.dataset.theme = bootstrap.theme;
+  }
+  function notifyReady() {
+    if (readyAnnounced) {
+      return;
+    }
+
+    readyAnnounced = true;
+
+    try {
+      if (window.PhialeWebHost && typeof window.PhialeWebHost.notifyReady === "function") {
+        window.PhialeWebHost.notifyReady();
+        return;
+      }
+    } catch (_) {
+    }
+
+    postMessage({ type: "documentEditor.ready" });
   }
   function activeCommand(command2) {
     switch (command2) {
@@ -29866,6 +29884,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
   function bindHostBridge() {
     if (window.PhialeWebHost) {
       window.PhialeWebHost.onHostMessage = handleMessage;
+      notifyReady();
     }
   }
   async function start() {
@@ -29906,7 +29925,6 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         captureBaselineDocument();
         renderShellActions();
         renderToolbar();
-        postMessage({ type: "documentEditor.ready" });
         broadcast("documentEditor.stateChanged");
       },
       onUpdate() {

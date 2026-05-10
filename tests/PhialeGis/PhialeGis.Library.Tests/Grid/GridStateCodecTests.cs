@@ -12,6 +12,21 @@ namespace PhialeGis.Library.Tests.Grid
     public class GridStateCodecTests
     {
         [Test]
+        public void RegionKindNumericValues_RemainStableForEncodedStatePayloads()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That((int)GridRegionKind.CoreGridSurface, Is.EqualTo(0));
+                Assert.That((int)GridRegionKind.TopCommandRegion, Is.EqualTo(1));
+                Assert.That((int)GridRegionKind.GroupingRegion, Is.EqualTo(2));
+                Assert.That((int)GridRegionKind.SummaryBottomRegion, Is.EqualTo(3));
+                Assert.That((int)GridRegionKind.SideToolRegion, Is.EqualTo(4));
+                Assert.That((int)GridRegionKind.ChangePanelRegion, Is.EqualTo(5));
+                Assert.That((int)GridRegionKind.ValidationPanelRegion, Is.EqualTo(6));
+            });
+        }
+
+        [Test]
         public void EncodeDecode_PreservesState()
         {
             var columns = new[]
@@ -31,7 +46,10 @@ namespace PhialeGis.Library.Tests.Grid
                     new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false),
                     new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false),
                     new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false),
+                    new GridRegionLayoutState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Closed, 320d, false),
                     new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 320d, true),
+                    new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
+                    new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
                 }));
 
             var encoded = GridStateCodec.Encode(snapshot);
@@ -75,7 +93,10 @@ namespace PhialeGis.Library.Tests.Grid
                     new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 44d, false),
                     new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false),
                     new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false),
+                    new GridRegionLayoutState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Closed, 320d, false),
                     new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 320d, false),
+                    new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
+                    new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
                 }));
             var encoded = GridStateCodec.Encode(snapshot);
             var parts = encoded.Split('|').ToArray();
@@ -88,3 +109,4 @@ namespace PhialeGis.Library.Tests.Grid
         }
     }
 }
+

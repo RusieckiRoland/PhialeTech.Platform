@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:styles="clr-namespace:PhialeTech.Styles.Wpf">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="Controls.Core.xaml" />
     </ResourceDictionary.MergedDictionaries>
@@ -178,6 +178,64 @@
     </Style>
 
     <Style
+        x:Key="PgWorkspacePanelChangeCardBorderStyle"
+        BasedOn="{StaticResource PgWorkspacePanelCardBorderStyle}"
+        TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource PgReviewBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PgReviewBorderBrush}" />
+    </Style>
+
+    <Style
+        x:Key="PgWorkspacePanelValidationIssueCardBorderStyle"
+        BasedOn="{StaticResource PgWorkspacePanelCardBorderStyle}"
+        TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource Brush.Badge.Danger.Outline.Fill}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Badge.Danger.Outline.Border}" />
+    </Style>
+
+    <Style x:Key="PgWorkspacePanelChangeSummaryPanelStyle" TargetType="StackPanel">
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="PgWorkspacePanelChangeIconBorderStyle" TargetType="Border">
+        <Setter Property="Width" Value="{DynamicResource PgWorkspacePanelValidationIssueIconSize}" />
+        <Setter Property="Height" Value="{DynamicResource PgWorkspacePanelValidationIssueIconSize}" />
+        <Setter Property="Margin" Value="{DynamicResource PgWorkspacePanelValidationIssueIconMargin}" />
+        <Setter Property="Background" Value="{DynamicResource PgReviewTextBrush}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource CornerRadius.Grid.RegionHeader}" />
+    </Style>
+
+    <Style x:Key="PgWorkspacePanelChangeIconTextStyle" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+        <Setter Property="FontSize" Value="{DynamicResource PgWorkspacePanelValidationIssueIconFontSize}" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <Style x:Key="PgWorkspacePanelValidationIssueSummaryPanelStyle" TargetType="StackPanel">
+        <Setter Property="Orientation" Value="Horizontal" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="PgWorkspacePanelValidationIssueIconBorderStyle" TargetType="Border">
+        <Setter Property="Width" Value="{DynamicResource PgWorkspacePanelValidationIssueIconSize}" />
+        <Setter Property="Height" Value="{DynamicResource PgWorkspacePanelValidationIssueIconSize}" />
+        <Setter Property="Margin" Value="{DynamicResource PgWorkspacePanelValidationIssueIconMargin}" />
+        <Setter Property="Background" Value="{DynamicResource Brush.Badge.Danger.Text}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource CornerRadius.Grid.RegionHeader}" />
+    </Style>
+
+    <Style x:Key="PgWorkspacePanelValidationIssueIconTextStyle" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+        <Setter Property="FontSize" Value="{DynamicResource PgWorkspacePanelValidationIssueIconFontSize}" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <Style
         x:Key="PgWorkspacePanelLinkButtonStyle"
         BasedOn="{StaticResource Button.Tertiary}"
         TargetType="Button">
@@ -222,10 +280,12 @@
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Bottom" />
         <Setter Property="Foreground" Value="{DynamicResource PgPanelTextBrush}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Support.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Support.FontSize}" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="BorderBrush" Value="{DynamicResource PgInputBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Background" Value="{DynamicResource PgGridRegionSurfaceBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PgPanelBorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource PgPanelBackgroundBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -251,10 +311,12 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="PgWorkspacePanelExpandedTabChrome" Property="Fill" Value="{DynamicResource PgHoverBackgroundBrush}" />
                             <Setter TargetName="PgWorkspacePanelExpandedTabChrome" Property="Stroke" Value="{DynamicResource PgAccentBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource PgAccentBrush}" />
                         </Trigger>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="PgWorkspacePanelExpandedTabChrome" Property="Stroke" Value="{DynamicResource PgAccentBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource PgAccentBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -267,7 +329,9 @@
         x:Key="PgWorkspacePanelExpandedActiveTabButtonStyle"
         BasedOn="{StaticResource PgWorkspacePanelExpandedTabButtonStyle}"
         TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource PgGridRegionSurfaceBackgroundBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource PgAccentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PgAccentBrush}" />
     </Style>
 
     <Style
@@ -300,7 +364,7 @@
                                 x:Name="PgWorkspacePanelCollapsedRailTabChrome"
                                 Width="{TemplateBinding Width}"
                                 Height="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ActualHeight}"
-                                Data="M 0,0 L 22,3 Q 28,5 28,14 L 28,86 Q 28,95 22,97 L 0,100 Z"
+                                Data="M 0.5,0.5 L 16.5,5.5 Q 23.5,7.5 23.5,14.5 L 23.5,85.5 Q 23.5,92.5 16.5,94.5 L 0.5,99.5 Z"
                                 Fill="{TemplateBinding Background}"
                                 Stretch="Fill"
                                 Stroke="{TemplateBinding BorderBrush}"
@@ -317,6 +381,7 @@
                             <Setter Property="Foreground" Value="{DynamicResource PgAccentBrush}" />
                         </Trigger>
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="PgWorkspacePanelCollapsedRailTabChrome" Property="Stroke" Value="{DynamicResource PgAccentBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource PgAccentBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -329,21 +394,35 @@
         x:Key="PgWorkspacePanelCollapsedRailActiveTabButtonStyle"
         BasedOn="{StaticResource PgWorkspacePanelCollapsedRailTabButtonStyle}"
         TargetType="Button">
+        <Setter Property="BorderBrush" Value="{DynamicResource PgAccentBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource PgAccentBrush}" />
     </Style>
 
     <Style x:Key="PgGridToolsPanelLabelTextStyle" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource PgPanelTextBrush}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.ControlLabel.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.ControlLabel.FontSize}" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
-    <Style x:Key="PgGridToolsComboBoxItemStyle" TargetType="ComboBoxItem">
+    <Style x:Key="PgGridToolsPanelDescriptionTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource PgMutedTextBrush}" />
+        <Setter Property="FontFamily" Value="{DynamicResource Text.FormDescription.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.FormDescription.FontSize}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style
+        x:Key="PgGridToolsComboBoxItemStyle"
+        BasedOn="{StaticResource ComboBox.DropDownItem}"
+        TargetType="ComboBoxItem">
         <Setter Property="Foreground" Value="{DynamicResource PgPrimaryTextBrush}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="{DynamicResource PgGridToolsComboBoxItemPadding}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
@@ -372,6 +451,8 @@
         </Setter>
     </Style>
 
+    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource PgGridToolsComboBoxItemStyle}" />
+
     <Style x:Key="PgGridToolsComboBoxStyle" TargetType="ComboBox">
         <Setter Property="Background" Value="{DynamicResource PgInputBackgroundBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource PgInputBorderBrush}" />
@@ -379,6 +460,8 @@
         <Setter Property="Foreground" Value="{DynamicResource PgPrimaryTextBrush}" />
         <Setter Property="Padding" Value="{DynamicResource PgGridToolsComboBoxPadding}" />
         <Setter Property="MinHeight" Value="{DynamicResource PgGridToolsComboBoxMinHeight}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="ItemContainerStyle" Value="{StaticResource PgGridToolsComboBoxItemStyle}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -862,6 +945,41 @@
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
+    <Style
+        x:Key="PgGridOptionsContextMenuStyle"
+        BasedOn="{StaticResource PgColumnContextMenuStyle}"
+        TargetType="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource PgGridRegionSurfaceBackgroundBrush}" />
+        <Setter Property="Padding" Value="10" />
+        <Setter Property="MinWidth" Value="172" />
+    </Style>
+
+    <Style
+        x:Key="PgGridOptionsContextMenuSectionTextStyle"
+        BasedOn="{StaticResource PgColumnContextMenuSectionTextStyle}"
+        TargetType="TextBlock">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource PgSecondaryMutedBrush}" />
+    </Style>
+
+    <Style
+        x:Key="PgGridRegionsContextMenuStyle"
+        BasedOn="{StaticResource PgGridOptionsContextMenuStyle}"
+        TargetType="ContextMenu">
+        <Setter Property="Padding" Value="14,12" />
+        <Setter Property="MinWidth" Value="178" />
+    </Style>
+
+    <Style
+        x:Key="PgGridRegionsContextMenuHeaderTextStyle"
+        BasedOn="{StaticResource PgGridToolsPanelLabelTextStyle}"
+        TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,2,0,8" />
+    </Style>
+
     <Style x:Key="PgColumnContextMenuItemStyle" TargetType="MenuItem">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -1042,6 +1160,15 @@
         </Setter>
     </Style>
 
+    <Style
+        x:Key="PgGridOptionsContextMenuItemStyle"
+        BasedOn="{StaticResource PgColumnContextMenuItemStyle}"
+        TargetType="MenuItem">
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
     <Style x:Key="PgColumnContextMenuSeparatorStyle" TargetType="Separator">
         <Setter Property="Margin" Value="10,8" />
         <Setter Property="Template">
@@ -1111,6 +1238,30 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PgGridRowDetailPresenterStyle" TargetType="ContentControl">
+        <Setter Property="Background" Value="{DynamicResource PgDetailsBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PgDetailsBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="{DynamicResource PgWorkspacePanelCardPadding}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource CornerRadius.Grid.RegionHeader}"
+                        SnapsToDevicePixels="True">
+                        <ContentPresenter
+                            Margin="{TemplateBinding Padding}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
@@ -1274,6 +1425,108 @@
         </Style.Triggers>
     </Style>
 
+    <Style x:Key="PgWorkspacePlaygroundBorderStyle" TargetType="Border">
+        <Setter Property="MinHeight" Value="{DynamicResource PgWorkspacePlaygroundMinHeight}" />
+        <Setter Property="Margin" Value="{DynamicResource PgWorkspacePlaygroundMargin}" />
+        <Setter Property="Padding" Value="{DynamicResource PgWorkspacePlaygroundPadding}" />
+        <Setter Property="Background" Value="{DynamicResource PgGridRegionHeaderBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PgControlBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource PgWorkspacePlaygroundCornerRadius}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="styles:RoundedChildClipBehavior.ClipChildToBorder" Value="True" />
+    </Style>
+
+    <Style x:Key="PgWorkspacePlaygroundScrollViewerStyle" TargetType="ScrollViewer">
+        <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Disabled" />
+    </Style>
+
+    <Style
+        x:Key="PgSummaryDesignerChipBorderStyle"
+        BasedOn="{StaticResource PgGroupChipBorderStyle}"
+        TargetType="Border">
+        <Setter Property="Margin" Value="{DynamicResource PgSummaryDesignerChipMargin}" />
+        <Setter Property="Padding" Value="{DynamicResource PgSummaryDesignerChipPadding}" />
+        <Setter Property="Background" Value="{DynamicResource PgPanelBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PgControlBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource CornerRadius.Grid.RegionHeader}" />
+    </Style>
+
+    <Style
+        x:Key="PgSummaryDesignerChipLabelTextStyle"
+        BasedOn="{StaticResource PgGroupChipTextStyle}"
+        TargetType="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource PgSecondaryMutedBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style
+        x:Key="PgSummaryDesignerChipMetaTextStyle"
+        BasedOn="{StaticResource PgGroupChipTextStyle}"
+        TargetType="TextBlock">
+        <Setter Property="Margin" Value="{DynamicResource PgSummaryDesignerChipTextGapMargin}" />
+        <Setter Property="Foreground" Value="{DynamicResource PgMutedTextBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style
+        x:Key="PgSummaryDesignerChipRemoveButtonStyle"
+        BasedOn="{StaticResource ColumnChipActionButtonStyle}"
+        TargetType="Button">
+        <Setter Property="Width" Value="{DynamicResource PgSummaryDesignerChipRemoveButtonSize}" />
+        <Setter Property="Height" Value="{DynamicResource PgSummaryDesignerChipRemoveButtonSize}" />
+        <Setter Property="MinWidth" Value="{DynamicResource PgSummaryDesignerChipRemoveButtonSize}" />
+        <Setter Property="MinHeight" Value="{DynamicResource PgSummaryDesignerChipRemoveButtonSize}" />
+        <Setter Property="Margin" Value="{DynamicResource PgSummaryDesignerChipRemoveButtonMargin}" />
+        <Setter Property="Foreground" Value="{DynamicResource PgMutedTextBrush}" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <Style x:Key="PgSummaryResultChipBorderStyle" TargetType="Border">
+        <Setter Property="Margin" Value="{DynamicResource PgSummaryResultChipMargin}" />
+        <Setter Property="MinWidth" Value="{DynamicResource PgSummaryResultChipMinWidth}" />
+        <Setter Property="Padding" Value="{DynamicResource PgSummaryResultChipPadding}" />
+        <Setter Property="Background" Value="{DynamicResource PgPanelBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PgSummaryCardBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource PgWorkspacePlaygroundCornerRadius}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <Style x:Key="PgSummaryResultChipTypeTextStyle" TargetType="TextBlock">
+        <Setter Property="Margin" Value="{DynamicResource PgSummaryResultChipTypeMargin}" />
+        <Setter Property="FontSize" Value="{DynamicResource PgSummaryResultChipTypeFontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource PgAccentBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="PgSummaryResultChipLabelTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{DynamicResource PgSummaryResultChipBodyFontSize}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource PgStatusTextBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style
+        x:Key="PgSummaryResultChipSeparatorTextStyle"
+        BasedOn="{StaticResource PgSummaryResultChipLabelTextStyle}"
+        TargetType="TextBlock">
+        <Setter Property="Margin" Value="{DynamicResource PgSummaryResultChipValueMargin}" />
+        <Setter Property="Text" Value=":" />
+    </Style>
+
+    <Style
+        x:Key="PgSummaryResultChipValueTextStyle"
+        BasedOn="{StaticResource PgSummaryResultChipLabelTextStyle}"
+        TargetType="TextBlock">
+        <Setter Property="Margin" Value="{DynamicResource PgSummaryResultChipValueMargin}" />
+        <Setter Property="Foreground" Value="{DynamicResource PgSummaryValueBrush}" />
+    </Style>
+
     <Style x:Key="PgFilterPanelVisibilityStyle" TargetType="FrameworkElement">
         <Setter Property="Visibility" Value="Visible" />
         <Style.Triggers>
@@ -1291,4 +1544,247 @@
             </DataTrigger>
         </Style.Triggers>
     </Style>
+
+    <Style x:Key="PgGridToolsCheckBoxStyle" TargetType="CheckBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource PgPrimaryTextBrush}" />
+        <Setter Property="Padding" Value="{DynamicResource PgGridToolsOptionCheckBoxPadding}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FocusVisualStyle.Ring}" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Border
+                        x:Name="Root"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="8"
+                        SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid
+                                x:Name="CheckboxHost"
+                                Grid.Column="0"
+                                Width="18"
+                                Height="18"
+                                VerticalAlignment="Center">
+                                <Border
+                                    x:Name="CheckboxOutline"
+                                    Background="Transparent"
+                                    BorderBrush="{DynamicResource PgControlBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4" />
+                                <Path
+                                    x:Name="CheckboxCheck"
+                                    Margin="1.5"
+                                    Data="M 4 9.5 L 7.5 13 L 14 6.5"
+                                    Stretch="Fill"
+                                    StrokeEndLineCap="Round"
+                                    StrokeLineJoin="Round"
+                                    StrokeStartLineCap="Round"
+                                    StrokeThickness="1.8"
+                                    Visibility="Collapsed" />
+                            </Grid>
+                            <ContentPresenter
+                                Grid.Column="2"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource PgHoverBackgroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="CheckboxOutline" Property="Background" Value="{DynamicResource PgSelectionBackgroundBrush}" />
+                            <Setter TargetName="CheckboxOutline" Property="BorderBrush" Value="{DynamicResource PgAccentBrush}" />
+                            <Setter TargetName="CheckboxCheck" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="CheckboxCheck" Property="Stroke" Value="{DynamicResource PgAccentBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="CheckboxOutline" Property="BorderBrush" Value="{DynamicResource PgFocusRingBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style
+        x:Key="PgGridRegionsContextMenuCheckBoxStyle"
+        BasedOn="{StaticResource PgGridToolsCheckBoxStyle}"
+        TargetType="CheckBox">
+        <Setter Property="MinWidth" Value="142" />
+        <Setter Property="Margin" Value="0,3,0,0" />
+    </Style>
+
+    <Style x:Key="PgGridToolsRadioButtonStyle" TargetType="RadioButton">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource PgPrimaryTextBrush}" />
+        <Setter Property="Padding" Value="{DynamicResource PgGridToolsOptionCheckBoxPadding}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource FocusVisualStyle.Ring}" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border
+                        x:Name="Root"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="8"
+                        SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid
+                                Grid.Column="0"
+                                Width="18"
+                                Height="18"
+                                VerticalAlignment="Center">
+                                <Ellipse
+                                    x:Name="RadioOutline"
+                                    Width="14"
+                                    Height="14"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Fill="Transparent"
+                                    Stroke="{DynamicResource PgControlBorderBrush}"
+                                    StrokeThickness="1.2" />
+                                <Ellipse
+                                    x:Name="RadioDot"
+                                    Width="6"
+                                    Height="6"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Fill="{DynamicResource PgAccentBrush}"
+                                    Visibility="Collapsed" />
+                            </Grid>
+                            <ContentPresenter
+                                Grid.Column="2"
+                                VerticalAlignment="Center"
+                                RecognizesAccessKey="True" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource PgHoverBackgroundBrush}" />
+                            <Setter TargetName="RadioOutline" Property="Stroke" Value="{DynamicResource PgSelectionBorderBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="RadioOutline" Property="Stroke" Value="{DynamicResource PgAccentBrush}" />
+                            <Setter TargetName="RadioDot" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style
+        x:Key="PgGridToolsBackButtonStyle"
+        BasedOn="{StaticResource PgWorkspacePanelLinkButtonStyle}"
+        TargetType="Button">
+        <Setter Property="FontFamily" Value="{DynamicResource Text.Support.FontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource Text.Support.FontSize}" />
+        <Setter Property="Margin" Value="0" />
+    </Style>
+
+    <Style x:Key="PgGridToolsColumnsButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource PgPrimaryTextBrush}" />
+        <Setter Property="Padding" Value="{DynamicResource PgGridToolsOptionCheckBoxPadding}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="Root"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="8"
+                        SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter
+                                Grid.Column="0"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                FontSize="11"
+                                Foreground="{DynamicResource PgMutedTextBrush}"
+                                Text="›" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource PgHoverBackgroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource PgInputBackgroundBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PgGridToolsScrollViewerStyle" TargetType="ScrollViewer">
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollViewer">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ScrollContentPresenter Grid.Column="0" />
+                        <ScrollBar
+                            x:Name="PART_VerticalScrollBar"
+                            Grid.Column="1"
+                            Style="{StaticResource PgScrollBarStyle}"
+                            Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

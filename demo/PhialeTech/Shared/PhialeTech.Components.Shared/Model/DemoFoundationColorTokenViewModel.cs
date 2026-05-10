@@ -23,3 +23,4 @@ namespace PhialeTech.Components.Shared.Model
         public string NightHex { get; }
     }
 }
+

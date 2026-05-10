@@ -55,3 +55,4 @@ namespace PhialeTech.Components.Shared.Model
         public IReadOnlyList<DemoDefinitionField> Fields { get; }
     }
 }
+

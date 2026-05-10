@@ -27,3 +27,4 @@ namespace PhialeTech.Components.Shared.Services
         public HttpStatusCode? StatusCode { get; }
     }
 }
+

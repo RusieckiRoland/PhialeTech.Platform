@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,3 +13,4 @@ namespace PhialeGis.ComponentSandboxWinUi.Core
         Task<Stream?> PickFgbAsync(Window owner); 
     }
 }
+

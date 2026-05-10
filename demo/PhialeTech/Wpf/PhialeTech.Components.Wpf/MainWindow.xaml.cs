@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -17,6 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using PhialeGrid.Core;
+using PhialeGrid.Core.Details;
 using PhialeGrid.Core.Regions;
 using PhialeGrid.Core.State;
 using PhialeTech.ComponentHost.Abstractions.Presentation;
@@ -33,6 +35,7 @@ using PhialeTech.MonacoEditor.Abstractions;
 using PhialeTech.MonacoEditor.Wpf.Controls;
 using PhialeTech.PhialeGrid.Wpf.Controls;
 using PhialeTech.PhialeGrid.Wpf.Diagnostics;
+using PhialeTech.PhialeGrid.Wpf.Surface;
 using PhialeTech.PhialeGrid.Wpf.State;
 using PhialeTech.ComponentHost.Wpf.Hosting;
 using PhialeTech.ComponentHost.Wpf.Services;
@@ -145,6 +148,8 @@ namespace PhialeTech.Components.Wpf
         private const string EditingCurrentRowId = "RD-GDA-OLI-0003";
         private const string EditingEditedRowId = "DZ-KRA-STA-0001";
         private const string EditingInvalidRowId = "BLD-WRO-FAB-0002";
+        private readonly DemoCustomRowDetailProvider _customRowDetailProvider = new DemoCustomRowDetailProvider();
+        private readonly DemoCustomRowDetailContentFactory _customRowDetailContentFactory = new DemoCustomRowDetailContentFactory();
         private readonly DemoApplicationServices _applicationServices;
         private readonly bool _ownsApplicationServices;
         private readonly HostedSurfaceManager _hostedSurfaceManager;
@@ -282,7 +287,7 @@ namespace PhialeTech.Components.Wpf
             _hostedSurfaceManager = new HostedSurfaceManager(new DemoHostedShellCoordinator(_viewModel));
             var hostedSurfaceRegistry = new WpfHostedSurfaceFactoryRegistry();
             hostedSurfaceRegistry.Register(new DemoViewHostedSurfaceFactory());
-            hostedSurfaceRegistry.Register(new DemoYamlHostedSurfaceFactory());
+            hostedSurfaceRegistry.Register(new DemoYamlHostedSurfaceFactory(ResolveReportDesignerTheme));
             HostedSurfaceService = new WpfHostedSurfaceService(_hostedSurfaceManager, hostedSurfaceRegistry);
             HostedSurfaceService.SessionChanged += HandleHostedSurfaceSessionChanged;
             AddHandler(PhialeTitleBar.CommandInvokedEvent, new EventHandler<ShellCommandInvokedRoutedEventArgs>(HandleShellCommandInvoked));
@@ -310,6 +315,8 @@ namespace PhialeTech.Components.Wpf
         private void HandleWindowLoaded(object sender, RoutedEventArgs e)
         {
             LogGridStateLifecycle("Window loaded. Scheduling grid state registration refresh.");
+            LogYamlScrollLayoutSnapshot("Window loaded");
+            QueueYamlScrollLayoutSnapshot("Window loaded deferred");
             QueueGridViewStatePreload();
             if (_viewModel.ShowSelectionTools || _viewModel.ShowEditingTools || _viewModel.ShowConstraintTools)
             {
@@ -319,6 +326,32 @@ namespace PhialeTech.Components.Wpf
 
             QueueGridStateRegistrationRefresh();
             QueueWebHostPrewarm();
+        }
+
+        private void HandleYamlUiSurfaceScrollHostLoaded(object sender, RoutedEventArgs e)
+        {
+            LogYamlScrollLayoutSnapshot("YamlUiSurfaceScrollHost Loaded");
+            QueueYamlScrollLayoutSnapshot("YamlUiSurfaceScrollHost Loaded deferred");
+        }
+
+        private void HandleYamlUiSurfaceScrollHostSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            MonacoInputTrace.Write(
+                "yaml.scroll",
+                "MainWindow",
+                "YamlUiSurfaceScrollHost SizeChanged previous=" + FormatDiagnosticSize(e.PreviousSize) +
+                " new=" + FormatDiagnosticSize(e.NewSize));
+            LogYamlScrollLayoutSnapshot("YamlUiSurfaceScrollHost SizeChanged");
+        }
+
+        private void HandleYamlUiSurfaceScrollHostIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            MonacoInputTrace.Write(
+                "yaml.scroll",
+                "MainWindow",
+                "YamlUiSurfaceScrollHost IsVisibleChanged old=" + e.OldValue + " new=" + e.NewValue);
+            LogYamlScrollLayoutSnapshot("YamlUiSurfaceScrollHost IsVisibleChanged");
+            QueueYamlScrollLayoutSnapshot("YamlUiSurfaceScrollHost IsVisibleChanged deferred");
         }
 
         private void QueueGridViewStatePreload()
@@ -616,7 +649,7 @@ namespace PhialeTech.Components.Wpf
                 return;
             }
 
-            DemoGrid.SetRegionVisibility(GridRegionKind.SideToolRegion, true);
+            DemoGrid.SetRegionVisibility(GridRegionKind.SummaryDesignerRegion, true);
         }
 
         private void HandleSaveFoundationsPdfClick(object sender, RoutedEventArgs e)
@@ -1201,7 +1234,7 @@ namespace PhialeTech.Components.Wpf
 
         private void HandleRemoveSummaryClick(object sender, RoutedEventArgs e)
         {
-            if (!(sender is FrameworkElement frameworkElement) || !(frameworkElement.Tag is DemoConfiguredSummaryViewModel summary))
+            if (!(sender is FrameworkElement frameworkElement) || !(frameworkElement.Tag is DemoConfiguredSummaryChipViewModel summary))
             {
                 return;
             }
@@ -1345,6 +1378,8 @@ namespace PhialeTech.Components.Wpf
                 return;
             }
 
+            LogYamlScrollLayoutSnapshot("SelectedExample changed handler begin");
+            QueueYamlScrollLayoutSnapshot("SelectedExample changed handler begin deferred");
             MarkScenarioLoad("SelectedExample PropertyChanged handler begin");
             if (_viewModel.IsYamlDocumentExample || _viewModel.IsYamlActionsExample)
             {
@@ -1387,6 +1422,8 @@ namespace PhialeTech.Components.Wpf
             MarkScenarioLoad("RefreshWebComponentSurface begin");
             RefreshWebComponentSurface();
             MarkScenarioLoad("RefreshWebComponentSurface completed");
+            LogYamlScrollLayoutSnapshot("SelectedExample after RefreshWebComponentSurface");
+            QueueYamlScrollLayoutSnapshot("SelectedExample after RefreshWebComponentSurface deferred");
 
             if (_viewModel.ShowActiveLayerSelectorSurface)
             {
@@ -1406,6 +1443,7 @@ namespace PhialeTech.Components.Wpf
             MarkScenarioLoad("Grid cleanup begin");
             DemoGrid?.CancelEdits();
             DemoGrid?.SetCheckedRows(Array.Empty<string>());
+            ClearCustomRowDetails();
             UpdateScenarioStatus(ScenarioStatusArea.Selection, string.Empty);
             UpdateScenarioStatus(ScenarioStatusArea.Editing, string.Empty);
             UpdateScenarioStatus(ScenarioStatusArea.Constraint, string.Empty);
@@ -1443,6 +1481,12 @@ namespace PhialeTech.Components.Wpf
                 await _viewModel.LoadCurrentRemotePageAsync();
                 MarkScenarioLoad("LoadCurrentRemotePageAsync completed");
             }
+
+            if (IsCustomDetailExampleSelected())
+            {
+                ConfigureCustomRowDetails();
+            }
+
             if (!_viewModel.ShowSelectionTools && !_viewModel.ShowEditingTools && !_viewModel.ShowConstraintTools)
             {
                 MarkScenarioLoad("QueueGridStateRegistrationRefresh begin");
@@ -1451,6 +1495,8 @@ namespace PhialeTech.Components.Wpf
                 CompleteScenarioSelectionGridBatch("no-state-activation");
             }
             MarkScenarioLoad("SelectedExample PropertyChanged handler completed");
+            LogYamlScrollLayoutSnapshot("SelectedExample changed handler completed");
+            QueueYamlScrollLayoutSnapshot("SelectedExample changed handler completed deferred");
         }
 
         private void ActivateCurrentExampleStateAndScenario()
@@ -2107,6 +2153,35 @@ namespace PhialeTech.Components.Wpf
             DemoGrid.SetHierarchySource(_viewModel.GridHierarchyRoots, _viewModel.GridHierarchyController);
         }
 
+        private bool IsCustomDetailExampleSelected()
+        {
+            return _viewModel?.SelectedExample != null &&
+                string.Equals(_viewModel.SelectedExample.Id, "custom-detail", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void ConfigureCustomRowDetails()
+        {
+            if (DemoGrid == null || !IsCustomDetailExampleSelected())
+            {
+                return;
+            }
+
+            DemoGrid.RowDetailProvider = _customRowDetailProvider;
+            DemoGrid.RowDetailContentFactory = _customRowDetailContentFactory;
+            DemoGrid.FocusRow("DZ-KRA-STA-0001", "ObjectName");
+        }
+
+        private void ClearCustomRowDetails()
+        {
+            if (DemoGrid == null)
+            {
+                return;
+            }
+
+            DemoGrid.RowDetailProvider = null;
+            DemoGrid.RowDetailContentFactory = null;
+        }
+
         private void ApplySelectionScenarioToGrid(bool enableMultiSelect)
         {
             if (DemoGrid == null || !_viewModel.ShowSelectionTools)
@@ -2458,13 +2533,14 @@ namespace PhialeTech.Components.Wpf
             _ = EnsureYamlGeneratedFormMonacoReadyAsync();
         }
 
-        private void HandleGenerateYamlFormClick(object sender, RoutedEventArgs e)
+        private async void HandleGenerateYamlFormClick(object sender, RoutedEventArgs e)
         {
             ClearYamlGeneratedFormDiagnostics();
+            var yamlSource = await ReadLiveYamlGeneratedFormSourceTextAsync().ConfigureAwait(true);
 
             var compiler = new YamlComposedDocumentCompiler();
             var imported = compiler.Compile(
-                YamlGeneratedFormSourceText,
+                yamlSource,
                 new[] { typeof(YamlLibraryMarker).Assembly },
                 _viewModel?.LanguageCode);
             if (!imported.Success)
@@ -2570,7 +2646,8 @@ namespace PhialeTech.Components.Wpf
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(YamlGeneratedFormSourceText))
+            var yamlSource = await ReadLiveYamlGeneratedFormSourceTextAsync().ConfigureAwait(true);
+            if (string.IsNullOrWhiteSpace(yamlSource))
             {
                 HostedModalLastResultText = "Generated form YAML is empty.";
                 return;
@@ -2588,7 +2665,7 @@ namespace PhialeTech.Components.Wpf
                     Placement = HostedSheetPlacement.Center,
                     Title = entranceStyle == HostedEntranceStyle.Materialize ? "Generated Yaml form (soft dialog)" : "Generated Yaml form",
                     CanDismiss = true,
-                    Payload = YamlGeneratedFormSourceText,
+                    Payload = yamlSource,
                 };
 
                 var result = await HostedSurfaceService.ShowAsync(request).ConfigureAwait(true);
@@ -2600,6 +2677,34 @@ namespace PhialeTech.Components.Wpf
                 HostedModalLastResultText = "Hosted modal failed: " + ex.Message;
                 SetYamlGeneratedFormDiagnostics("Nie udalo sie pokazac formularza jako dialog." + Environment.NewLine + ex.Message);
             }
+        }
+
+        private async Task<string> ReadLiveYamlGeneratedFormSourceTextAsync()
+        {
+            var editor = GetActiveYamlGeneratedFormMonacoEditor();
+            if (editor != null)
+            {
+                var value = await editor.GetValueAsync().ConfigureAwait(true);
+                YamlGeneratedFormSourceText = value ?? string.Empty;
+                MonacoInputTrace.Write(GetActiveMonacoScenario(), "MainWindow", "GetValueAsync before render length=" + YamlGeneratedFormSourceText.Length + " snippet=" + MonacoInputTrace.SafeSnippet(YamlGeneratedFormSourceText));
+            }
+
+            return YamlGeneratedFormSourceText ?? string.Empty;
+        }
+
+        private PhialeMonacoEditor GetActiveYamlGeneratedFormMonacoEditor()
+        {
+            if (_viewModel != null && _viewModel.IsYamlActionsExample)
+            {
+                return _yamlActionsMonacoEditor;
+            }
+
+            if (_viewModel != null && _viewModel.IsYamlDocumentExample)
+            {
+                return _yamlDocumentMonacoEditor;
+            }
+
+            return _yamlDocumentMonacoEditor;
         }
 
         private PhialeMonacoEditor EnsureYamlGeneratedFormMonacoEditor()
@@ -2786,10 +2891,12 @@ namespace PhialeTech.Components.Wpf
                 "namespace: application.forms",
                 "imports:",
                 "  - domain.person",
+                "  - application.forms.actionShells",
                 "",
                 "documents:",
                 "  yaml-generated-form:",
                 "    kind: Form",
+                "    extends: review-sticky-header-footer",
                 "    name: YAML generated form",
                 "    interactionMode: Classic",
                 "    densityMode: Normal",
@@ -2807,7 +2914,7 @@ namespace PhialeTech.Components.Wpf
                 "      - id: age",
                 "        extends: age",
                 "      - id: notes",
-                "        extends: notes",
+                "        extends: documentNotes",
                 "    layout:",
                 "      type: Column",
                 "      items:",
@@ -2908,10 +3015,11 @@ namespace PhialeTech.Components.Wpf
                 "      widthHint: Fill",
                 "  layout:",
                 "    type: Column",
+                "    overlayScope: true",
                 "    items:",
                 "      - type: Container",
                 "        caption: Action rendering examples",
-                "        showBorder: true",
+                "        containerChrome: Framed",
                 "        items:",
                 "          - fieldRef: reviewTitle",
                 "          - fieldRef: reviewNotes",
@@ -2998,14 +3106,20 @@ namespace PhialeTech.Components.Wpf
                 "      extends: firstName",
                 "    - id: lastName",
                 "      extends: lastName",
+                "    - id: age",
+                "      extends: age",
                 "    - id: notes",
-                "      extends: notes",
+                "      extends: documentNotes",
+                "    - id: developer.firstName",
+                "      extends: firstName",
+                "    - id: developer.lastName",
+                "      extends: lastName",
                 "  layout:",
                 "    type: Column",
                 "    items:",
                 "      - type: Container",
                 "        caption: Reviewer",
-                "        showBorder: true",
+                "        containerChrome: Framed",
                 "        variant: Compact",
                 "        items:",
                 "          - type: Row",
@@ -3013,8 +3127,20 @@ namespace PhialeTech.Components.Wpf
                 "              - fieldRef: firstName",
                 "              - fieldRef: lastName",
                 "      - type: Container",
+                "        caption: Developer data",
+                "        containerChrome: Framed",
+                "        containerBehavior: Collapsible",
+                "        collapsedText: \"{developer.lastName} {developer.firstName}, {age}\"",
+                "        variant: Compact",
+                "        items:",
+                "          - type: Row",
+                "            items:",
+                "              - fieldRef: developer.lastName",
+                "              - fieldRef: developer.firstName",
+                "              - fieldRef: age",
+                "      - type: Container",
                 "        caption: Review notes",
-                "        showBorder: true",
+                "        containerChrome: None",
                 "        items:",
                 "          - fieldRef: notes",
             });
@@ -3156,12 +3282,16 @@ namespace PhialeTech.Components.Wpf
                 YamlActionsEditorPresenter.Content = null;
             }
 
+            LogYamlScrollLayoutSnapshot("AttachYamlGeneratedFormEditorToActivePresenter after clearing presenters");
+
             if (_viewModel != null && _viewModel.IsYamlActionsExample)
             {
                 if (YamlActionsEditorPresenter != null)
                 {
                     YamlActionsEditorPresenter.Content = editor;
                     MonacoInputTrace.Write("yaml.actions", "MainWindow", "editor attached to YamlActionsEditorPresenter");
+                    LogYamlScrollLayoutSnapshot("AttachYamlGeneratedFormEditorToActivePresenter actions attached");
+                    QueueYamlScrollLayoutSnapshot("AttachYamlGeneratedFormEditorToActivePresenter actions attached deferred");
                 }
 
                 return;
@@ -3171,6 +3301,8 @@ namespace PhialeTech.Components.Wpf
             {
                 YamlGeneratedFormEditorPresenter.Content = editor;
                 MonacoInputTrace.Write("yaml.document", "MainWindow", "editor attached to YamlGeneratedFormEditorPresenter");
+                LogYamlScrollLayoutSnapshot("AttachYamlGeneratedFormEditorToActivePresenter document attached");
+                QueueYamlScrollLayoutSnapshot("AttachYamlGeneratedFormEditorToActivePresenter document attached deferred");
             }
         }
 
@@ -3289,6 +3421,94 @@ namespace PhialeTech.Components.Wpf
             }
 
             return "main.other";
+        }
+
+        private void QueueYamlScrollLayoutSnapshot(string phase)
+        {
+            Dispatcher.BeginInvoke(
+                new Action(() => LogYamlScrollLayoutSnapshot(phase + " priority=Loaded")),
+                DispatcherPriority.Loaded);
+            Dispatcher.BeginInvoke(
+                new Action(() => LogYamlScrollLayoutSnapshot(phase + " priority=ContextIdle")),
+                DispatcherPriority.ContextIdle);
+        }
+
+        private void LogYamlScrollLayoutSnapshot(string phase)
+        {
+            MonacoInputTrace.Write(
+                "yaml.scroll",
+                "MainWindow",
+                phase +
+                " selected=" + (_viewModel?.SelectedExample?.Id ?? "<null>") +
+                " isOverview=" + (_viewModel?.IsOverviewVisible.ToString() ?? "<null>") +
+                " showYamlUi=" + (_viewModel?.ShowYamlUiSurface.ToString() ?? "<null>") +
+                " isYamlDocument=" + (_viewModel?.IsYamlDocumentExample.ToString() ?? "<null>") +
+                " isYamlActions=" + (_viewModel?.IsYamlActionsExample.ToString() ?? "<null>") +
+                " isGeneratedFormVisible=" + IsYamlGeneratedFormVisible +
+                " " + DescribeFrameworkElementState("DemoSurfaceViewportGrid", DemoSurfaceViewportGrid) +
+                " " + DescribeFrameworkElementState("YamlUiSurfaceScrollHost", YamlUiSurfaceScrollHost) +
+                " " + DescribeFrameworkElementState("YamlActionsEditorScrollHost", YamlActionsEditorScrollHost) +
+                " " + DescribeFrameworkElementState("YamlGeneratedFormEditorScrollHost", YamlGeneratedFormEditorScrollHost) +
+                " " + DescribeContentControlState("YamlActionsEditorPresenter", YamlActionsEditorPresenter) +
+                " " + DescribeContentControlState("YamlGeneratedFormEditorPresenter", YamlGeneratedFormEditorPresenter));
+        }
+
+        private static string DescribeContentControlState(string label, ContentControl element)
+        {
+            if (element == null)
+            {
+                return label + "=<null>";
+            }
+
+            return DescribeFrameworkElementState(label, element) +
+                " content=" + (element.Content == null ? "<null>" : element.Content.GetType().Name);
+        }
+
+        private static string DescribeFrameworkElementState(string label, FrameworkElement element)
+        {
+            if (element == null)
+            {
+                return label + "=<null>";
+            }
+
+            return label +
+                "(visibility=" + element.Visibility +
+                ", isVisible=" + element.IsVisible +
+                ", actual=" + FormatDiagnosticSize(element.ActualWidth, element.ActualHeight) +
+                ", desired=" + FormatDiagnosticSize(element.DesiredSize) +
+                ", render=" + FormatDiagnosticSize(element.RenderSize) +
+                ", margin=" + element.Margin +
+                ")";
+        }
+
+        private static string FormatDiagnosticSize(Size size)
+        {
+            return FormatDiagnosticSize(size.Width, size.Height);
+        }
+
+        private static string FormatDiagnosticSize(double width, double height)
+        {
+            return FormatDiagnosticDimension(width) + "x" + FormatDiagnosticDimension(height);
+        }
+
+        private static string FormatDiagnosticDimension(double value)
+        {
+            if (double.IsNaN(value))
+            {
+                return "NaN";
+            }
+
+            if (double.IsPositiveInfinity(value))
+            {
+                return "+Infinity";
+            }
+
+            if (double.IsNegativeInfinity(value))
+            {
+                return "-Infinity";
+            }
+
+            return value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private static string DescribeElement(DependencyObject element)
@@ -3605,6 +3825,94 @@ namespace PhialeTech.Components.Wpf
             public string SampleDisplayName { get; }
         }
 
+        private sealed class DemoCustomRowDetailProvider : IGridRowDetailProvider
+        {
+            private static readonly string[] DetailColumnIds =
+            {
+                "ObjectName",
+                "ObjectId",
+                "Municipality",
+                "District",
+                "Status",
+                "Priority",
+            };
+
+            public bool HasDetail(GridRowDetailRequest request)
+            {
+                if (request == null)
+                {
+                    throw new ArgumentNullException(nameof(request));
+                }
+
+                return request.Record is DemoGisRecordViewModel;
+            }
+
+            public GridRowDetailDescriptor CreateDetail(GridRowDetailRequest request)
+            {
+                if (request == null)
+                {
+                    throw new ArgumentNullException(nameof(request));
+                }
+
+                return new GridRowDetailDescriptor(
+                    request.RowKey + ":custom-detail",
+                    request.RowKey,
+                    GridRowDetailHeightPolicy.Fixed(112d),
+                    new DemoCustomRowDetailContentSpec(DetailColumnIds));
+            }
+        }
+
+        private sealed class DemoCustomRowDetailContentFactory : IGridRowDetailContentFactory
+        {
+            public FrameworkElement CreateContent(GridRowDetailWpfContext context)
+            {
+                if (context == null)
+                {
+                    throw new ArgumentNullException(nameof(context));
+                }
+
+                var spec = context.ContentDescriptor as DemoCustomRowDetailContentSpec;
+                if (spec == null)
+                {
+                    throw new InvalidOperationException("Custom row detail content descriptor must be DemoCustomRowDetailContentSpec.");
+                }
+
+                var panel = new StackPanel();
+                foreach (var columnId in spec.ColumnIds)
+                {
+                    if (!context.CoreContext.Fields.TryGetValue(columnId, out var field) ||
+                        !context.CoreContext.Values.TryGetValue(columnId, out var value))
+                    {
+                        throw new InvalidOperationException("Custom row detail field is missing from the row context: " + columnId + ".");
+                    }
+
+                    var textBlock = new TextBlock
+                    {
+                        Text = field.DisplayName + ": " + Convert.ToString(value, CultureInfo.CurrentCulture),
+                    };
+                    textBlock.SetResourceReference(FrameworkElement.StyleProperty, "PgGridToolsPanelDescriptionTextStyle");
+                    panel.Children.Add(textBlock);
+                }
+
+                return panel;
+            }
+        }
+
+        private sealed class DemoCustomRowDetailContentSpec
+        {
+            public DemoCustomRowDetailContentSpec(IReadOnlyList<string> columnIds)
+            {
+                if (columnIds == null || columnIds.Count == 0)
+                {
+                    throw new ArgumentException("At least one custom detail column id is required.", nameof(columnIds));
+                }
+
+                ColumnIds = columnIds;
+            }
+
+            public IReadOnlyList<string> ColumnIds { get; }
+        }
+
         private static RuntimeFieldState CreateDocumentEditorDemoFieldState(string id, string caption, FieldChromeMode chromeMode, string sampleText)
         {
             var definition = new YamlDocumentEditorFieldDefinition
@@ -3656,4 +3964,5 @@ namespace PhialeTech.Components.Wpf
         }
     }
 }
+
 

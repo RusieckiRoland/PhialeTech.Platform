@@ -28,3 +28,4 @@ namespace PhialeTech.Components.Wpf
         public bool IsFocusMode { get; }
     }
 }
+

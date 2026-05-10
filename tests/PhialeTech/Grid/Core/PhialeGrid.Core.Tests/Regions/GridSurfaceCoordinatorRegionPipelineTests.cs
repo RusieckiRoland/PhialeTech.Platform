@@ -68,7 +68,10 @@ namespace PhialeGrid.Core.Regions.Tests
                 new GridRegionLayoutState(GridRegionKind.TopCommandRegion, GridRegionState.Open, 52d, false ),
                 new GridRegionLayoutState(GridRegionKind.GroupingRegion, GridRegionState.Open, 56d, false ),
                 new GridRegionLayoutState(GridRegionKind.SummaryBottomRegion, GridRegionState.Open, 56d, false ),
+                new GridRegionLayoutState(GridRegionKind.SummaryDesignerRegion, GridRegionState.Closed, 320d, false),
                 new GridRegionLayoutState(GridRegionKind.SideToolRegion, GridRegionState.Open, 330d, true),
+                new GridRegionLayoutState(GridRegionKind.ChangePanelRegion, GridRegionState.Closed, 320d, false),
+                new GridRegionLayoutState(GridRegionKind.ValidationPanelRegion, GridRegionState.Closed, 320d, false),
             });
 
             coordinator.RestoreRegionLayout(snapshot);
@@ -85,5 +88,6 @@ namespace PhialeGrid.Core.Regions.Tests
         }
     }
 }
+
 
 

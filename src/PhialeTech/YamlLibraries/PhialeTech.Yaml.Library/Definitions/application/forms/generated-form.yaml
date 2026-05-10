@@ -1,10 +1,12 @@
 namespace: application.forms
 imports:
   - domain.person
+  - application.forms.actionShells
 
 document:
   id: yaml-generated-form
   kind: Form
+  extends: review-sticky-header-footer
   name: YAML generated form
   interactionMode: Classic
   densityMode: Normal
@@ -35,24 +37,39 @@ document:
     - id: age
       extends: age
     - id: notes
-      extends: notes
+      extends: documentNotes
+    - id: developer.firstName
+      extends: firstName
+    - id: developer.lastName
+      extends: lastName
   layout:
     type: Column
+    overlayScope: true
     items:
       - type: Container
         caption: Reviewer
-        showBorder: true
+        containerChrome: Framed
         variant: Compact
         items:
           - type: Row
             items:
               - fieldRef: firstName
               - fieldRef: lastName
+      - type: Container
+        caption: Developer data
+        containerChrome: Framed
+        containerBehavior: Collapsible
+        collapsedText: "{developer.lastName} {developer.firstName}, {age}"
+        variant: Compact
+        items:
+          - type: Row
+            items:
+              - fieldRef: developer.lastName
+              - fieldRef: developer.firstName
               - fieldRef: age
       - type: Container
         caption: Review notes
-        showBorder: true
-        overlayScope: true
+        containerChrome: None
         items:
           - fieldRef: notes
   actions:

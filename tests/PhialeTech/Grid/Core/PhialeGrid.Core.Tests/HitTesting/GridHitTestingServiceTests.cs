@@ -287,6 +287,7 @@ namespace PhialeGrid.Core.Tests.HitTesting
                     {
                         Bounds = new GridBounds(0, dataTop, 40, 20),
                         SnapshotRevision = 1,
+                        HasDetails = hasDetails,
                         HasDetailsExpanded = hasDetails,
                         HasHierarchyChildren = hasHierarchyChildren,
                         HierarchyLevel = hierarchyLevel,
@@ -418,3 +419,4 @@ namespace PhialeGrid.Core.Tests.HitTesting
         }
     }
 }
+

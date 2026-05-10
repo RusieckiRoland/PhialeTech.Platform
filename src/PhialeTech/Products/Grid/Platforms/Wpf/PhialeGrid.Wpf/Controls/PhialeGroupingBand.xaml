@@ -2,6 +2,7 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:PhialeTech.PhialeGrid.Wpf.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
@@ -31,88 +32,79 @@
                    Foreground="{DynamicResource PgPanelTextBrush}"
                    Text="{Binding ElementName=Root, Path=BandLabelText}" />
 
-        <Border x:Name="GroupingDropZone"
-                Grid.Column="1"
-                MinHeight="34"
-                Padding="10,4"
-                Background="{DynamicResource PgAltRowBackgroundBrush}"
-                BorderBrush="{DynamicResource PgControlBorderBrush}"
-                BorderThickness="1"
-                CornerRadius="{DynamicResource CornerRadius.Grid.RegionHeader}">
-            <ScrollViewer VerticalAlignment="Center"
-                          VerticalScrollBarVisibility="Disabled"
-                          HorizontalScrollBarVisibility="Auto">
+        <controls:PhialeWorkspacePlayground x:Name="GroupingDropZone"
+                                            Grid.Column="1"
+                                            DataContext="{Binding ElementName=Root}">
+            <controls:PhialeWorkspacePlayground.PlaygroundContent>
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <TextBlock Margin="0,0,10,0"
-                               VerticalAlignment="Center"
-                               FontSize="12"
-                               Foreground="{DynamicResource PgMutedTextBrush}"
-                               Text="{Binding ElementName=Root, Path=DropText}"
-                               Visibility="{Binding ElementName=Root, Path=HasNoGroups, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <TextBlock Margin="0,0,10,0"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Foreground="{DynamicResource PgMutedTextBrush}"
+                           Text="{Binding DropText}"
+                           Visibility="{Binding HasNoGroups, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-                    <ItemsControl VerticalAlignment="Center"
-                                  ItemsSource="{Binding ElementName=Root, Path=GroupChips}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal"
-                                            VerticalAlignment="Center">
-                                    <Border Background="{DynamicResource PgPanelBackgroundBrush}"
-                                            BorderBrush="{DynamicResource PgControlBorderBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="{DynamicResource CornerRadius.Grid.RegionHeader}"
-                                            Style="{DynamicResource PgGroupChipBorderStyle}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Click="HandleToggleDirectionClick"
-                                                    Style="{DynamicResource ColumnChipActionButtonStyle}"
-                                                    Tag="{Binding ColumnId}">
-                                                <TextBlock x:Name="DirectionGlyph"
-                                                           Text="{Binding DirectionGlyph}"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource PgMutedTextBrush}"
-                                                           Style="{DynamicResource PgGroupChipActionTextStyle}" />
-                                            </Button>
-                                            <TextBlock Text="{Binding DisplayText}"
-                                                       VerticalAlignment="Center"
+                <ItemsControl VerticalAlignment="Center"
+                              ItemsSource="{Binding GroupChips}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <Border Background="{DynamicResource PgPanelBackgroundBrush}"
+                                        BorderBrush="{DynamicResource PgControlBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource CornerRadius.Grid.RegionHeader}"
+                                        Style="{DynamicResource PgGroupChipBorderStyle}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Click="HandleToggleDirectionClick"
+                                                Style="{DynamicResource ColumnChipActionButtonStyle}"
+                                                Tag="{Binding ColumnId}">
+                                            <TextBlock Text="{Binding DirectionGlyph}"
                                                        FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource PgSecondaryMutedBrush}"
-                                                       Style="{DynamicResource PgGroupChipTextStyle}" />
-                                            <Button Click="HandleRemoveGroupClick"
-                                                    Style="{DynamicResource ColumnChipActionButtonStyle}"
-                                                    Tag="{Binding ColumnId}">
-                                                <TextBlock Text="×"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource PgMutedTextBrush}"
-                                                           Style="{DynamicResource PgGroupChipActionTextStyle}" />
-                                            </Button>
-                                        </StackPanel>
-                                    </Border>
+                                                       Foreground="{DynamicResource PgMutedTextBrush}"
+                                                       Style="{DynamicResource PgGroupChipActionTextStyle}" />
+                                        </Button>
+                                        <TextBlock Text="{Binding DisplayText}"
+                                                   VerticalAlignment="Center"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource PgSecondaryMutedBrush}"
+                                                   Style="{DynamicResource PgGroupChipTextStyle}" />
+                                        <Button Click="HandleRemoveGroupClick"
+                                                Style="{DynamicResource ColumnChipActionButtonStyle}"
+                                                Tag="{Binding ColumnId}">
+                                            <TextBlock Text="×"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource PgMutedTextBrush}"
+                                                       Style="{DynamicResource PgGroupChipActionTextStyle}" />
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
 
-                                    <Viewbox x:Name="HierarchyArrow"
-                                             Width="48"
-                                             Height="18"
-                                             Margin="10,0,10,0"
-                                             VerticalAlignment="Center"
-                                             Visibility="{Binding HasFollowingGroup, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <Path Data="M 0 8 H 16 C 24 8 24 12 32 12 H 40 M 36 8 L 40 12 L 36 16"
-                                              Stroke="{DynamicResource PgMutedTextBrush}"
-                                              StrokeThickness="1.6"
-                                              StrokeStartLineCap="Round"
-                                              StrokeEndLineCap="Round"
-                                              StrokeLineJoin="Round" />
-                                    </Viewbox>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                                <Viewbox Width="48"
+                                         Height="18"
+                                         Margin="10,0,10,0"
+                                         VerticalAlignment="Center"
+                                         Visibility="{Binding HasFollowingGroup, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Path Data="M 0 8 H 16 C 24 8 24 12 32 12 H 40 M 36 8 L 40 12 L 36 16"
+                                          Stroke="{DynamicResource PgMutedTextBrush}"
+                                          StrokeThickness="1.6"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round" />
+                                </Viewbox>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
                 </StackPanel>
-            </ScrollViewer>
-        </Border>
+            </controls:PhialeWorkspacePlayground.PlaygroundContent>
+        </controls:PhialeWorkspacePlayground>
 
         <StackPanel Grid.Column="2"
                     Margin="8,0,0,0"

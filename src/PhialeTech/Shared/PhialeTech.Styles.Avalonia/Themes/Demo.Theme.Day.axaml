@@ -1,0 +1,33 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <SolidColorBrush x:Key="DemoWindowBackgroundBrush" Color="#F4F6FA" />
+    <SolidColorBrush x:Key="DemoSidebarBackgroundBrush" Color="#EEF2F7" />
+    <SolidColorBrush x:Key="DemoSidebarBorderBrush" Color="#D8DEE7" />
+    <SolidColorBrush x:Key="DemoPanelBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="DemoPanelBorderBrush" Color="#E4E7EC" />
+    <SolidColorBrush x:Key="DemoPrimaryTextBrush" Color="#1F2937" />
+    <SolidColorBrush x:Key="DemoSecondaryTextBrush" Color="#5B6572" />
+    <SolidColorBrush x:Key="DemoHeaderTextBrush" Color="#4B5563" />
+    <SolidColorBrush x:Key="DemoInputBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="DemoInputBorderBrush" Color="#D3D9E1" />
+    <SolidColorBrush x:Key="DemoPlatformBadgeBackgroundBrush" Color="#E6F4F1" />
+    <SolidColorBrush x:Key="DemoPlatformBadgeBorderBrush" Color="#B8DDD7" />
+    <SolidColorBrush x:Key="DemoPlatformBadgeTextBrush" Color="#0F766E" />
+    <SolidColorBrush x:Key="DemoHintBackgroundBrush" Color="#F6FAF9" />
+    <SolidColorBrush x:Key="DemoHintBorderBrush" Color="#D5E5E0" />
+    <SolidColorBrush x:Key="DemoHintTextBrush" Color="#2F5D57" />
+    <SolidColorBrush x:Key="DemoToolbarButtonBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="DemoToolbarButtonBorderBrush" Color="#D3D9E1" />
+    <SolidColorBrush x:Key="DemoToolbarButtonTextBrush" Color="#1F2937" />
+    <SolidColorBrush x:Key="DemoCodeBackgroundBrush" Color="#131A22" />
+    <SolidColorBrush x:Key="DemoCodeBorderBrush" Color="#2E3642" />
+    <SolidColorBrush x:Key="DemoCodeTextBrush" Color="#F4F7FB" />
+    <SolidColorBrush x:Key="DemoTokenBackgroundBrush" Color="#F4F7FB" />
+    <SolidColorBrush x:Key="DemoTokenBorderBrush" Color="#CBD5E1" />
+    <SolidColorBrush x:Key="DemoTokenTextBrush" Color="#334155" />
+    <SolidColorBrush x:Key="DemoGridBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="DemoGridBorderBrush" Color="#D9DDE3" />
+    <SolidColorBrush x:Key="DemoGridTextBrush" Color="#1F2937" />
+  </Styles.Resources>
+</Styles>

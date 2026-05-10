@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using PhialeGis.ComponentSandbox.Core;              // ISecondaryViewService (WPF variant)
 using PhialeGis.Library.Abstractions.Interactions;  // IGisInteractionManager, RelayCommand
@@ -35,3 +35,4 @@ namespace PhialeGis.ComponentSandbox.ViewModels
 
     }
 }
+

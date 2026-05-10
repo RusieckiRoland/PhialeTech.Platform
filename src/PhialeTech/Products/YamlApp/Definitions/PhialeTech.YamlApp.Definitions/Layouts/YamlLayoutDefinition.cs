@@ -10,6 +10,8 @@ namespace PhialeTech.YamlApp.Definitions.Layouts
 
         public string Name { get; set; }
 
+        public LayoutHeightMode? HeightMode { get; set; }
+
         public double? Width { get; set; }
 
         public FieldWidthHint? WidthHint { get; set; }

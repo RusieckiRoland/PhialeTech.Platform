@@ -1,10 +1,13 @@
 using System;
+using System.IO;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using NUnit.Framework;
+using PhialeTech.DocumentEditor;
 using PhialeTech.DocumentEditor.Abstractions;
 using PhialeTech.DocumentEditor.Wpf.Controls;
 using PhialeTech.WebHost.Abstractions.Ui.Web;
@@ -87,6 +90,7 @@ namespace PhialeTech.WebHost.Wpf.Tests
                 Assert.That(root.Children.Count, Is.EqualTo(1));
                 Assert.That(cell.Children[1], Is.InstanceOf<Grid>());
                 Assert.That(Panel.GetZIndex((UIElement)cell.Children[1]), Is.EqualTo(short.MaxValue));
+                Assert.That(hostFactory.Host.PostedMessages, Does.Contain("{\"type\":\"documentEditor.setOverlay\",\"isOpen\":true}"));
             }
             finally
             {
@@ -139,6 +143,51 @@ namespace PhialeTech.WebHost.Wpf.Tests
             }
         }
 
+        [Test]
+        public async Task DocumentEditorWorkspace_NormalizesInitialThemeForBootstrap()
+        {
+            using (var workspace = new DocumentEditorWorkspace(new DocumentEditorOptions
+            {
+                InitialTheme = "night"
+            }))
+            {
+                await workspace.PrepareAsync().ConfigureAwait(false);
+
+                var bootstrapPath = Path.Combine(
+                    workspace.WorkspaceRootPath,
+                    "DocumentEditor",
+                    "document-editor.bootstrap.json");
+                using (var document = JsonDocument.Parse(File.ReadAllText(bootstrapPath)))
+                {
+                    Assert.That(document.RootElement.GetProperty("theme").GetString(), Is.EqualTo("dark"));
+                }
+            }
+        }
+
+        [Test]
+        [Apartment(System.Threading.ApartmentState.STA)]
+        public async Task PhialeDocumentEditor_DoesNotResetTheme_WhenContentMessageDoesNotCarryTheme()
+        {
+            var hostFactory = new FakeWebComponentHostFactory();
+            var editor = new PhialeDocumentEditor(hostFactory, new DocumentEditorOptions());
+
+            try
+            {
+                await editor.InitializeAsync().ConfigureAwait(true);
+                await editor.SetThemeAsync("dark").ConfigureAwait(true);
+
+                hostFactory.Host.RaiseMessage(
+                    "{\"type\":\"documentEditor.contentChanged\",\"html\":\"<p>x</p>\",\"markdown\":\"x\",\"documentJson\":\"{}\",\"isReadOnly\":false}",
+                    "documentEditor.contentChanged");
+
+                Assert.That(editor.Theme, Is.EqualTo("dark"));
+            }
+            finally
+            {
+                editor.Dispose();
+            }
+        }
+
         private sealed class FakeWebComponentHostFactory : IWebComponentHostFactory
         {
             public FakeWebComponentHost Host { get; private set; }
@@ -152,6 +201,8 @@ namespace PhialeTech.WebHost.Wpf.Tests
 
         private sealed class FakeWebComponentHost : Border, IWebComponentHost
         {
+            private readonly System.Collections.Generic.List<string> _postedMessages = new System.Collections.Generic.List<string>();
+
             public FakeWebComponentHost(WebComponentHostOptions options)
             {
                 Options = options ?? new WebComponentHostOptions();
@@ -171,6 +222,8 @@ namespace PhialeTech.WebHost.Wpf.Tests
 
             public event EventHandler<WebComponentReadyStateChangedEventArgs> ReadyStateChanged;
 
+            public System.Collections.Generic.IReadOnlyList<string> PostedMessages => _postedMessages;
+
             public Task InitializeAsync()
             {
                 ReadyStateChanged?.Invoke(this, new WebComponentReadyStateChangedEventArgs(true, true));
@@ -183,9 +236,17 @@ namespace PhialeTech.WebHost.Wpf.Tests
 
             public Task LoadHtmlAsync(string html, string baseUrl = null) => Task.CompletedTask;
 
-            public Task PostMessageAsync(object message) => Task.CompletedTask;
+            public Task PostMessageAsync(object message)
+            {
+                _postedMessages.Add(System.Text.Json.JsonSerializer.Serialize(message));
+                return Task.CompletedTask;
+            }
 
-            public Task PostRawMessageAsync(string rawMessage) => Task.CompletedTask;
+            public Task PostRawMessageAsync(string rawMessage)
+            {
+                _postedMessages.Add(rawMessage ?? string.Empty);
+                return Task.CompletedTask;
+            }
 
             public Task<string> ExecuteScriptAsync(string script) => Task.FromResult(string.Empty);
 
@@ -205,3 +266,4 @@ namespace PhialeTech.WebHost.Wpf.Tests
         }
     }
 }
+

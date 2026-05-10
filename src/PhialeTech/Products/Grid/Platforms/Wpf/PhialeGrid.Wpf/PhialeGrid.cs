@@ -21,9 +21,10 @@ using System.Windows.Input;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using PhialeGrid.Core;
-using PhialeGrid.Core.Columns;
 using PhialeGrid.Core.Capabilities;
+using PhialeGrid.Core.Columns;
 using PhialeGrid.Core.Data;
+using PhialeGrid.Core.Details;
 using PhialeGrid.Core.Editing;
 using PhialeGrid.Core.Export;
 using PhialeGrid.Core.Hierarchy;
@@ -64,6 +65,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         private const string GroupingDragFormat = "PhialeGrid.Wpf.ColumnId";
         private const double RegionDragThreshold = 12d;
+        private const double RowDetailToggleWidth = 16d;
         private static readonly long AutoTouchPromotionWindowTicks = (long)(Stopwatch.Frequency * 0.8d);
         private const double ClassicColumnResizeStep = 24d;
         private const double TouchColumnResizeStep = 48d;
@@ -113,6 +115,9 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         private IReadOnlyList<GridHierarchyNode<object>> _hierarchyRoots = Array.Empty<GridHierarchyNode<object>>();
         private GridHierarchyController<object> _hierarchyController;
         private GridHierarchyPresentationMode _hierarchyPresentationMode;
+        private IGridRowDetailProvider _rowDetailProvider;
+        private IGridRowDetailContentFactory _rowDetailContentFactory;
+        private GridRowDetailExpansionState _rowDetailExpansionState = GridRowDetailExpansionState.Empty;
         private GridMasterDetailHeaderPlacementMode _masterDetailHeaderPlacementMode = GridMasterDetailHeaderPlacementMode.Inside;
         private string _hierarchyDisplayColumnId = "ObjectName";
         private string _masterDetailDisplayColumnId = "ObjectName";
@@ -156,6 +161,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         private bool _pendingRefreshSurfaceRowIndicatorsAfterBatch;
         private bool _pendingApplyRegionLayoutAfterBatch;
         private bool _pendingViewStateChangedAfterBatch;
+        private bool _isChangePanelChangedRowsFilterActive;
         private string _pendingCurrentCellRowKeyAfterBatch;
         private string _pendingCurrentCellColumnKeyAfterBatch;
         private GridInteractionMode _autoInteractionMode = GridInteractionMode.Classic;
@@ -176,6 +182,9 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public static readonly DependencyProperty ValidationPanelContentProperty =
             DependencyProperty.Register(nameof(ValidationPanelContent), typeof(object), typeof(PhialeGrid), new PropertyMetadata(null, HandleRegionChromeChanged));
+
+        public static readonly DependencyProperty SummaryDesignerContentProperty =
+            DependencyProperty.Register(nameof(SummaryDesignerContent), typeof(object), typeof(PhialeGrid), new PropertyMetadata(null, HandleRegionChromeChanged));
 
         public static readonly DependencyProperty SideToolRegionTitleProperty =
             DependencyProperty.Register(nameof(SideToolRegionTitle), typeof(string), typeof(PhialeGrid), new PropertyMetadata("Grid options", HandleSideToolRegionTitleChanged));
@@ -210,7 +219,11 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, HandleSortsChanged));
 
         public static readonly DependencyProperty SummariesProperty =
-            DependencyProperty.Register(nameof(Summaries), typeof(IEnumerable<GridSummaryDescriptor>), typeof(PhialeGrid), new PropertyMetadata(null, HandleSummariesChanged));
+            DependencyProperty.Register(
+                nameof(Summaries),
+                typeof(IEnumerable<GridSummaryDescriptor>),
+                typeof(PhialeGrid),
+                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, HandleSummariesChanged));
 
         public static readonly DependencyProperty IsGridReadOnlyProperty =
             DependencyProperty.Register(nameof(IsGridReadOnly), typeof(bool), typeof(PhialeGrid), new PropertyMetadata(true, HandleReadOnlyChanged));
@@ -287,6 +300,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             _surfaceCoordinator.ColumnReorderRequested += HandleSurfaceColumnReorderRequested;
             _surfaceCoordinator.ColumnGroupingDragRequested += HandleSurfaceColumnGroupingDragRequested;
             _surfaceCoordinator.RowActionRequested += HandleSurfaceRowActionRequested;
+            SurfaceHost.RowDetailContentFactory = _rowDetailContentFactory;
             SurfaceHost.Initialize(_surfaceCoordinator);
             SurfaceColumnHeaderBand.InputSurfaceHost = SurfaceHost;
             SurfaceHost.ViewportScrollChanged += HandleSurfaceViewportScrollChanged;
@@ -480,6 +494,12 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             set => SetValue(ValidationPanelContentProperty, value);
         }
 
+        public object SummaryDesignerContent
+        {
+            get => GetValue(SummaryDesignerContentProperty);
+            set => SetValue(SummaryDesignerContentProperty, value);
+        }
+
         public string SideToolRegionTitle
         {
             get => (string)GetValue(SideToolRegionTitleProperty);
@@ -496,6 +516,43 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         {
             get => (IGridCapabilityPolicy)GetValue(CapabilityPolicyProperty) ?? GridAllowAllCapabilityPolicy.Instance;
             set => SetValue(CapabilityPolicyProperty, value);
+        }
+
+        public IGridRowDetailProvider RowDetailProvider
+        {
+            get => _rowDetailProvider;
+            set
+            {
+                if (ReferenceEquals(_rowDetailProvider, value))
+                {
+                    return;
+                }
+
+                _rowDetailProvider = value;
+                _rowDetailExpansionState = GridRowDetailExpansionState.Empty;
+                ApplyResolvedRowHeaderMetrics();
+                OnPropertyChanged(nameof(ResolvedRowHeaderWidth));
+                OnPropertyChanged(nameof(ResolvedRowActionWidth));
+                RefreshRowsView();
+            }
+        }
+
+        public IGridRowDetailContentFactory RowDetailContentFactory
+        {
+            get => _rowDetailContentFactory;
+            set
+            {
+                if (ReferenceEquals(_rowDetailContentFactory, value))
+                {
+                    return;
+                }
+
+                _rowDetailContentFactory = value;
+                if (SurfaceHost != null)
+                {
+                    SurfaceHost.RowDetailContentFactory = value;
+                }
+            }
         }
 
         public IEnumerable RowsView
@@ -558,9 +615,36 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public string ToolsRegionTitleText => string.IsNullOrWhiteSpace(SideToolRegionTitle) ? "Grid options" : SideToolRegionTitle;
 
+        public bool IsRowNumberingGlobal
+        {
+            get => RowNumberingMode == GridRowNumberingMode.Global;
+            set { if (value) RowNumberingMode = GridRowNumberingMode.Global; }
+        }
+
+        public bool IsRowNumberingWithinGroup
+        {
+            get => RowNumberingMode == GridRowNumberingMode.WithinGroup;
+            set { if (value) RowNumberingMode = GridRowNumberingMode.WithinGroup; }
+        }
+
+        public IReadOnlyList<GridColumnDefinition> ColumnChooserColumns => GetGridOptionsColumnChooserColumns();
+
+        public void ToggleColumnVisibilityFromPanel(string columnId)
+        {
+            var isCurrentlyVisible = _layoutState?.Columns.Any(c => string.Equals(c.Id, columnId, StringComparison.OrdinalIgnoreCase) && c.IsVisible) ?? false;
+            if (isCurrentlyVisible && GetVisibleColumnCount() <= 1)
+            {
+                return;
+            }
+
+            SetColumnVisibility(columnId, !isCurrentlyVisible);
+        }
+
         public string ChangePanelTitleText => "Changes";
 
         public string ValidationPanelTitleText => "Validation";
+
+        public string SummaryDesignerTitleText => "Summary designer";
 
         public string SummaryRegionTitleText => "Summaries";
 
@@ -576,6 +660,8 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public string ValidationPanelRegionToggleText => GetChromeState(GridRegionKind.ValidationPanelRegion).ToggleText;
 
+        public string SummaryDesignerRegionToggleText => GetChromeState(GridRegionKind.SummaryDesignerRegion).ToggleText;
+
         public bool CanToggleTopCommandStrip => GetChromeState(GridRegionKind.TopCommandRegion).CanCollapse;
 
         public bool CanCollapseGroupingRegion => GetChromeState(GridRegionKind.GroupingRegion).CanCollapse;
@@ -587,6 +673,8 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         public bool CanCollapseChangePanelRegion => GetChromeState(GridRegionKind.ChangePanelRegion).CanCollapse;
 
         public bool CanCollapseValidationPanelRegion => GetChromeState(GridRegionKind.ValidationPanelRegion).CanCollapse;
+
+        public bool CanCollapseSummaryDesignerRegion => GetChromeState(GridRegionKind.SummaryDesignerRegion).CanCollapse;
 
         public bool CanCloseTopCommandStrip => GetChromeState(GridRegionKind.TopCommandRegion).CanClose;
 
@@ -600,11 +688,15 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public bool CanCloseValidationPanelRegion => GetChromeState(GridRegionKind.ValidationPanelRegion).CanClose;
 
+        public bool CanCloseSummaryDesignerRegion => GetChromeState(GridRegionKind.SummaryDesignerRegion).CanClose;
+
         public Visibility ToolsPanelToolsTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SideToolRegion, GridRegionKind.SideToolRegion);
 
         public Visibility ToolsPanelChangesTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SideToolRegion, GridRegionKind.ChangePanelRegion);
 
         public Visibility ToolsPanelValidationTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SideToolRegion, GridRegionKind.ValidationPanelRegion);
+
+        public Visibility ToolsPanelSummaryDesignerTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SideToolRegion, GridRegionKind.SummaryDesignerRegion);
 
         public Visibility ChangesPanelToolsTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ChangePanelRegion, GridRegionKind.SideToolRegion);
 
@@ -612,11 +704,23 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public Visibility ChangesPanelValidationTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ChangePanelRegion, GridRegionKind.ValidationPanelRegion);
 
+        public Visibility ChangesPanelSummaryDesignerTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ChangePanelRegion, GridRegionKind.SummaryDesignerRegion);
+
         public Visibility ValidationPanelToolsTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ValidationPanelRegion, GridRegionKind.SideToolRegion);
 
         public Visibility ValidationPanelChangesTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ValidationPanelRegion, GridRegionKind.ChangePanelRegion);
 
         public Visibility ValidationPanelValidationTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ValidationPanelRegion, GridRegionKind.ValidationPanelRegion);
+
+        public Visibility ValidationPanelSummaryDesignerTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.ValidationPanelRegion, GridRegionKind.SummaryDesignerRegion);
+
+        public Visibility SummaryDesignerPanelToolsTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SummaryDesignerRegion, GridRegionKind.SideToolRegion);
+
+        public Visibility SummaryDesignerPanelChangesTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SummaryDesignerRegion, GridRegionKind.ChangePanelRegion);
+
+        public Visibility SummaryDesignerPanelValidationTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SummaryDesignerRegion, GridRegionKind.ValidationPanelRegion);
+
+        public Visibility SummaryDesignerPanelSummaryDesignerTabVisibility => ResolveWorkspacePanelTabVisibility(GridRegionKind.SummaryDesignerRegion, GridRegionKind.SummaryDesignerRegion);
 
         public string FilterLabelText => GetText(GridTextKeys.FilterLabel);
 
@@ -670,11 +774,31 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public IReadOnlyList<string> PendingEditRowIds => OrderRowIdsByCurrentView(CurrentEditSessionContext?.EditedRecordIds ?? Array.Empty<string>());
 
+        public IReadOnlyList<ChangePanelItem> ChangePanelItems => ResolveChangePanelItems();
+
+        public string ChangeSummaryText => string.Format(
+            CultureInfo.CurrentCulture,
+            PendingEditCount == 1 ? "{0} changed row" : "{0} changed rows",
+            PendingEditCount);
+
+        public bool IsChangePanelChangedRowsFilterActive => _isChangePanelChangedRowsFilterActive;
+
+        public string ChangePanelRowsFilterToggleText => _isChangePanelChangedRowsFilterActive
+            ? "Show all rows"
+            : "Show only changed rows";
+
         public IReadOnlyList<string> PendingEditRowIdsWithoutValidation => OrderRowIdsByCurrentView(
             (CurrentEditSessionContext?.EditedRecordIds ?? Array.Empty<string>())
                 .Where(rowId => !(CurrentEditSessionContext?.InvalidRecordIds?.Contains(rowId) ?? false)));
 
         public IReadOnlyList<string> ValidationIssueRowIds => OrderRowIdsByCurrentView(CurrentEditSessionContext?.InvalidRecordIds ?? Array.Empty<string>());
+
+        public IReadOnlyList<ValidationIssuePanelItem> ValidationIssueItems => ResolveValidationIssueItems();
+
+        public string ValidationIssueSummaryText => string.Format(
+            CultureInfo.CurrentCulture,
+            ValidationIssueCount == 1 ? "{0} validation issue" : "{0} validation issues",
+            ValidationIssueCount);
 
         public bool HasPendingEdits => PendingEditCount > 0;
 
@@ -692,9 +816,9 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         public double ResolvedDetailRowHeight => _densityMetrics.DetailRowHeight;
 
-        public double ResolvedRowHeaderWidth => ResolvedRowStateWidth + ResolvedRowNumbersWidth;
+        public double ResolvedRowHeaderWidth => ResolvedRowDetailToggleWidth + ResolvedRowStateWidth + ResolvedRowNumbersWidth;
 
-        public double ResolvedRowActionWidth => ResolvedRowHeaderWidth;
+        public double ResolvedRowActionWidth => ResolvedRowDetailToggleWidth;
 
         public double SurfaceColumnHeaderHeight => ResolveSurfaceViewportState()?.ColumnHeaderHeight ?? _surfaceCoordinator.ColumnHeaderHeight;
 
@@ -709,6 +833,8 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         public double SurfaceHorizontalScrollBarGutterHeight => SurfaceHost?.HorizontalScrollBarGutterHeight ?? 0d;
 
         public double ResolvedRowStateWidth => ResolvedRowIndicatorWidth + ResolvedSelectionCheckboxWidth;
+
+        public double ResolvedRowDetailToggleWidth => _rowDetailProvider == null ? 0d : RowDetailToggleWidth;
 
         public double ResolvedRowNumbersWidth => ShowNb
             ? ResolveAdaptiveRowMarkerWidth()
@@ -882,6 +1008,42 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 DateTime.UtcNow));
         }
 
+        public void ToggleChangePanelChangedRowsFilter()
+        {
+            SetChangePanelChangedRowsFilterActive(!_isChangePanelChangedRowsFilterActive);
+        }
+
+        public void ClearChangePanelChangedRowsFilter()
+        {
+            SetChangePanelChangedRowsFilterActive(false);
+        }
+
+        private void SetChangePanelChangedRowsFilterActive(bool isActive)
+        {
+            if (_isChangePanelChangedRowsFilterActive == isActive)
+            {
+                return;
+            }
+
+            var wasActive = _isChangePanelChangedRowsFilterActive;
+            _isChangePanelChangedRowsFilterActive = isActive;
+            OnPropertyChanged(nameof(IsChangePanelChangedRowsFilterActive));
+            OnPropertyChanged(nameof(ChangePanelRowsFilterToggleText));
+            RefreshRowsView();
+            if (wasActive && !isActive)
+            {
+                ResetChangePanelChangedRowsFilterViewport();
+            }
+
+            RaiseViewStateChanged();
+        }
+
+        private void ResetChangePanelChangedRowsFilterViewport()
+        {
+            _surfaceCoordinator.SetScrollPosition(0d, 0d);
+            SyncFilterScrollOffset();
+        }
+
         private void EnsureWorkspacePanelOpen(GridRegionKind regionKind)
         {
             var regionState = ResolveRequiredRegionState(regionKind);
@@ -1001,18 +1163,21 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 OnPropertyChanged(nameof(SideToolRegionToggleText));
                 OnPropertyChanged(nameof(ChangePanelRegionToggleText));
                 OnPropertyChanged(nameof(ValidationPanelRegionToggleText));
+                OnPropertyChanged(nameof(SummaryDesignerRegionToggleText));
                 OnPropertyChanged(nameof(CanToggleTopCommandStrip));
                 OnPropertyChanged(nameof(CanCollapseGroupingRegion));
                 OnPropertyChanged(nameof(CanCollapseSummaryBottomRegion));
                 OnPropertyChanged(nameof(CanCollapseSideToolRegion));
                 OnPropertyChanged(nameof(CanCollapseChangePanelRegion));
                 OnPropertyChanged(nameof(CanCollapseValidationPanelRegion));
+                OnPropertyChanged(nameof(CanCollapseSummaryDesignerRegion));
                 OnPropertyChanged(nameof(CanCloseTopCommandStrip));
                 OnPropertyChanged(nameof(CanCloseGroupingRegion));
                 OnPropertyChanged(nameof(CanCloseSummaryBottomRegion));
                 OnPropertyChanged(nameof(CanCloseSideToolRegion));
                 OnPropertyChanged(nameof(CanCloseChangePanelRegion));
                 OnPropertyChanged(nameof(CanCloseValidationPanelRegion));
+                OnPropertyChanged(nameof(CanCloseSummaryDesignerRegion));
                 RaiseWorkspacePanelTabVisibilityChanged();
                 QueueWorkspacePanelTabOverflowLayout();
                 LogDiagnostics("ApplyRegionLayout finished in " + stopwatch.ElapsedMilliseconds + " ms. Count=" + applyCounter.Count + ". " + GetGridSessionDescription() + ".");
@@ -1028,12 +1193,19 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             OnPropertyChanged(nameof(ToolsPanelToolsTabVisibility));
             OnPropertyChanged(nameof(ToolsPanelChangesTabVisibility));
             OnPropertyChanged(nameof(ToolsPanelValidationTabVisibility));
+            OnPropertyChanged(nameof(ToolsPanelSummaryDesignerTabVisibility));
             OnPropertyChanged(nameof(ChangesPanelToolsTabVisibility));
             OnPropertyChanged(nameof(ChangesPanelChangesTabVisibility));
             OnPropertyChanged(nameof(ChangesPanelValidationTabVisibility));
+            OnPropertyChanged(nameof(ChangesPanelSummaryDesignerTabVisibility));
             OnPropertyChanged(nameof(ValidationPanelToolsTabVisibility));
             OnPropertyChanged(nameof(ValidationPanelChangesTabVisibility));
             OnPropertyChanged(nameof(ValidationPanelValidationTabVisibility));
+            OnPropertyChanged(nameof(ValidationPanelSummaryDesignerTabVisibility));
+            OnPropertyChanged(nameof(SummaryDesignerPanelToolsTabVisibility));
+            OnPropertyChanged(nameof(SummaryDesignerPanelChangesTabVisibility));
+            OnPropertyChanged(nameof(SummaryDesignerPanelValidationTabVisibility));
+            OnPropertyChanged(nameof(SummaryDesignerPanelSummaryDesignerTabVisibility));
         }
 
         private void HandleWorkspacePanelTabOverflowLayoutChanged(object sender, SizeChangedEventArgs e)
@@ -1065,7 +1237,8 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 ToolsPanelOverflowTabButton,
                 ToolsPanelToolsTabButton,
                 ToolsPanelChangesTabButton,
-                ToolsPanelValidationTabButton);
+                ToolsPanelValidationTabButton,
+                ToolsPanelSummaryDesignerTabButton);
             UpdateWorkspacePanelTabOverflow(
                 GridRegionKind.ChangePanelRegion,
                 ChangePanelExpandedShell,
@@ -1073,7 +1246,8 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 ChangesPanelOverflowTabButton,
                 ChangesPanelToolsTabButton,
                 ChangesPanelChangesTabButton,
-                ChangesPanelValidationTabButton);
+                ChangesPanelValidationTabButton,
+                ChangesPanelSummaryDesignerTabButton);
             UpdateWorkspacePanelTabOverflow(
                 GridRegionKind.ValidationPanelRegion,
                 ValidationPanelExpandedShell,
@@ -1081,7 +1255,17 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 ValidationPanelOverflowTabButton,
                 ValidationPanelToolsTabButton,
                 ValidationPanelChangesTabButton,
-                ValidationPanelValidationTabButton);
+                ValidationPanelValidationTabButton,
+                ValidationPanelSummaryDesignerTabButton);
+            UpdateWorkspacePanelTabOverflow(
+                GridRegionKind.SummaryDesignerRegion,
+                SummaryDesignerExpandedShell,
+                SummaryDesignerExpandedTabStrip,
+                SummaryDesignerPanelOverflowTabButton,
+                SummaryDesignerPanelToolsTabButton,
+                SummaryDesignerPanelChangesTabButton,
+                SummaryDesignerPanelValidationTabButton,
+                SummaryDesignerPanelSummaryDesignerTabButton);
         }
 
         private void UpdateWorkspacePanelTabOverflow(
@@ -1535,6 +1719,28 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                         ValidationPanelExpandedShell,
                         ValidationPanelExpandedShellTransform,
                         ResolveRequiredRegionDefaultSize(GridRegionKind.ValidationPanelRegion)),
+                    new WpfGridWorkspacePanelBinding(
+                        GridRegionKind.SummaryDesignerRegion,
+                        RegionSurfaceColumn,
+                        LeftWorkspacePanelSplitterColumn,
+                        LeftWorkspacePanelColumn,
+                        SideToolRegionSplitterColumn,
+                        SideToolRegionColumn,
+                        new FrameworkElement[]
+                        {
+                            TopWorkspaceBandHost,
+                            RegionLayoutFrame,
+                            SummaryBottomRegionSplitter,
+                            BottomWorkspaceBandHost,
+                            BottomStatusStripHost,
+                        },
+                        SummaryDesignerRegionSplitter,
+                        SummaryDesignerRegionHost,
+                        SummaryDesignerContentScrollViewer,
+                        SummaryDesignerCollapsedRail,
+                        SummaryDesignerExpandedShell,
+                        SummaryDesignerExpandedShellTransform,
+                        ResolveRequiredRegionDefaultSize(GridRegionKind.SummaryDesignerRegion)),
                 });
         }
 
@@ -1571,12 +1777,13 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     [GridRegionKind.SideToolRegion] = WpfGridRegionContentResolver.HasRenderableContent(SideToolRegionContentPresenter),
                     [GridRegionKind.ChangePanelRegion] = WpfGridRegionContentResolver.HasRenderableContent(ChangePanelContentPresenter),
                     [GridRegionKind.ValidationPanelRegion] = WpfGridRegionContentResolver.HasRenderableContent(ValidationPanelContentPresenter),
+                    [GridRegionKind.SummaryDesignerRegion] = WpfGridRegionContentResolver.HasRenderableContent(SummaryDesignerContentPresenter),
                 },
                 new Dictionary<GridRegionKind, WpfGridRegionRenderDirectives>
                 {
                     [GridRegionKind.TopCommandRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: false),
                     [GridRegionKind.GroupingRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: true),
-                    [GridRegionKind.SummaryBottomRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: true),
+                    [GridRegionKind.SummaryBottomRegion] = new WpfGridRegionRenderDirectives(forceCompactSize: false, autoSizeToContent: true),
                 },
                 SideToolRegionUsesDrawerChrome);
         }
@@ -1715,12 +1922,10 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         private static IReadOnlyList<GridRegionKind> ResolveWorkspacePanelRegionKinds()
         {
-            return new[]
-            {
-                GridRegionKind.SideToolRegion,
-                GridRegionKind.ChangePanelRegion,
-                GridRegionKind.ValidationPanelRegion,
-            };
+            return GridRegionDefinitionCatalog.CreateDefault()
+                .Where(region => region.HostKind == GridRegionHostKind.WorkspacePanel)
+                .Select(region => region.RegionKind)
+                .ToArray();
         }
 
         private void HandleRegionDragMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -2085,6 +2290,12 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     expandedShell = ValidationPanelExpandedShell;
                     expandedShellTransform = ValidationPanelExpandedShellTransform;
                     return;
+                case GridRegionKind.SummaryDesignerRegion:
+                    host = SummaryDesignerRegionHost;
+                    panel = SummaryDesignerPanel;
+                    expandedShell = SummaryDesignerExpandedShell;
+                    expandedShellTransform = SummaryDesignerExpandedShellTransform;
+                    return;
                 default:
                     throw new InvalidOperationException(regionKind + " is not a workspace panel.");
             }
@@ -2110,6 +2321,9 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                         return;
                     case GridRegionKind.ValidationPanelRegion:
                         PersistColumnRegionSize(GridRegionKind.ValidationPanelRegion, ResolveWorkspacePanelSizeColumn(GridRegionKind.ValidationPanelRegion));
+                        return;
+                    case GridRegionKind.SummaryDesignerRegion:
+                        PersistColumnRegionSize(GridRegionKind.SummaryDesignerRegion, ResolveWorkspacePanelSizeColumn(GridRegionKind.SummaryDesignerRegion));
                         return;
                     default:
                         throw new InvalidOperationException("Unsupported region splitter binding.");
@@ -2179,8 +2393,25 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             }
 
             _surfaceCoordinator.ProcessInput(input);
+            ClearChangePanelChangedRowsFilterWhenPanelIsNotVisible();
             ApplyRegionLayout();
             RaiseViewStateChanged();
+        }
+
+        private void ClearChangePanelChangedRowsFilterWhenPanelIsNotVisible()
+        {
+            if (!_isChangePanelChangedRowsFilterActive || IsChangePanelVisibleForChangedRowsFilter())
+            {
+                return;
+            }
+
+            ClearChangePanelChangedRowsFilter();
+        }
+
+        private bool IsChangePanelVisibleForChangedRowsFilter()
+        {
+            var state = ResolveRequiredRegionState(GridRegionKind.ChangePanelRegion);
+            return state.State == GridRegionState.Open && state.IsActive;
         }
 
         private static double ResolvePersistedRegionSize(GridRegionKind regionKind, GridLength configuredSize, double actualSize)
@@ -3016,6 +3247,8 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             grid.OnPropertyChanged(nameof(ResolvedRowMarkerWidth));
             grid.OnPropertyChanged(nameof(ResolvedSelectionCheckboxWidth));
             grid.OnPropertyChanged(nameof(ResolvedRowHeaderWidth));
+            grid.OnPropertyChanged(nameof(IsRowNumberingGlobal));
+            grid.OnPropertyChanged(nameof(IsRowNumberingWithinGroup));
             grid._surfaceCoordinator.SelectCurrentRow = grid.SelectCurrentRow;
             grid._surfaceCoordinator.MultiSelect = grid.MultiSelect;
             grid._surfaceCoordinator.ShowRowNumbers = grid.ShowNb;
@@ -3256,10 +3489,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 })
                 .ToArray();
 
-            var usedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var keyedRows = (sourceRows ?? Array.Empty<object>())
-                .Select((row, index) => new KeyValuePair<string, object>(CreateSurfaceRowKey(row, index, usedKeys), row))
-                .ToArray();
+            var keyedRows = CreateSurfaceRowsWithCustomDetails(sourceRows ?? Array.Empty<object>());
 
             _surfaceRowsByKey = keyedRows.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
             _surfaceColumnsByKey = _visibleColumns.ToDictionary(column => column.ColumnId, column => column, StringComparer.OrdinalIgnoreCase);
@@ -3275,6 +3505,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     ? ResolveRequiredDimensionResource("PgGridFilterRowHeight")
                     : 0d;
                 _surfaceCoordinator.RowHeaderWidth = ResolvedRowHeaderWidth;
+                _surfaceCoordinator.RowActionWidth = ResolvedRowActionWidth;
                 _surfaceCoordinator.RowIndicatorWidth = ResolvedRowIndicatorWidth;
                 _surfaceCoordinator.RowMarkerWidth = ResolvedRowMarkerWidth;
                 _surfaceCoordinator.SelectionCheckboxWidth = ResolvedSelectionCheckboxWidth;
@@ -3301,6 +3532,35 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             LogDiagnostics($"SyncSurfaceRendererSnapshot finished in {stopwatch.ElapsedMilliseconds} ms. Count={snapshotCounter.Count}, SourceRows={sourceRows?.Count ?? 0}, LayoutColumns={layoutColumns.Length}, RowDefinitions={rowDefinitions.Length}. {GetGridSessionDescription()}.");
         }
 
+        private KeyValuePair<string, object>[] CreateSurfaceRowsWithCustomDetails(IReadOnlyList<object> sourceRows)
+        {
+            var usedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var keyedRows = new List<KeyValuePair<string, object>>();
+            if (sourceRows == null || sourceRows.Count == 0)
+            {
+                return keyedRows.ToArray();
+            }
+
+            for (var index = 0; index < sourceRows.Count; index++)
+            {
+                var row = sourceRows[index];
+                var rowKey = CreateSurfaceRowKey(row, index, usedKeys);
+                keyedRows.Add(new KeyValuePair<string, object>(rowKey, row));
+
+                if (TryCreateCustomDetailHostRow(rowKey, row, out var detailHost))
+                {
+                    if (!usedKeys.Add(detailHost.RowKey))
+                    {
+                        throw new InvalidOperationException("Duplicate row detail key: " + detailHost.RowKey);
+                    }
+
+                    keyedRows.Add(new KeyValuePair<string, object>(detailHost.RowKey, detailHost));
+                }
+            }
+
+            return keyedRows.ToArray();
+        }
+
         private string CreateSurfaceRowKey(object row, int index, ISet<string> usedKeys)
         {
             var baseKey = ResolveSurfaceRowKey(row);
@@ -3313,10 +3573,94 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             return candidate;
         }
 
+        private bool TryCreateCustomDetailHostRow(string rowKey, object row, out GridCustomDetailHostRowModel detailHost)
+        {
+            detailHost = null;
+            if (_rowDetailProvider == null)
+            {
+                return false;
+            }
+
+            var record = UnwrapCustomDetailRecord(row);
+            if (record == null)
+            {
+                return false;
+            }
+
+            var request = CreateRowDetailRequest(rowKey, record);
+            if (!_rowDetailProvider.HasDetail(request))
+            {
+                return false;
+            }
+
+            if (!_rowDetailExpansionState.IsExpanded(rowKey))
+            {
+                return false;
+            }
+
+            var descriptor = _rowDetailProvider.CreateDetail(request);
+            if (descriptor == null)
+            {
+                throw new InvalidOperationException("Row detail provider returned null descriptor for row '" + rowKey + "'.");
+            }
+
+            if (!string.Equals(descriptor.OwnerRowKey, rowKey, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Row detail descriptor owner key does not match source row key '" + rowKey + "'.");
+            }
+
+            detailHost = new GridCustomDetailHostRowModel(rowKey, descriptor, request.ToContext());
+            return true;
+        }
+
+        private object UnwrapCustomDetailRecord(object row)
+        {
+            if (row is GridGroupFlatRow<object> groupedRow)
+            {
+                return groupedRow.Kind == GridGroupFlatRowKind.DataRow ? groupedRow.Item : null;
+            }
+
+            if (row is GridDataRowModel dataRow)
+            {
+                return dataRow.SourceRow;
+            }
+
+            if (row is GridDisplayRowModel)
+            {
+                return null;
+            }
+
+            return row;
+        }
+
+        private GridRowDetailRequest CreateRowDetailRequest(string rowKey, object record)
+        {
+            var values = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            var fields = new Dictionary<string, GridRowDetailFieldContext>(StringComparer.OrdinalIgnoreCase);
+            foreach (var column in _visibleColumns)
+            {
+                values[column.ColumnId] = ResolveRowValue(record, column.ColumnId);
+                fields[column.ColumnId] = new GridRowDetailFieldContext(
+                    column.ColumnId,
+                    column.Header,
+                    column.ValueType,
+                    IsGridReadOnly || !CanEditColumn(column));
+            }
+
+            return new GridRowDetailRequest(
+                rowKey,
+                ResolveRowId(record),
+                record,
+                values,
+                fields);
+        }
+
         private global::PhialeGrid.Core.Layout.GridRowDefinition CreateSurfaceRowDefinition(string rowKey, object row)
         {
             if (row is GridGroupFlatRow<object> groupedRow)
             {
+                var hasCustomDetail = groupedRow.Kind == GridGroupFlatRowKind.DataRow &&
+                    HasCustomDetailForSurfaceRow(rowKey, row);
                 return new global::PhialeGrid.Core.Layout.GridRowDefinition
                 {
                     RowKey = rowKey,
@@ -3326,6 +3670,8 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     IsHierarchyExpanded = groupedRow.IsExpanded,
                     HasHierarchyChildren = groupedRow.Kind == GridGroupFlatRowKind.GroupHeader,
                     IsGroupHeader = groupedRow.Kind == GridGroupFlatRowKind.GroupHeader,
+                    HasDetails = hasCustomDetail,
+                    HasDetailsExpanded = hasCustomDetail && _rowDetailExpansionState.IsExpanded(rowKey),
                     IsReadOnly = groupedRow.Kind == GridGroupFlatRowKind.GroupHeader,
                     RepresentsDataRecord = groupedRow.Kind == GridGroupFlatRowKind.DataRow,
                 };
@@ -3392,6 +3738,23 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 };
             }
 
+            if (row is GridCustomDetailHostRowModel customDetailHost)
+            {
+                return new global::PhialeGrid.Core.Layout.GridRowDefinition
+                {
+                    RowKey = rowKey,
+                    Height = customDetailHost.Descriptor.HeightPolicy.Height,
+                    HeaderText = string.Empty,
+                    HierarchyLevel = 0,
+                    HasDetails = true,
+                    HasDetailsExpanded = true,
+                    IsDetailsHost = true,
+                    DetailsPayload = customDetailHost.ToSurfacePayload(),
+                    IsReadOnly = true,
+                    RepresentsDataRecord = false,
+                };
+            }
+
             if (row is GridMasterDetailHeaderRowModel masterDetailHeaderRow)
             {
                 return new global::PhialeGrid.Core.Layout.GridRowDefinition
@@ -3415,11 +3778,30 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 };
             }
 
+            var hasDetail = HasCustomDetailForSurfaceRow(rowKey, row);
             return new global::PhialeGrid.Core.Layout.GridRowDefinition
             {
                 RowKey = rowKey,
                 Height = ResolvedRowHeight,
+                HasDetails = hasDetail,
+                HasDetailsExpanded = hasDetail && _rowDetailExpansionState.IsExpanded(rowKey),
             };
+        }
+
+        private bool HasCustomDetailForSurfaceRow(string rowKey, object row)
+        {
+            if (_rowDetailProvider == null)
+            {
+                return false;
+            }
+
+            var record = UnwrapCustomDetailRecord(row);
+            if (record == null)
+            {
+                return false;
+            }
+
+            return _rowDetailProvider.HasDetail(CreateRowDetailRequest(rowKey, record));
         }
 
         private string ResolveSurfaceRowKey(object row)
@@ -3447,6 +3829,11 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             if (row is GridSurfaceMasterDetailDetailsHostRowModel masterDetailDetailsHost)
             {
                 return "master-details:" + masterDetailDetailsHost.MasterRow.Node.PathId;
+            }
+
+            if (row is GridCustomDetailHostRowModel customDetailHost)
+            {
+                return customDetailHost.RowKey;
             }
 
             if (row is GridMasterDetailHeaderRowModel masterDetailHeaderRow)
@@ -4379,6 +4766,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
             RefreshSortIndicators();
             OnPropertyChanged(nameof(VisibleColumns));
+            OnPropertyChanged(nameof(ColumnChooserColumns));
             RebuildGroupChips();
             if (refreshRows)
             {
@@ -4430,7 +4818,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             }
 
             PhialeGridDiagnostics.IncrementGridCounter(gridId, "RefreshRowsViewExecuted");
-            var sourceRows = ApplyGlobalSearch(EnumerateEffectiveItemsSource().ToArray());
+            var sourceRows = ApplyChangePanelChangedRowsFilter(ApplyGlobalSearch(EnumerateEffectiveItemsSource().ToArray()));
             if (sourceRows.Length == 0)
             {
                 RowsView = Array.Empty<GridDisplayRowModel>();
@@ -4538,6 +4926,26 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                     var text = GridValueFormatter.FormatDisplayValue(value);
                     return text.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
                 }))
+                .ToArray();
+        }
+
+        private object[] ApplyChangePanelChangedRowsFilter(IReadOnlyList<object> sourceRows)
+        {
+            if (!_isChangePanelChangedRowsFilterActive)
+            {
+                return sourceRows.ToArray();
+            }
+
+            var changedRowIds = new HashSet<string>(
+                CurrentEditSessionContext?.EditedRecordIds ?? Array.Empty<string>(),
+                StringComparer.OrdinalIgnoreCase);
+            if (changedRowIds.Count == 0)
+            {
+                return Array.Empty<object>();
+            }
+
+            return sourceRows
+                .Where(row => changedRowIds.Contains(ResolveRowId(row)))
                 .ToArray();
         }
 
@@ -4844,11 +5252,40 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 return;
             }
 
+            if (e.ActionKind == GridRowActionKind.ToggleDetails)
+            {
+                ToggleCustomRowDetail(e.RowKey, row);
+                return;
+            }
+
             if (e.ActionKind == GridRowActionKind.LoadMoreHierarchy &&
                 row is GridHierarchyLoadMoreRowModel loadMoreRow)
             {
                 LoadMoreHierarchyChildrenAsync(loadMoreRow);
             }
+        }
+
+        private void ToggleCustomRowDetail(string rowKey, object row)
+        {
+            if (_rowDetailProvider == null || string.IsNullOrWhiteSpace(rowKey))
+            {
+                return;
+            }
+
+            var record = UnwrapCustomDetailRecord(row);
+            if (record == null)
+            {
+                return;
+            }
+
+            var request = CreateRowDetailRequest(rowKey, record);
+            if (!_rowDetailProvider.HasDetail(request))
+            {
+                return;
+            }
+
+            _rowDetailExpansionState = _rowDetailExpansionState.Toggle(rowKey);
+            RefreshRowsView();
         }
 
         private async void ToggleHierarchyNodeAsync(GridHierarchyNodeRowModel hierarchyNodeRow)
@@ -5497,7 +5934,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 summary.Values.TryGetValue(key, out var value);
                 var column = _visibleColumns.FirstOrDefault(candidate => string.Equals(candidate.ColumnId, descriptor.ColumnId, StringComparison.OrdinalIgnoreCase));
                 var header = column == null ? descriptor.ColumnId : column.Header;
-                items.Add(new GridSummaryDisplayItem(header + " " + GetSummaryTypeText(descriptor.Type), GridValueFormatter.FormatDisplayValue(value)));
+                items.Add(new GridSummaryDisplayItem(header, GetSummaryTypeText(descriptor.Type), GridValueFormatter.FormatDisplayValue(value)));
             }
 
             _summaryItems = new ObservableCollection<GridSummaryDisplayItem>(items);
@@ -5813,65 +6250,15 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 PlacementTarget = placementTarget,
                 Placement = popupLayout.Placement,
                 MaxHeight = popupLayout.MaxHeight,
-                Style = TryFindResource("PgColumnContextMenuStyle") as Style,
+                Style = TryFindResource("PgGridRegionsContextMenuStyle") as Style,
             };
 
-            contextMenu.Items.Add(CreateGridOptionsSectionHeader(GetText(GridTextKeys.OptionsSectionRowState)));
-            contextMenu.Items.Add(CreateGridOptionsToggleMenuItem(
-                GetText(GridTextKeys.OptionsShowRowIndicator),
-                SelectCurrentRow,
-                () => SelectCurrentRow = !SelectCurrentRow,
-                icon: BuildGridOptionsMenuIcon(GridOptionsMenuIconKind.CurrentRowIndicator)));
-            contextMenu.Items.Add(CreateGridOptionsToggleMenuItem(
-                GetText(GridTextKeys.OptionsMultiSelect),
-                MultiSelect,
-                () => MultiSelect = !MultiSelect,
-                icon: BuildGridOptionsMenuIcon(GridOptionsMenuIconKind.MultiSelect)));
-            contextMenu.Items.Add(CreateColumnMenuSeparator());
-
-            contextMenu.Items.Add(CreateGridOptionsSectionHeader(GetText(GridTextKeys.OptionsSectionRowNumbers)));
-            contextMenu.Items.Add(CreateGridOptionsToggleMenuItem(
-                GetText(GridTextKeys.OptionsShowRowNumbers),
-                ShowNb,
-                () => ShowNb = !ShowNb,
-                icon: BuildGridOptionsMenuIcon(GridOptionsMenuIconKind.ShowRowNumbers)));
-
-            if (ShowNb)
-            {
-                contextMenu.Items.Add(CreateGridOptionsRadioMenuItem(
-                    GetText(GridTextKeys.OptionsRowNumberingGlobal),
-                    RowNumberingMode == GridRowNumberingMode.Global,
-                    () => RowNumberingMode = GridRowNumberingMode.Global));
-                contextMenu.Items.Add(CreateGridOptionsRadioMenuItem(
-                    GetText(GridTextKeys.OptionsRowNumberingWithinGroup),
-                    RowNumberingMode == GridRowNumberingMode.WithinGroup,
-                    () => RowNumberingMode = GridRowNumberingMode.WithinGroup));
-            }
-
-            contextMenu.Items.Add(CreateColumnMenuSeparator());
-            contextMenu.Items.Add(CreateGridOptionsSectionHeader(GetText(GridTextKeys.ColumnsChooser)));
-            contextMenu.Items.Add(CreateGridOptionsColumnsSubmenuItem());
-
-            contextMenu.Items.Add(CreateColumnMenuSeparator());
-            contextMenu.Items.Add(CreateGridOptionsSectionHeader(GetText(GridTextKeys.OptionsSectionCellInteraction)));
-            contextMenu.Items.Add(CreateGridOptionsToggleMenuItem(
-                GetText(GridTextKeys.OptionsEnableCellSelection),
-                EnableCellSelection,
-                () => EnableCellSelection = !EnableCellSelection,
-                icon: BuildGridOptionsMenuIcon(GridOptionsMenuIconKind.CellSelection)));
-            contextMenu.Items.Add(CreateGridOptionsToggleMenuItem(
-                GetText(GridTextKeys.OptionsEnableRangeSelection),
-                EnableRangeSelection,
-                () => EnableRangeSelection = !EnableRangeSelection,
-                EnableCellSelection,
-                BuildGridOptionsMenuIcon(GridOptionsMenuIconKind.RangeSelection)));
-
-            contextMenu.Items.Add(CreateColumnMenuSeparator());
             contextMenu.Items.Add(CreateGridOptionsSectionHeader("Regions"));
-            contextMenu.Items.Add(CreateGridOptionsRegionToggleMenuItem(GridRegionKind.TopCommandRegion, "Command strip"));
-            contextMenu.Items.Add(CreateGridOptionsRegionToggleMenuItem(GridRegionKind.GroupingRegion, "Grouping"));
-            contextMenu.Items.Add(CreateGridOptionsRegionToggleMenuItem(GridRegionKind.SummaryBottomRegion, SummaryRegionTitleText));
-            contextMenu.Items.Add(CreateGridOptionsRegionToggleMenuItem(GridRegionKind.SideToolRegion, ToolsRegionTitleText));
+            contextMenu.Items.Add(CreateGridOptionsRegionToggleCheckBox(GridRegionKind.TopCommandRegion, "Command strip"));
+            contextMenu.Items.Add(CreateGridOptionsRegionToggleCheckBox(GridRegionKind.GroupingRegion, "Grouping"));
+            contextMenu.Items.Add(CreateGridOptionsRegionToggleCheckBox(GridRegionKind.SummaryBottomRegion, SummaryRegionTitleText));
+            contextMenu.Items.Add(CreateGridOptionsRegionToggleCheckBox(GridRegionKind.SideToolRegion, ToolsRegionTitleText));
+            contextMenu.Items.Add(CreateGridOptionsRegionToggleCheckBox(GridRegionKind.SummaryDesignerRegion, SummaryDesignerTitleText));
             return contextMenu;
         }
 
@@ -6051,17 +6438,22 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             return menuItem;
         }
 
-        private MenuItem CreateGridOptionsRegionToggleMenuItem(GridRegionKind regionKind, string header)
+        private CheckBox CreateGridOptionsRegionToggleCheckBox(GridRegionKind regionKind, string header)
         {
             var regionState = GetChromeState(regionKind);
-            return CreateGridOptionsToggleMenuItem(
-                header,
-                regionState.IsVisible,
-                () =>
-                {
-                    SetRegionVisibility(regionKind, !regionState.IsVisible);
-                },
-                regionState.CanClose || !regionState.IsVisible);
+            var checkBox = new CheckBox
+            {
+                Content = header,
+                IsChecked = regionState.IsVisible,
+                IsEnabled = regionState.CanClose || !regionState.IsVisible,
+                Style = TryFindResource("PgGridRegionsContextMenuCheckBoxStyle") as Style,
+            };
+
+            checkBox.Click += (sender, args) =>
+            {
+                SetRegionVisibility(regionKind, checkBox.IsChecked == true);
+            };
+            return checkBox;
         }
 
         private IReadOnlyList<GridColumnDefinition> GetGridOptionsColumnChooserColumns()
@@ -6104,7 +6496,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
                 IsCheckable = true,
                 IsChecked = isChecked,
                 IsEnabled = isEnabled,
-                Style = TryFindResource("PgColumnContextMenuItemStyle") as Style,
+                Style = TryFindResource("PgGridOptionsContextMenuItemStyle") as Style,
             };
             menuItem.Click += (sender, args) => callback();
             return menuItem;
@@ -6115,13 +6507,12 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             var textBlock = new TextBlock
             {
                 Text = title ?? string.Empty,
-                Style = TryFindResource("PgColumnContextMenuSectionTextStyle") as Style,
+                Style = TryFindResource("PgGridRegionsContextMenuHeaderTextStyle") as Style,
             };
 
             return new Border
             {
                 Child = textBlock,
-                Padding = new Thickness(12, 10, 12, 4),
                 SnapsToDevicePixels = true,
                 IsHitTestVisible = false,
             };
@@ -6805,6 +7196,122 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             return _editSessionContext.EditedRecordIds.ToArray();
         }
 
+        private IReadOnlyList<ChangePanelItem> ResolveChangePanelItems()
+        {
+            var rowIds = PendingEditRowIds;
+            if (rowIds.Count == 0)
+            {
+                return Array.Empty<ChangePanelItem>();
+            }
+
+            var items = new List<ChangePanelItem>(rowIds.Count);
+            foreach (var rowId in rowIds)
+            {
+                var row = FindCurrentRow(rowId);
+                var description = row == null
+                    ? rowId
+                    : ResolveIndicatorRecordLabel(row);
+                var displayRowText = ResolveChangePanelRowDisplayText(rowId, row);
+                items.Add(new ChangePanelItem(rowId, ResolveChangePanelNavigationColumnId(row), displayRowText, description));
+            }
+
+            return items;
+        }
+
+        private string ResolveChangePanelRowDisplayText(string rowId, object row)
+        {
+            var rowNumber = ResolveCurrentViewDataRowNumber(rowId);
+            if (rowNumber > 0)
+            {
+                return rowNumber.ToString(CultureInfo.CurrentCulture);
+            }
+
+            if (!string.IsNullOrWhiteSpace(rowId))
+            {
+                return rowId;
+            }
+
+            throw new InvalidOperationException("Change panel row display text requires a row id.");
+        }
+
+        private int ResolveCurrentViewDataRowNumber(string rowId)
+        {
+            if (string.IsNullOrWhiteSpace(rowId) || RowsView == null)
+            {
+                return 0;
+            }
+
+            var rowNumber = 0;
+            foreach (var row in RowsView.Cast<object>())
+            {
+                if (!IsSelectableSurfaceRow(row))
+                {
+                    continue;
+                }
+
+                rowNumber++;
+                if (string.Equals(ResolveRowId(row), rowId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return rowNumber;
+                }
+            }
+
+            return 0;
+        }
+
+        private string ResolveChangePanelNavigationColumnId(object row)
+        {
+            var candidateColumns = new[] { "ObjectName", "Name", "Id" };
+            foreach (var columnId in candidateColumns)
+            {
+                if (HasChangePanelNavigationColumn(columnId))
+                {
+                    return columnId;
+                }
+            }
+
+            var firstColumnId = ResolveChangePanelColumns()
+                .Select(column => column.Id)
+                .FirstOrDefault(columnId => !string.IsNullOrWhiteSpace(columnId));
+            if (!string.IsNullOrWhiteSpace(firstColumnId))
+            {
+                return firstColumnId;
+            }
+
+            throw new InvalidOperationException("Change panel row navigation requires at least one column.");
+        }
+
+        private bool HasChangePanelNavigationColumn(string columnId)
+        {
+            return !string.IsNullOrWhiteSpace(columnId) &&
+                ResolveChangePanelColumns().Any(column => string.Equals(column.Id, columnId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private IReadOnlyList<GridColumnDefinition> ResolveChangePanelColumns()
+        {
+            if (_visibleColumns.Count > 0)
+            {
+                return _visibleColumns
+                    .Select(column => column.Definition)
+                    .Where(column => column != null)
+                    .ToArray();
+            }
+
+            if (_layoutState != null && _layoutState.Columns.Count > 0)
+            {
+                return _layoutState.Columns;
+            }
+
+            if (_baselineColumns.Count > 0)
+            {
+                return _baselineColumns;
+            }
+
+            return (_editSessionContext?.FieldDefinitions ?? Array.Empty<IEditSessionFieldDefinition>())
+                .Select(field => new GridColumnDefinition(field.FieldId, field.DisplayName))
+                .ToArray();
+        }
+
         private bool HasRowValidationIssues(string rowId)
         {
             return !string.IsNullOrWhiteSpace(rowId) &&
@@ -6814,6 +7321,32 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
         private IReadOnlyList<string> ResolveValidationIssueRowIds()
         {
             return _editSessionContext.InvalidRecordIds.ToArray();
+        }
+
+        private IReadOnlyList<ValidationIssuePanelItem> ResolveValidationIssueItems()
+        {
+            var rowIds = OrderRowIdsByCurrentView(CurrentEditSessionContext?.InvalidRecordIds ?? Array.Empty<string>());
+            if (rowIds.Count == 0)
+            {
+                return Array.Empty<ValidationIssuePanelItem>();
+            }
+
+            var items = new List<ValidationIssuePanelItem>();
+            foreach (var rowId in rowIds)
+            {
+                var details = ResolveValidationDetails(rowId);
+                if (details.Count == 0)
+                {
+                    throw new InvalidOperationException("Validation issue row '" + rowId + "' has no validation details.");
+                }
+
+                foreach (var detail in details)
+                {
+                    items.Add(new ValidationIssuePanelItem(rowId, detail.ColumnId, detail.DisplayName, detail.Message));
+                }
+            }
+
+            return items;
         }
 
         private IReadOnlyList<RowValidationDetail> ResolveValidationDetails(string rowId)
@@ -7822,7 +8355,14 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             OnPropertyChanged(nameof(HasSelectedRows));
             OnPropertyChanged(nameof(EditStatusText));
             OnPropertyChanged(nameof(PendingEditCount));
+            OnPropertyChanged(nameof(ChangePanelItems));
+            OnPropertyChanged(nameof(ChangeSummaryText));
+            OnPropertyChanged(nameof(IsChangePanelChangedRowsFilterActive));
+            OnPropertyChanged(nameof(ChangePanelRowsFilterToggleText));
             OnPropertyChanged(nameof(ValidationIssueCount));
+            OnPropertyChanged(nameof(ValidationIssueRowIds));
+            OnPropertyChanged(nameof(ValidationIssueItems));
+            OnPropertyChanged(nameof(ValidationIssueSummaryText));
             OnPropertyChanged(nameof(HasPendingEdits));
             OnPropertyChanged(nameof(HasValidationIssues));
             OnPropertyChanged(nameof(PendingEditBannerText));
@@ -7832,14 +8372,7 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
         private int ResolveValidationIssueCount()
         {
-            var rowValidationCount = _editSessionContext.ValidationIssueCount;
-            var snapshot = _surfaceCoordinator.GetCurrentSnapshot();
-            if (snapshot == null)
-            {
-                return rowValidationCount;
-            }
-
-            return rowValidationCount + snapshot.Cells.Count(cell => cell.HasValidationError);
+            return ResolveValidationIssueItems().Count;
         }
 
         private string GetSummaryTypeText(GridSummaryType type)
@@ -7934,6 +8467,42 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             public GridMasterDetailMasterRowModel MasterRow { get; }
         }
 
+        private sealed class GridCustomDetailHostRowModel
+        {
+            public GridCustomDetailHostRowModel(
+                string ownerRowKey,
+                GridRowDetailDescriptor descriptor,
+                GridRowDetailContext context)
+            {
+                if (string.IsNullOrWhiteSpace(ownerRowKey))
+                {
+                    throw new ArgumentException("Owner row key is required.", nameof(ownerRowKey));
+                }
+
+                OwnerRowKey = ownerRowKey;
+                Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
+                Context = context ?? throw new ArgumentNullException(nameof(context));
+                RowKey = descriptor.DetailKey;
+            }
+
+            public string RowKey { get; }
+
+            public string OwnerRowKey { get; }
+
+            public GridRowDetailDescriptor Descriptor { get; }
+
+            public GridRowDetailContext Context { get; }
+
+            public GridRowDetailSurfacePayload ToSurfacePayload()
+            {
+                return new GridRowDetailSurfacePayload(
+                    Descriptor.DetailKey,
+                    OwnerRowKey,
+                    Context,
+                    Descriptor.ContentDescriptor);
+            }
+        }
+
         private sealed class RowValidationDetail
         {
             public RowValidationDetail(string columnId, string displayName, string message)
@@ -7948,6 +8517,90 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
             public string DisplayName { get; }
 
             public string Message { get; }
+        }
+
+        public sealed class ValidationIssuePanelItem
+        {
+            public ValidationIssuePanelItem(string rowId, string columnId, string columnDisplayName, string message)
+            {
+                if (string.IsNullOrWhiteSpace(rowId))
+                {
+                    throw new ArgumentException("Validation issue row id is required.", nameof(rowId));
+                }
+
+                if (string.IsNullOrWhiteSpace(columnId))
+                {
+                    throw new ArgumentException("Validation issue column id is required.", nameof(columnId));
+                }
+
+                if (string.IsNullOrWhiteSpace(columnDisplayName))
+                {
+                    throw new ArgumentException("Validation issue column display name is required.", nameof(columnDisplayName));
+                }
+
+                if (string.IsNullOrWhiteSpace(message))
+                {
+                    throw new ArgumentException("Validation issue message is required.", nameof(message));
+                }
+
+                RowId = rowId;
+                ColumnId = columnId;
+                ColumnDisplayName = columnDisplayName;
+                Message = message;
+                Title = "Row " + RowId + " - " + ColumnDisplayName;
+            }
+
+            public string RowId { get; }
+
+            public string ColumnId { get; }
+
+            public string ColumnDisplayName { get; }
+
+            public string Message { get; }
+
+            public string Title { get; }
+        }
+
+        public sealed class ChangePanelItem
+        {
+            public ChangePanelItem(string rowId, string navigationColumnId, string rowDisplayText, string description)
+            {
+                if (string.IsNullOrWhiteSpace(rowId))
+                {
+                    throw new ArgumentException("Change panel row id is required.", nameof(rowId));
+                }
+
+                if (string.IsNullOrWhiteSpace(navigationColumnId))
+                {
+                    throw new ArgumentException("Change panel navigation column id is required.", nameof(navigationColumnId));
+                }
+
+                if (string.IsNullOrWhiteSpace(rowDisplayText))
+                {
+                    throw new ArgumentException("Change panel row display text is required.", nameof(rowDisplayText));
+                }
+
+                if (string.IsNullOrWhiteSpace(description))
+                {
+                    throw new ArgumentException("Change panel description is required.", nameof(description));
+                }
+
+                RowId = rowId;
+                NavigationColumnId = navigationColumnId;
+                RowDisplayText = rowDisplayText;
+                Description = description;
+                Title = "Row " + RowDisplayText;
+            }
+
+            public string RowId { get; }
+
+            public string NavigationColumnId { get; }
+
+            public string RowDisplayText { get; }
+
+            public string Description { get; }
+
+            public string Title { get; }
         }
 
         private sealed class RowIndicatorProjection
@@ -9577,13 +10230,21 @@ namespace PhialeTech.PhialeGrid.Wpf.Controls
 
     public sealed class GridSummaryDisplayItem
     {
-        public GridSummaryDisplayItem(string label, string valueText)
+        public GridSummaryDisplayItem(string columnLabel, string typeLabel, string valueText)
         {
-            Label = label;
-            ValueText = valueText;
+            ColumnLabel = columnLabel ?? throw new ArgumentNullException(nameof(columnLabel));
+            TypeLabel = typeLabel ?? throw new ArgumentNullException(nameof(typeLabel));
+            ValueText = valueText ?? throw new ArgumentNullException(nameof(valueText));
+            Label = string.IsNullOrWhiteSpace(TypeLabel)
+                ? ColumnLabel
+                : ColumnLabel + " " + TypeLabel;
         }
 
         public string Label { get; }
+
+        public string ColumnLabel { get; }
+
+        public string TypeLabel { get; }
 
         public string ValueText { get; }
     }

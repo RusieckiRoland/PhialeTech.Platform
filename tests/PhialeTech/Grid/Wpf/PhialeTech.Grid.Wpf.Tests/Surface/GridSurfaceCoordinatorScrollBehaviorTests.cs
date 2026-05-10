@@ -298,3 +298,4 @@ namespace PhialeGrid.Wpf.Tests.Surface
         }
     }
 }
+

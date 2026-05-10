@@ -265,6 +265,49 @@ namespace PhialeGrid.Wpf.Tests.Hierarchy
         }
 
         [Test]
+        public void MainWindow_WhenCustomDetailScenarioIsSelected_ConfiguresRowDetailProviderAndShowsCustomDetailAfterToggle()
+        {
+            var window = new MainWindow();
+
+            try
+            {
+                window.Show();
+                GridSurfaceTestHost.FlushDispatcher(window);
+
+                var viewModel = (DemoShellViewModel)window.DataContext;
+                var grid = (WpfGrid)window.FindName("DemoGrid");
+
+                viewModel.SelectExample("custom-detail");
+                GridSurfaceTestHost.FlushDispatcher(window);
+
+                var surfaceHost = GridSurfaceTestHost.FindSurfaceHost(grid);
+                var firstRow = surfaceHost.CurrentSnapshot.Rows.First(row => !row.IsGroupHeader && !row.IsDetailsHost);
+
+                GridSurfaceTestHost.ClickPointViaRoutedUi(surfaceHost, x: 8d, y: firstRow.Bounds.Y + (firstRow.Bounds.Height / 2d));
+                GridSurfaceTestHost.FlushDispatcher(window);
+                surfaceHost.UpdateLayout();
+                GridSurfaceTestHost.FlushDispatcher(window);
+
+                var detailPresenter = GridSurfaceTestHost.FindVisualChildren<GridRowDetailPresenter>(surfaceHost)
+                    .FirstOrDefault(presenter => presenter.OverlayData != null);
+                var detailText = detailPresenter == null ? string.Empty : GridSurfaceTestHost.ReadVisibleText(detailPresenter);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(grid.RowDetailProvider, Is.Not.Null);
+                    Assert.That(grid.RowDetailContentFactory, Is.Not.Null);
+                    Assert.That(surfaceHost.CurrentSnapshot.Rows.Any(row => row.IsDetailsHost), Is.True);
+                    Assert.That(detailPresenter, Is.Not.Null);
+                    Assert.That(detailText, Does.Contain("Parcel Stare Miasto 1001"));
+                });
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        [Test]
         public void MainWindow_WhenInsideMasterDetailExpandsManyRows_KeepsDetailPresenterScrollableAndBounded()
         {
             var window = new MainWindow();
@@ -638,3 +681,4 @@ namespace PhialeGrid.Wpf.Tests.Hierarchy
         }
     }
 }
+

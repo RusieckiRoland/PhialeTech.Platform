@@ -245,3 +245,4 @@ namespace PhialeGrid.Core.Tests.Interaction
         }
     }
 }
+

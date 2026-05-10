@@ -16,3 +16,4 @@ namespace PhialeTech.Components.Shared.Model
         public string Usage { get; }
     }
 }
+

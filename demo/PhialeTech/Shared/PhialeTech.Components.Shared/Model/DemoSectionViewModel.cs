@@ -24,3 +24,4 @@ namespace PhialeTech.Components.Shared.Model
         public IReadOnlyList<DemoSectionRowViewModel> Rows { get; }
     }
 }
+

@@ -38,3 +38,4 @@ public sealed class DemoPdfPaginationPlannerTests
         Assert.That(slices[1].RenderedHeight, Is.EqualTo(550d).Within(0.01d));
     }
 }
+

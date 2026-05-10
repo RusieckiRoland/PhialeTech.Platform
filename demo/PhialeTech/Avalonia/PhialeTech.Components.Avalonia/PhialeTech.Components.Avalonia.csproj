@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\PdfViewer\Platforms\Avalonia\PhialeTech.PdfViewer.Avalonia\PhialeTech.PdfViewer.Avalonia.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Products\ReportDesigner\Platforms\Avalonia\PhialeTech.ReportDesigner.Avalonia\PhialeTech.ReportDesigner.Avalonia.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\Platforms\Avalonia\PhialeTech.WebHost.Avalonia\PhialeTech.WebHost.Avalonia.csproj" />
+    <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.Styles.Avalonia\PhialeTech.Styles.Avalonia.csproj" />
     <ProjectReference Include="..\..\..\..\src\PhialeTech\Shared\PhialeTech.WebAssets\PhialeTech.WebAssets.csproj" />
     <ProjectReference Include="..\\..\\Shared\\PhialeTech.Components.Shared\\PhialeTech.Components.Shared.csproj" />
   </ItemGroup>

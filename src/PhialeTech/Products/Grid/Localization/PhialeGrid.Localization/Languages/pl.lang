@@ -63,7 +63,7 @@ editing.status=Brudne wiersze: {0}, błędy walidacji: {1}
 editing.pending=Wykryto niezapisane zmiany. Zatwierdź je albo anuluj przed opuszczeniem tego scenariusza.
 editing.pending_with_validation=Wykryto niezapisane zmiany. Popraw błędy walidacji przed zatwierdzeniem albo anuluj, aby odrzucić zmiany.
 
-summary.count=Liczba
+summary.count=Ilość
 summary.sum=Suma
 summary.average=Średnia
 summary.min=Min
